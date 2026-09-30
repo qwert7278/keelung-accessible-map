@@ -17,8 +17,10 @@
 - 正式管理者已透過 Email 確認帳號，並由私有 `admin_users` 清單授權；管理頁顯示「管理權限已驗證」。真實管理者將 QA 案件 open → in_progress → resolved；沒有改善照時拒絕結案，提供合成照片後通過。
 - 瀏覽器真實檔案選擇、客戶端縮圖／EXIF 清除、Storage 上傳、改善前後公開照片、社群照片與更新均通過。
 - 真實 GPS 授權/精度分支需裝置驗收；手動座標可用。Google Maps 真實 key 未測，OSM 預設保留。
-- GitHub repository/push、Vercel Preview/Production 尚未執行。部署後須重跑手機/桌面與管理跳轉。
-- API fixture 是明確標示 QA 的合成案件與公開照片；精確 fixture 清單在被 Git 忽略的 `output/cloud-fixture.json`。須從 Supabase 管理介面刪除案件與測試照片後，才可開放 Preview/Production 收件。正式管理者帳號保留。
+- GitHub repository 已推送至 `https://github.com/qwert7278/keelung-accessible-map`；Vercel 專案已連接，Git 分支 Preview 已部署並通過桌面只讀 smoke test。Preview 受 Vercel 登入保護。手機 375/390px 與 1920px 版面在本機驗收；仍需用真實手機檢查受保護的 Preview，以及真實 GPS 授權/精度分支。
+- Vercel 前端環境變數目前只設在 Preview：Supabase URL、publishable key、OSM provider、Demo Mode 關閉；未設定 service-role secret，也未設定 Production 環境變數。`keelung-accessible-map.vercel.app` 網域已解除指派，Production 尚未核准升版。
+- API fixture 是明確標示 QA 的合成案件與公開照片；精確 fixture 清單在被 Git 忽略的 `output/cloud-fixture.json`。正式開放前仍須從 Supabase 管理介面刪除案件與測試照片，正式管理者帳號保留。
+- Vercel 曾由手動「Create Preview Deployment」流程建立一筆實際標示為 Production 的 deployment（`dpl_65htXXD2vqqzdbkXffEoabTAWUsA`），雖已解除正式網域指派，該 deployment 記錄仍存在。永久刪除需另行確認；在此之前不會升版 Production。
 
 一次性高權限 QA Edge Function 提案被自動審核拒絕，沒有部署。未以替代途徑建立高權限入口，改走正常管理者帳號驗證。
 
