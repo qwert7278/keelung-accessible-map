@@ -1,5 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ImageIcon, WheelchairIcon, MapPinIcon } from "@phosphor-icons/react";
+import {
+  ImageIcon,
+  WheelchairIcon,
+  MapPinIcon,
+  ShareNetworkIcon,
+} from "@phosphor-icons/react";
 import {
   ACCESS,
   CATEGORIES,
@@ -15,6 +20,7 @@ import { readableError } from "../utils/validation";
 import Modal from "./Modal";
 import PhotoUploader from "./PhotoUploader";
 import StatusBadge from "./StatusBadge";
+import { reportShareUrl } from "../utils/reportLink";
 
 const date = (value: string) =>
   new Date(value).toLocaleString("zh-TW", {
@@ -59,6 +65,8 @@ export default function ReportPanel({
     [busy, setBusy] = useState(false),
     [progress, setProgress] = useState(0),
     [success, setSuccess] = useState(""),
+    [shareMessage, setShareMessage] = useState(""),
+    [shareUrl, setShareUrl] = useState(""),
     [revision, setRevision] = useState(0),
     [consent, setConsent] = useState(false);
   useEffect(() => {
@@ -76,6 +84,26 @@ export default function ReportPanel({
     };
   }, [repository, report.id, revision]);
   const latest = [...updates].reverse().find((u) => u.imageUrl)?.imageUrl;
+  async function shareReport() {
+    const url = reportShareUrl(window.location.origin, report.id);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: report.title, url });
+        setShareMessage("已開啟分享選項。");
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        setShareMessage("案件連結已複製。");
+      } else {
+        setShareUrl(url);
+        setShareMessage("此瀏覽器不支援自動複製，請複製下方連結。");
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name !== "AbortError") {
+        setShareUrl(url);
+        setShareMessage("無法分享連結，請確認瀏覽器權限後再試。");
+      }
+    }
+  }
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (busy || !consent) return;
@@ -128,6 +156,19 @@ export default function ReportPanel({
           {report.address ||
             `${report.district} · ${report.location.lat.toFixed(5)}, ${report.location.lng.toFixed(5)}`}
         </p>
+        <div className="report-actions">
+          <button className="button secondary" type="button" onClick={shareReport}>
+            <ShareNetworkIcon size={18} />
+            分享案件
+          </button>
+          {shareMessage && <span role="status">{shareMessage}</span>}
+          {shareUrl && (
+            <label className="share-link">
+              案件連結
+              <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+            </label>
+          )}
+        </div>
         <div className={`access-callout access-${report.wheelchairAccess}`}>
           <WheelchairIcon size={24} />
           <div>
@@ -189,6 +230,11 @@ export default function ReportPanel({
         </section>
         <form onSubmit={submit} className="update-form">
           <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
+          {!admin && (
+            <p className="muted">
+              你的補充會公開顯示；若提出狀況改善，正式案件狀態仍由管理者確認後更新。
+            </p>
+          )}
           {admin && DEMO_MODE && (
             <p className="notice">Demo 管理操作只影響你的瀏覽器測試資料。</p>
           )}

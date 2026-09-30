@@ -244,6 +244,92 @@ h1 {
   font-weight: 500;
   color: var(--green);
 }
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 0;
+  margin-top: 4px;
+  font-size: 14px;
+}
+.help-lead {
+  font-size: 16px !important;
+  line-height: 1.8;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f1f6f2;
+}
+.help-steps {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 24px;
+  padding-left: 24px;
+}
+.help-steps li {
+  padding-left: 4px;
+}
+.help-steps strong,
+.help-steps span {
+  display: block;
+}
+.help-steps span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.help-faq {
+  display: grid;
+  gap: 12px;
+}
+.help-faq > div {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.help-faq dt {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.help-faq dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.report-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+.report-actions > span {
+  color: var(--green);
+  font-size: 13px;
+}
+.share-link {
+  flex: 1 1 100%;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.share-link input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--green);
+  background: #fff;
+}
+.help-content a,
+.panel-content a {
+  color: #1c654b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .workspace {
   display: grid;
   grid-template-columns: 345px minmax(0, 1fr);
@@ -644,6 +730,11 @@ h1 {
   background: none;
   min-height: 44px;
   font-size: 11px;
+}
+.site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 .footer-separator {
   padding: 0 8px;
@@ -1217,6 +1308,9 @@ progress {
     font-size: 12px;
     max-width: 280px;
     line-height: 1.8;
+  }
+  .help-link {
+    font-size: 13px;
   }
   .city-label {
     margin-bottom: 8px;

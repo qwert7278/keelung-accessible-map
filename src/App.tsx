@@ -12,7 +12,7 @@ import {
   WheelchairIcon,
   PathIcon,
 } from "@phosphor-icons/react";
-import { CITY, DEMO_MODE } from "./config";
+import { BETA_FEEDBACK_EMAIL, CITY, DEMO_MODE } from "./config";
 import {
   ACCESS,
   CATEGORIES,
@@ -30,6 +30,8 @@ import StatusBadge from "./components/StatusBadge";
 import ReportForm from "./components/ReportForm";
 import ReportPanel from "./components/ReportPanel";
 import Modal from "./components/Modal";
+import HelpPanel from "./components/HelpPanel";
+import { reportIdFromSearch } from "./utils/reportLink";
 
 export default function App() {
   const [repository, setRepository] = useState<ReportRepository | null>(null),
@@ -41,8 +43,11 @@ export default function App() {
     [filter, setFilter] = useState<Status | "all">("all"),
     [district, setDistrict] = useState("all"),
     [access, setAccess] = useState("all"),
-    [selected, setSelected] = useState<string | null>(null),
+    [selected, setSelected] = useState<string | null>(() =>
+      reportIdFromSearch(window.location.search),
+    ),
     [creating, setCreating] = useState(false),
+    [help, setHelp] = useState(false),
     [about, setAbout] = useState(false),
     [focus, setFocus] = useState<Location>(),
     [toast, setToast] = useState("");
@@ -110,7 +115,29 @@ export default function App() {
   function choose(id: string) {
     setSelected(id);
     setFocus(reports.find((r) => r.id === id)?.location);
+    const url = new URL(window.location.href);
+    if (reportIdFromSearch(url.search) !== id) {
+      url.searchParams.set("report", id);
+      window.history.pushState({}, "", url);
+    }
   }
+  function closeReport() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("report");
+    window.history.replaceState({}, "", url);
+    setSelected(null);
+  }
+  useEffect(() => {
+    const syncSelectedReport = () =>
+      setSelected(reportIdFromSearch(window.location.search));
+    window.addEventListener("popstate", syncSelectedReport);
+    return () => window.removeEventListener("popstate", syncSelectedReport);
+  }, []);
+  useEffect(() => {
+    if (!selected) return;
+    const match = reports.find((r) => r.id === selected);
+    if (match) setFocus(match.location);
+  }, [reports, selected]);
   function locate() {
     if (!navigator.geolocation) {
       setToast("此瀏覽器不支援定位。你仍可拖曳地圖查看。");
@@ -172,6 +199,7 @@ export default function App() {
             關於計畫
             <ArrowUpRightIcon size={14} />
           </button>
+          <button onClick={() => setHelp(true)}>如何使用</button>
           <a className={adminPage ? "nav-active" : ""} href="/admin">
             <ShieldCheckIcon size={18} />
             <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
@@ -202,7 +230,7 @@ export default function App() {
           )}
         </p>
       </div>
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="page-intro">
           <div>
             <div className="city-label">
@@ -212,7 +240,15 @@ export default function App() {
             <h1>
               {adminPage ? "一起，讓改善發生。" : "看見障礙，一起走得更遠。"}
             </h1>
-            <p>記錄街角的障礙，也留下每一次改善。從基隆開始。</p>
+            <p>
+              基隆無障礙通行回報地圖：查看路口、騎樓與人行道現況，也能回報障礙、補充照片，持續追蹤改善。
+            </p>
+            <button
+              className="text-button help-link"
+              onClick={() => setHelp(true)}
+            >
+              如何使用與常見問題 <ArrowRightIcon size={16} />
+            </button>
           </div>
           <div className="intro-note">
             <WheelchairIcon size={24} />
@@ -465,7 +501,15 @@ export default function App() {
           基隆好行 <span className="footer-separator">/</span> Keelung
           Accessible Map
         </span>
+        <button onClick={() => setHelp(true)}>如何使用</button>
         <button onClick={() => setAbout(true)}>使用與隱私說明</button>
+        {!DEMO_MODE && (
+          <a
+            href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行 Beta 試用回饋")}`}
+          >
+            提供試用回饋
+          </a>
+        )}
         <a href={adminPage ? "/" : "/admin"}>
           {adminPage ? "返回地圖" : DEMO_MODE ? "管理體驗" : "管理案件"}
         </a>
@@ -490,11 +534,11 @@ export default function App() {
             setDistrict("all");
             setAccess("all");
             setSearch("");
-            setSelected(id);
+            choose(id);
             setToast(
               DEMO_MODE
-                ? "測試回報已保存，地圖已新增標記。"
-                : "回報已送出，感謝你的紀錄。",
+                ? "測試回報已建立，案件內容已開啟。"
+                : "回報已建立，案件內容已開啟。感謝你的紀錄。",
             );
           }}
           onExisting={(id) => {
@@ -509,9 +553,10 @@ export default function App() {
           report={report}
           repository={repository}
           admin={adminPage && !!session?.admin}
-          onClose={() => setSelected(null)}
+          onClose={closeReport}
         />
       )}
+      {help && <HelpPanel onClose={() => setHelp(false)} />}
       {about && (
         <Modal title="關於基隆好行" onClose={() => setAbout(false)}>
           <div className="panel-content">
@@ -534,7 +579,16 @@ export default function App() {
               1999 或政府派工。
             </p>
             <p>
-              搜尋目前僅搜尋既有回報。照片請避開人臉、車牌及個人資訊。正式對外收件前，將補上營運者聯絡、申訴刪除與資料保留政策。
+              搜尋目前僅搜尋既有回報。照片請避開人臉、車牌及個人資訊。
+              {DEMO_MODE
+                ? " Demo 的回報和照片只保存在此瀏覽器；可在本說明視窗使用清除功能移除。"
+                : " 公開案件與照片會在案件公開期間持續保留；收到並確認移除申請後會處理，並至少每年檢視一次資料是否仍有保留必要。"}
+            </p>
+            <p>
+              Beta 回饋、資料更正、照片移除與隱私申訴：{" "}
+              <a href={`mailto:${BETA_FEEDBACK_EMAIL}`}>
+                {BETA_FEEDBACK_EMAIL}
+              </a>
             </p>
             {DEMO_MODE && (
               <button

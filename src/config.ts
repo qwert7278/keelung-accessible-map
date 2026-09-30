@@ -1,4 +1,5 @@
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
+export const BETA_FEEDBACK_EMAIL = "lingwei2046@gmail.com";
 export const CITIES = [
   {
     id: "TW-KEE",

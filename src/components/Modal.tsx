@@ -17,8 +17,19 @@ export default function Modal({
     titleId = useId();
   useEffect(() => {
     const dialog = ref.current!;
+    const returnFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     dialog.showModal();
-    return () => dialog.close();
+    return () => {
+      dialog.close();
+      window.requestAnimationFrame(() => {
+        if (document.querySelector("dialog[open]")) return;
+        if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+        else document.querySelector<HTMLElement>("main")?.focus();
+      });
+    };
   }, []);
   return (
     <dialog
