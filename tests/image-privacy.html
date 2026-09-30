@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <meta charset="utf-8" /><title>Image privacy test</title>
+  <h1>Image privacy test</h1>
+  <button id="run">執行本機合成圖片測試</button>
+  <pre id="result">等待照片</pre>
+  <script type="module">
+    import { compressImage } from "/src/utils/images.ts";
+    document.querySelector("#run").onclick = async () => {
+      try {
+        const data = await (await fetch("/tests/fixtures/qa-exif.jpg")).blob();
+        const file = new File([data], "qa-exif.jpg", { type: "image/jpeg" });
+        const original = await file.arrayBuffer();
+        if (
+          !new TextDecoder().decode(original).includes("QA_PRIVATE_GPS_MARKER")
+        )
+          throw Error("Fixture lacks EXIF marker");
+        const blob = await compressImage(file);
+        const image = await createImageBitmap(blob);
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        if (image.width !== 1920 || image.height !== 960)
+          throw Error("Wrong resize");
+        if (blob.type !== "image/jpeg" || blob.size >= file.size)
+          throw Error("Compression failed");
+        if (new TextDecoder().decode(bytes).includes("QA_PRIVATE_GPS_MARKER"))
+          throw Error("EXIF leaked");
+        let pos = 2;
+        while (bytes[pos] === 255) {
+          const marker = bytes[pos + 1];
+          if (marker === 218) break;
+          if (marker === 225) throw Error("EXIF APP1 remains");
+          const n = (bytes[pos + 2] << 8) | bytes[pos + 3];
+          pos += 2 + n;
+        }
+        document.querySelector("#result").textContent =
+          `PASS: 2400×1200 → ${image.width}×${image.height}; ${file.size} → ${blob.size} bytes; JPEG; no EXIF APP1 or private GPS marker.`;
+        image.close();
+      } catch (e) {
+        document.querySelector("#result").textContent = "FAIL: " + e.message;
+      }
+    };
+  </script>
+</html>
