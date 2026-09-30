@@ -11,16 +11,22 @@
 
 ## Preview / Production 尚待部署驗收
 
+SEO Preview deployment：`https://keelung-accessible-jyp7fy380-masons-projects-2c78a251.vercel.app/`，commit `a90f860`，Vercel 狀態 READY；Production 未變更。GitHub Actions Quality run 9 通過：[run 36713630610](https://github.com/qwert7278/keelung-accessible-map/actions/runs/36713630610)。
+
+已完成 Preview 首頁 fetch：HTTP 200 / `text/html`；raw HTML 有 Production canonical、OG/Twitter、WebSite JSON-LD 及 `robots=noindex`，response 有 `X-Robots-Tag: noindex`。該 header 可能同時由 Vercel Deployment Protection 產生。Vercel fetch/browser 對其他路徑會被保護層導回 SSO，所以下表標「受保護，待有登入狀態驗收」，不能把 302 當作頁面本身失敗，也不能宣稱路徑驗收通過。
+
+本機 Vite preview 直接讀取生成的 `/how-to/index.html`、`/about/index.html`、`/privacy/index.html` 均為 200 / `text/html`；robots 為 200 / `text/plain`、sitemap 為 200 / `text/xml`、OG image 為 200 / `image/png`，favicon 為 200 / `image/svg+xml`。Vercel clean paths 及 HTTP 404 仍以部署後驗收為準。
+
 | URL / 流程 | 預期 | 結果 |
 | --- | --- | --- |
-| `/` | 200，HTML metadata / WebSite JSON-LD | 待 Preview deploy |
-| `/how-to`, `/about`, `/privacy` | 200，`text/html`、各自 H1/canonical | 待 Preview deploy |
-| `/robots.txt` | 200，`text/plain`，Sitemap 指向 Production | 待 Preview deploy |
-| `/sitemap.xml` | 200，XML，恰好 4 個 public URL | 待 Preview deploy |
-| `/og-image.png` | 200，PNG 1200×630 | 待 Preview deploy |
-| `/admin` | SPA 正常載入，X-Robots-Tag noindex | 待 Preview deploy |
-| 隨機不存在路由 | 真正 404，不回首頁 shell | 待 Preview deploy |
-| Preview 首頁和資訊頁 | Deployment Protection + robots noindex，canonical 無 Preview host | 待 Preview deploy |
+| `/` | 200，HTML metadata / WebSite JSON-LD | Preview pass；canonical 指 Production；Preview noindex pass |
+| `/how-to`, `/about`, `/privacy` | 200，`text/html`、各自 H1/canonical | 本機輸出 pass；Vercel route 受保護層阻擋驗收 |
+| `/robots.txt` | 200，`text/plain`，Sitemap 指向 Production | 本機輸出 pass；Vercel route 受保護層阻擋驗收 |
+| `/sitemap.xml` | 200，XML，恰好 4 個 public URL | Build/本機輸出 pass；Vercel route 受保護層阻擋驗收 |
+| `/og-image.png` | 200，PNG 1200×630 | 本機 pass；部署路徑受保護層阻擋驗收 |
+| `/admin` | SPA 正常載入，X-Robots-Tag noindex | Vercel rewrite/header config 與 SEO check pass；部署路徑受保護層阻擋驗收 |
+| 隨機不存在路由 | 真正 404，不回首頁 shell | Vercel catch-all 已移除、404.html 存在；HTTP 狀態受保護層阻擋驗收 |
+| Preview 首頁和資訊頁 | Deployment Protection + robots noindex，canonical 無 Preview host | 首頁 pass；Preview build 對資訊頁 noindex 由 CI/build check pass，部署路徑受保護層阻擋驗收 |
 | `/?report=<uuid>` | canonical `/`，不在 sitemap | build/source pass；瀏覽器待 Preview |
 | 手機/桌機、社群分享擷取 | link/meta/OG 圖和版面正確 | 待 Preview browser |
 | Lighthouse / Rich Results / Schema validator | 無 critical regression | external tools / Search Console 待 owner |
