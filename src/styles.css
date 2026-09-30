@@ -1203,6 +1203,27 @@ input[type="radio"] {
 .admin-gate p {
   font-size: 13px;
 }
+.admin-gate > div {
+  flex: 1 1 300px;
+  min-width: 240px;
+}
+.admin-gate label {
+  flex: 1 1 260px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-gate input {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 6px;
+  padding: 9px 12px;
+  border: 1px solid #bdcfc7;
+  border-radius: 6px;
+  color: inherit;
+  background: #fff;
+}
 .admin-banner {
   background: #e7f1eb;
   color: var(--green);
