@@ -17,7 +17,7 @@ The exact Production `/admin` redirect and the project Preview URL pattern must 
 
 ## Verification
 
-Source inspection and production TypeScript build pass. Existing local verification records include the prior RLS/API negative tests, but no Magic Link email was sent in this V2 visual pass. The account owner must request a new link and click it on the target Preview browser session; links are single-use and should not be copied into chat or logs.
+Source inspection, four focused auth unit tests, and production TypeScript build pass. The V2 Preview successfully created an anonymous session and its `is_admin()` RPC returned 200; the unauthenticated admin gate remained visible. On 2026-09-30, the owner-provided admin address requested a one-time Preview link; the Supabase OTP request returned HTTP 200 and the UI confirmed delivery. The account owner must click that email link in the target Preview browser session to complete the final role/redirect verification. Links are single-use and should not be copied into chat or logs.
 
 ## Authorization boundary
 

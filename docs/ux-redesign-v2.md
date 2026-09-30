@@ -27,6 +27,10 @@ Date: 2026-09-30. The existing React/Vite/Supabase/Leaflet implementation and th
 - Demo success: `screenshots/beta-v2-after-success-demo.png`
 - Report detail: `screenshots/beta-v2-after-detail.png`
 - Admin login gate: `screenshots/beta-v2-after-admin-login.png`
+- Final Preview desktop: `screenshots/beta-v2-preview-desktop.png`
+- Final Preview mobile 390×844: `screenshots/beta-v2-preview-mobile.png`
+- Final Preview report form: `screenshots/beta-v2-preview-report-form.png`
+- Final Preview admin login gate: `screenshots/beta-v2-preview-admin-login.png`
 
 The success screenshot was captured after a synthetic submission in a separate local Demo Mode browser, which stores data only in that browser and does not connect to Supabase. The admin screenshot shows the unauthenticated gate; verified-admin still requires the account owner to click their own one-time Preview email link.
 

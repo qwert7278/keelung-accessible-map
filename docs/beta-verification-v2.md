@@ -22,7 +22,9 @@ Date: 2026-09-30. Local branch: `codex/beta-readiness`. This document separates 
 
 ## Not yet confirmed for this V2 Preview
 
-- New code has not yet been pushed or verified in a fresh Vercel Preview deployment.
-- The admin owner must click a one-time email link to verify the real admin route on Preview.
+- Commits `a8b55b0` and `d8b73b2` were pushed to `codex/beta-readiness`; the final Vercel Preview `https://keelung-accessible-r4vfkviv6-masons-projects-2c78a251.vercel.app/` reached READY. Production was not promoted.
+- Preview browser verification observed anonymous Auth signup 200, public `report_feed` reads 200, and `is_admin()` RPC 200; after anonymous session setup the report CTA became enabled. The existing three sample cases remained visible. No report, update, or Storage upload was sent.
+- Preview desktop 1366×768, mobile 390×844, mobile report form, and unauthenticated Admin gate were inspected and captured in `screenshots/beta-v2-preview-*.png`.
+- A one-time Admin Magic Link was requested from this final Preview and Supabase returned HTTP 200. The Admin owner still needs to open their inbox and click the link; real admin grant/return has not yet been observed.
 - The stable success UI is verified in Demo Mode; no live submission was created.
 - Physical phone, keyboard-only, screen-reader, true 200% zoom, and GPS permission branches remain human checks.
