@@ -1,6 +1,13 @@
 # Beta Verification
 
-Updated: 2026-09-30. Branch: `codex/beta-readiness`. Deployment stage: Preview only; Production changes are not authorized by this work.
+Updated: 2026-09-30. Branch: `codex/beta-readiness` at `6e1b255`. Deployment stage: Preview only; Production changes are not authorized by this work.
+
+## GitHub and Vercel
+
+- GitHub Actions [Quality run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/36691344074): success for audit, lint, tests, and build.
+- Vercel Preview: [keelung-accessible-ivmeo3q9j-masons-projects-2c78a251.vercel.app](https://keelung-accessible-ivmeo3q9j-masons-projects-2c78a251.vercel.app/), state READY and protected by Vercel Authentication.
+- The local browser is not authenticated to Vercel. Use of a temporary Vercel Preview share link for browser-side Preview testing is pending explicit approval; it expires after about 23 hours. No share URL is recorded in project files.
+- The existing Production deployment/domain was not changed.
 
 ## Local checks
 
@@ -38,4 +45,4 @@ This review does not claim real iOS/Safari, Android camera, real GPS denial, 200
 
 ## Beta readiness gate
 
-Small closed Beta is recommended after local checks pass and the protected Vercel Preview is reviewed. Complete the manual-device checklist in `docs/user-test-checklist.md` before inviting users. Preview deployment and final browser checks are still pending. This document does not itself authorize public Production promotion.
+Small closed Beta is recommended after local checks pass, the protected Vercel Preview is reviewed, and the operator completes the manual-device checklist in `docs/user-test-checklist.md`. Preview is READY; browser-side Preview review and updated screenshot files remain pending. The local interface was visually inspected, but the current browser capture was not exported as a repository asset. This document does not itself authorize public Production promotion.

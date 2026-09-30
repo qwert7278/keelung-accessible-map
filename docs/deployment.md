@@ -17,7 +17,7 @@ Node 24。匯入 GitHub repository，Framework 選 Vite，Build `npm run build`�
 5. Dashboard 設定 Site URL 與 Redirect URLs，包含 `https://YOUR_DOMAIN/admin` 和需要的 localhost 測試網址。管理者以 Email magic link 登入。正式 Email 傳送需核對 SMTP 寄送限制並設定自己的 SMTP。
 6. Vercel 設定 `VITE_SUPABASE_URL`、`VITE_SUPABASE_PUBLISHABLE_KEY`。只放 publishable key；**不可使用 service_role／secret key**。
 7. 在非公開測試環境設定 `VITE_DEMO_MODE=false`，驗證匿名建案、照片、補充、管理變更與 RLS。
-8. 完成營運聯絡、申訴刪除、保留政策、CAPTCHA 與容量／帳務提醒，再決定開放正式收件。
+8. Beta 聯絡信箱、資料更正／移除申請管道及保留政策已公開說明：公開案件與照片在仍有服務需要時保留；收到並確認移除申請後處理，並至少每年檢視是否仍有保留必要。正式開放收件前，仍須完成 CAPTCHA／防濫用方案及容量、MAU、帳務提醒，並驗證申訴處理流程有人負責。
 
 ## Google Maps（可選）
 
