@@ -59,7 +59,7 @@ export type ReportDraft = Pick<
   | "location"
   | "wheelchairAccess"
 >;
-export type Session = { uid: string; admin: boolean };
+export type Session = { uid: string; admin: boolean; anonymous: boolean };
 export type UpdateDraft = { message: string; suggestedStatus: Status | null };
 export interface ReportRepository {
   session(): Promise<Session>;

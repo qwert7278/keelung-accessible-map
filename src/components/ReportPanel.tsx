@@ -83,7 +83,9 @@ export default function ReportPanel({
       active = false;
     };
   }, [repository, report.id, revision]);
-  const latest = [...updates].reverse().find((u) => u.imageUrl)?.imageUrl;
+  const latestCommunityPhoto = [...updates]
+    .reverse()
+    .find((u) => u.type === "community" && u.imageUrl)?.imageUrl;
   async function shareReport() {
     const url = reportShareUrl(window.location.origin, report.id);
     try {
@@ -144,11 +146,10 @@ export default function ReportPanel({
     }
   }
   return (
-    <Modal title={report.title} onClose={onClose} busy={busy} wide>
+    <Modal title={report.title} onClose={onClose} busy={busy} wide sheet>
       <div className="panel-content">
         <div className="detail-top">
           <StatusBadge status={report.status} />
-          <span>{CATEGORIES[report.category]}</span>
           {DEMO_MODE && <span className="demo-tag">測試資料</span>}
         </div>
         <p className="location-line">
@@ -176,27 +177,31 @@ export default function ReportPanel({
             <strong>{ACCESS[report.wheelchairAccess]}</strong>
           </div>
         </div>
+        <p className="detail-category">問題類型：{CATEGORIES[report.category]}</p>
         <p>{report.description || "此案件尚無補充說明。"}</p>
-        <div className="before-after">
-          <Photo src={report.beforeImageUrl} label="改善前／原始照片" />
-          <Photo
-            src={report.afterImageUrl || latest || null}
-            label={report.afterImageUrl ? "改善後（管理者上傳）" : "最新照片"}
-          />
-        </div>
-        <p className="metadata">
-          建立：{date(report.createdAt)}
-          <br />
-          案件狀態更新：{date(report.updatedAt)}
-        </p>
+        <section className="evidence-section" aria-label="現場照片與改善證據">
+          <h3>現場照片</h3>
+          <div className="evidence-grid">
+            <Photo src={report.beforeImageUrl} label="原始回報照片" />
+            <Photo
+              src={latestCommunityPhoto || null}
+              label="最新民眾補充照片"
+            />
+            <Photo
+              src={report.afterImageUrl}
+              label="管理者改善後照片"
+            />
+          </div>
+          <p className="muted evidence-note">
+            民眾補充是現場觀察，不代表管理者已確認改善。正式狀態由管理者更新。
+          </p>
+        </section>
         <section className="timeline">
           <h3>
             現場紀錄 <span className="count">{updates.length}</span>
           </h3>
           {updates.length === 0 ? (
-            <p className="muted">
-              還沒有補充紀錄。每一筆更新，都讓現場更清楚。
-            </p>
+            <p className="muted">尚無補充紀錄。</p>
           ) : (
             <ol>
               {updates.map((u) => (
@@ -210,9 +215,7 @@ export default function ReportPanel({
                   <p>{u.message}</p>
                   {u.suggestedStatus && (
                     <small>
-                      {u.type === "admin"
-                        ? "設定狀態："
-                        : "民眾回報（待審核）："}
+                      {u.type === "admin" ? "管理者設定：" : "民眾觀察（待確認）："}
                       {STATUSES[u.suggestedStatus]}
                     </small>
                   )}
@@ -220,7 +223,7 @@ export default function ReportPanel({
                     <img
                       className="update-photo"
                       src={u.imageUrl}
-                      alt="此筆現場更新的照片"
+                      alt={u.type === "admin" ? "管理者更新照片" : "民眾補充照片"}
                     />
                   )}
                 </li>
@@ -228,6 +231,11 @@ export default function ReportPanel({
             </ol>
           )}
         </section>
+        <p className="metadata">
+          建立：{date(report.createdAt)}
+          <br />
+          案件狀態更新：{date(report.updatedAt)}
+        </p>
         <form onSubmit={submit} className="update-form">
           <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
           {!admin && (
@@ -270,14 +278,14 @@ export default function ReportPanel({
               </div>
             ) : (
               <label>
-                目前觀察
+                我看到的現況
                 <select
                   value={suggestion}
                   onChange={(e) => setSuggestion(e.target.value as Status | "")}
                 >
                   <option value="">僅補充資訊</option>
                   <option value="open">問題仍存在</option>
-                  <option value="resolved">看起來已改善（需管理者確認）</option>
+                  <option value="resolved">看起來已改善（待管理者確認）</option>
                 </select>
               </label>
             )}

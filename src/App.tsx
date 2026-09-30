@@ -5,7 +5,6 @@ import {
   CrosshairIcon,
   InfoIcon,
   ListIcon,
-  MapPinIcon,
   PlusIcon,
   MagnifyingGlassIcon,
   ShieldCheckIcon,
@@ -31,6 +30,8 @@ import ReportForm from "./components/ReportForm";
 import ReportPanel from "./components/ReportPanel";
 import Modal from "./components/Modal";
 import HelpPanel from "./components/HelpPanel";
+import OnboardingPanel from "./components/OnboardingPanel";
+import ReportSuccessPanel from "./components/ReportSuccessPanel";
 import { reportIdFromSearch } from "./utils/reportLink";
 
 export default function App() {
@@ -47,12 +48,15 @@ export default function App() {
       reportIdFromSearch(window.location.search),
     ),
     [creating, setCreating] = useState(false),
+    [onboarding, setOnboarding] = useState(false),
     [help, setHelp] = useState(false),
     [about, setAbout] = useState(false),
     [focus, setFocus] = useState<Location>(),
-    [toast, setToast] = useState("");
+    [toast, setToast] = useState(""),
+    [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [adminEmail, setAdminEmail] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+  const [signInSent, setSignInSent] = useState(false);
   const adminPage = window.location.pathname.replace(/\/$/, "") === "/admin";
   useEffect(() => {
     let active = true,
@@ -95,6 +99,58 @@ export default function App() {
       unsubscribe?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (adminPage) return;
+    try {
+      if (localStorage.getItem("keelung-accessible-map-onboarding-seen-v1") !== "yes")
+        setOnboarding(true);
+    } catch {
+      // Keep the map available when browser storage is disabled.
+    }
+  }, [adminPage]);
+
+  function dismissOnboarding() {
+    try {
+      localStorage.setItem("keelung-accessible-map-onboarding-seen-v1", "yes");
+    } catch {
+      // The guide remains skippable when browser storage is disabled.
+    }
+    setOnboarding(false);
+  }
+
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+
+    void import("./services/supabase")
+      .then(({ subscribeAuthSession }) => {
+        if (!active) return;
+        unsubscribe = subscribeAuthSession(
+          (current, event) => {
+            if (!active) return;
+            setSession(current);
+            if (event === "SIGNED_IN" && current?.admin && adminPage) {
+              setError("");
+              setToast("管理者登入成功。");
+            }
+          },
+          (e) => {
+            if (active) setError(readableError(e));
+          },
+        );
+      })
+      .catch((e) => {
+        if (active) setError(readableError(e));
+      });
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [adminPage]);
+
   const visible = useMemo(
     () =>
       reports.filter(
@@ -166,9 +222,12 @@ export default function App() {
   async function signIn() {
     if (signingIn) return;
     setSigningIn(true);
+    setSignInSent(false);
+    setError("");
     try {
       const { loginAdmin } = await import("./services/supabase");
       await loginAdmin(adminEmail);
+      setSignInSent(true);
       setToast("登入連結已寄出，請查看你的管理者信箱。");
     } catch (e) {
       setError(readableError(e));
@@ -233,15 +292,11 @@ export default function App() {
       <main id="main-content" tabIndex={-1}>
         <section className="page-intro">
           <div>
-            <div className="city-label">
-              <MapPinIcon size={17} weight="fill" />
-              基隆市<span>首站示範城市</span>
-            </div>
-            <h1>
-              {adminPage ? "一起，讓改善發生。" : "看見障礙，一起走得更遠。"}
-            </h1>
+            <h1>{adminPage ? "案件管理" : "基隆無障礙通行地圖"}</h1>
             <p>
-              基隆無障礙通行回報地圖：查看路口、騎樓與人行道現況，也能回報障礙、補充照片，持續追蹤改善。
+              {adminPage
+                ? "檢視案件、確認現況與管理者更新。"
+                : "查看附近障礙，或回報你現在看到的通行問題。"}
             </p>
             <button
               className="text-button help-link"
@@ -249,14 +304,6 @@ export default function App() {
             >
               如何使用與常見問題 <ArrowRightIcon size={16} />
             </button>
-          </div>
-          <div className="intro-note">
-            <WheelchairIcon size={24} />
-            <span>
-              為輪椅、推車與每一位行人
-              <br />
-              <strong>多留一條好走的路</strong>
-            </span>
           </div>
         </section>
         {error && (
@@ -276,14 +323,24 @@ export default function App() {
             <div>
               <h2>管理者登入</h2>
               <p>
-                需使用已由營運者授權的管理者 Email
-                帳號。一般使用者仍可查看與補充案件。
+                請使用已授權的管理者 Email。登入連結僅能使用一次，點開後會返回本頁。
               </p>
+              {session && !session.anonymous && !session.admin && (
+                <p className="error admin-denied" role="status">
+                  這個帳號已登入，但尚未被授權為管理者。
+                </p>
+              )}
+              {signInSent && (
+                <p className="success admin-login-sent" role="status">
+                  登入連結已寄出。請在此裝置開啟信件中的一次性連結；驗證成功後會自動返回管理案件。
+                </p>
+              )}
             </div>
             <label>
               管理者 Email
               <input
                 type="email"
+                autoComplete="email"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -478,23 +535,14 @@ export default function App() {
             </div>
           </div>
         </section>
-        <section className="contribute-strip">
-          <div className="contribute-icon">
-            <MapPinIcon size={28} />
-          </div>
-          <div>
-            <h2>你的一筆紀錄，是城市改變的起點。</h2>
-            <p>遇見不好走的路？留下位置與照片，讓障礙被看見。</p>
-          </div>
-          <button
-            className="button secondary"
-            onClick={() => setCreating(true)}
-            disabled={!repository || !session}
-          >
-            新增一筆回報
-            <PlusIcon size={19} />
-          </button>
-        </section>
+        <button
+          className="button primary mobile-report-cta"
+          onClick={() => setCreating(true)}
+          disabled={!repository || !session}
+        >
+          <PlusIcon size={20} weight="bold" />
+          回報障礙
+        </button>
       </main>
       <footer className="site-footer">
         <span>
@@ -534,12 +582,8 @@ export default function App() {
             setDistrict("all");
             setAccess("all");
             setSearch("");
-            choose(id);
-            setToast(
-              DEMO_MODE
-                ? "測試回報已建立，案件內容已開啟。"
-                : "回報已建立，案件內容已開啟。感謝你的紀錄。",
-            );
+            setCreatedReportId(id);
+            setFocus(reports.find((item) => item.id === id)?.location);
           }}
           onExisting={(id) => {
             setCreating(false);
@@ -557,6 +601,18 @@ export default function App() {
         />
       )}
       {help && <HelpPanel onClose={() => setHelp(false)} />}
+      {onboarding && <OnboardingPanel onClose={dismissOnboarding} />}
+      {createdReportId && (
+        <ReportSuccessPanel
+          id={createdReportId}
+          onClose={() => setCreatedReportId(null)}
+          onView={() => {
+            const id = createdReportId;
+            setCreatedReportId(null);
+            choose(id);
+          }}
+        />
+      )}
       {about && (
         <Modal title="關於基隆好行" onClose={() => setAbout(false)}>
           <div className="panel-content">

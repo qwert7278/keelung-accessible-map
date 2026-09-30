@@ -269,6 +269,9 @@ export default function ReportForm({
           )}
           {step === 2 && (
             <>
+              <p className="photo-guidance">
+                拍到障礙本身，也盡量拍到周圍通行空間。請避免刻意拍攝可辨識的人臉、車牌或其他不必要個資。
+              </p>
               <PhotoUploader
                 label="現場照片"
                 required
