@@ -3,7 +3,7 @@
 ## Vercel Demo
 
 Node 24。匯入 GitHub repository，Framework 選 Vite，Build `npm run build`，Output `dist`。
-設定 `VITE_DEMO_MODE=true`（省略也預設 Demo）。不需要 Google Maps 或 Supabase key。
+設定 `VITE_DEMO_MODE=true`（省略也預設 Demo）及安全可公開的 `VITE_PUBLIC_SITE_URL=https://keelung-accessible-map.vercel.app`。不需要 Google Maps 或 Supabase key。
 `vercel.json` 讓 `/admin` 重新整理仍能載入 SPA。
 
 ## Supabase

@@ -254,11 +254,11 @@ export default function App() {
           <a className={!adminPage ? "nav-active" : ""} href="/">
             通行地圖
           </a>
-          <button onClick={() => setAbout(true)}>
+          <a href="/about">
             關於計畫
             <ArrowUpRightIcon size={14} />
-          </button>
-          <button onClick={() => setHelp(true)}>如何使用</button>
+          </a>
+          <a href="/how-to">如何使用</a>
           <a className={adminPage ? "nav-active" : ""} href="/admin">
             <ShieldCheckIcon size={18} />
             <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
@@ -549,8 +549,9 @@ export default function App() {
           基隆好行 <span className="footer-separator">/</span> Keelung
           Accessible Map
         </span>
-        <button onClick={() => setHelp(true)}>如何使用</button>
-        <button onClick={() => setAbout(true)}>使用與隱私說明</button>
+        <a href="/how-to">如何使用</a>
+        <a href="/about">關於計畫</a>
+        <a href="/privacy">使用與隱私說明</a>
         {!DEMO_MODE && (
           <a
             href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行 Beta 試用回饋")}`}

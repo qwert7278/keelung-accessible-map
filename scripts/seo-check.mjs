@@ -1,0 +1,81 @@
+import { readFile, stat } from "node:fs/promises";
+import { resolve } from "node:path";
+
+const dist = resolve(process.cwd(), "dist");
+const base = (process.env.VITE_PUBLIC_SITE_URL || "https://keelung-accessible-map.vercel.app").replace(/\/+$/, "");
+const expectedPaths = ["/", "/how-to", "/about", "/privacy"];
+const failures = [];
+const read = async (path) => readFile(resolve(dist, path), "utf8");
+const check = (condition, message) => { if (!condition) failures.push(message); };
+const meta = (html, key, value) => {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(new RegExp(`<meta[^>]+(?:name|property)=["']${escaped}["'][^>]+content=["']([^"']*)["']`, "i"))
+    || html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["']${escaped}["']`, "i"));
+  return !value || match?.[1] === value;
+};
+
+const index = await read("index.html");
+check(index.includes(`<html lang="zh-Hant-TW">`), "Homepage language must remain zh-Hant-TW.");
+check(index.includes("基隆無障礙通行地圖"), "Homepage title/topic is missing.");
+check(index.includes(`${base}/`), "Homepage canonical and social URLs must use the production host.");
+check(meta(index, "og:type", "website"), "Homepage og:type must be website.");
+check(index.includes('"@type": "WebSite"'), "WebSite JSON-LD is missing.");
+check(!/localhost|\.vercel\.app\//i.test(index.replaceAll(base, "")), "Homepage must not contain a preview or localhost URL.");
+
+for (const path of ["how-to", "about", "privacy"]) {
+  const html = await read(`${path}/index.html`);
+  check(html.includes(`<html lang="zh-Hant-TW">`), `${path} language is missing.`);
+  check(html.includes(`<h1>`), `${path} must have one H1.`);
+  check((html.match(/<h1>/g) || []).length === 1, `${path} must have exactly one H1.`);
+  check(html.includes(`${base}/${path}`), `${path} canonical/social URLs must use its production route.`);
+  check(/<title>[^<]+<\/title>/.test(html), `${path} title is missing.`);
+  check(/<meta[^>]+name="description"[^>]+content="[^"]+"/.test(html), `${path} description is missing.`);
+  check(!/localhost|\.vercel\.app\//i.test(html.replaceAll(base, "")), `${path} must not contain a preview or localhost URL.`);
+}
+
+const robots = await read("robots.txt");
+check(robots.includes("User-agent: *\nAllow: /"), "robots.txt must allow public pages.");
+check(robots.includes(`Sitemap: ${base}/sitemap.xml`), "robots.txt Sitemap URL must use the canonical host.");
+check(!robots.includes("Disallow: /admin"), "robots.txt must not block crawling the admin noindex header.");
+
+const sitemap = await read("sitemap.xml");
+check(sitemap.includes("<urlset"), "sitemap.xml must be XML.");
+const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+check(urls.length === expectedPaths.length, "Sitemap must include only the four stable public routes.");
+for (const path of expectedPaths) check(urls.includes(`${base}${path}`), `Sitemap is missing ${path}.`);
+check(!/admin|\?|localhost|vercel\.app/i.test(urls.join("\n").replaceAll(base, "")), "Sitemap contains an admin, query, local or preview URL.");
+
+const vercelConfig = JSON.parse(await readFile(resolve(process.cwd(), "vercel.json"), "utf8"));
+const rewrites = new Map(vercelConfig.rewrites.map(({ source, destination }) => [source, destination]));
+for (const [source, destination] of [
+  ["/admin", "/index.html"],
+  ["/how-to", "/how-to/index.html"],
+  ["/about", "/about/index.html"],
+  ["/privacy", "/privacy/index.html"],
+]) check(rewrites.get(source) === destination, `Vercel rewrite ${source} -> ${destination} is required.`);
+check(!vercelConfig.rewrites.some(({ source }) => source === "/(.*)" || source.includes(".*")), "A catch-all rewrite can make unknown routes soft 404s.");
+const adminHeaders = vercelConfig.headers.filter(({ source }) => source === "/admin" || source === "/admin/:path*");
+check(adminHeaders.some(({ headers }) => headers.some(({ key, value }) => key.toLowerCase() === "x-robots-tag" && /noindex/i.test(value))), "Admin response must include an X-Robots-Tag noindex header.");
+
+const shareImagePath = resolve(dist, "og-image.png");
+const shareImage = await readFile(shareImagePath);
+const width = shareImage.readUInt32BE(16);
+const height = shareImage.readUInt32BE(20);
+check(width === 1200 && height === 630, `OG image must be 1200x630 (got ${width}x${height}).`);
+check((await stat(resolve(dist, "favicon.svg"))).isFile(), "Favicon must exist in build output.");
+check((await stat(resolve(dist, "404.html"))).isFile(), "A static 404 page must exist.");
+
+const preview = process.env.VERCEL_ENV === "preview" || process.argv.includes("--preview");
+if (preview) {
+  for (const path of ["index.html", ...["how-to", "about", "privacy"].map((p) => `${p}/index.html`)]) {
+    const html = await read(path);
+    check(/<meta\s+name="robots"\s+content="noindex, nofollow, noarchive"/i.test(html), `${path} must be noindex on Preview.`);
+  }
+}
+
+if (failures.length) {
+  console.error(`SEO check failed (${failures.length}):\n- ${failures.join("\n- ")}`);
+  process.exitCode = 1;
+} else {
+  console.log(`SEO check passed: metadata, safe routes, robots, sitemap, ${width}x${height} OG image${preview ? ", and Preview noindex" : ""}.`);
+}

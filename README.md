@@ -47,6 +47,8 @@ npm run preview
 - [架構、資料模型與全台擴充](docs/architecture.md)
 - [Supabase／Google Maps／Vercel 設定](docs/deployment.md)
 - [環境變數範例](.env.example)
+- [Technical SEO 架構與路由政策](docs/seo-architecture.md)
+- [SEO 基線、驗收與網域遷移](docs/seo-baseline.md) · [SEO QA](docs/seo-qa.md) · [網域遷移清單](docs/domain-migration-seo.md) · [SEO 變更紀錄](docs/seo-changelog.md)
 - [資料庫 migration 與安全規則](supabase/migrations/)
 - [安全與 PostGIS 下一版準備](docs/security-and-next-iteration.md)
 - [實際驗證結果與尚未完成項目](docs/verification.md)
