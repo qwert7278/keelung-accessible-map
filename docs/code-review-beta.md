@@ -41,6 +41,14 @@ Security impact: photo is not attached to a public report but the bucket URL is 
 Fix: keep browser deletion unavailable; later add a server-only scheduled inventory and conservative cleanup after a retention window, after checking references.  
 Verification: P2 follow-up must cover referenced/unreferenced paths without granting client delete.
 
+### P2 — Missing favicon produced a browser 404
+
+Location: `public/favicon.svg`, `index.html`.  
+Problem: the browser requested `/favicon.ico` and received a 404 during the first local Preview console check.  
+User impact: no core workflow impact, but the console showed an avoidable error and the tab had no project icon.  
+Fix: add a small branded SVG favicon and link it from the document head.  
+Verification: after the fix, the local browser console showed 0 errors and 0 warnings; commit `aad6edb` passed GitHub Quality and Vercel Preview build.
+
 ### Note — Anonymous per-UID cooldown is not distributed anti-spam protection
 
 Location: initial migration and `private.consume_rate_limit`.  

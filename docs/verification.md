@@ -27,3 +27,16 @@
 ## 重現圖片檢查
 
 執行 `npm run dev`，開啟 `/tests/image-privacy.html` 並點選「執行本機合成圖片測試」。合成 fixture 不含真實人像、個資或真實 GPS。此頁不包含在 production dist。
+
+## Beta review update (2026-09-30)
+
+The deployment observations in the earlier sections above are historical snapshots and should not be used as the current deployment state. During the later read-only Beta review:
+
+- The reviewed app commit was `aad6edb` on `codex/beta-readiness`. Its GitHub Quality run passed: https://github.com/qwert7278/keelung-accessible-map/actions/runs/36699750675.
+- The latest reviewed Preview was READY at https://keelung-accessible-2066krn98-masons-projects-2c78a251.vercel.app/.
+- Production remains publicly available at https://keelung-accessible-map.vercel.app/ and was not changed. Its About dialog still showed the older “details will be added later” wording; the updated Help/policy content was verified on Preview.
+- Preview and Production displayed the same three user-provided sample reports and the report photos used the same Supabase Storage origin (`ifcicahnrpkwjcxmnmug.supabase.co`). This is direct browser observation, not a read of Vercel environment settings. Because the backend appears shared, this review ran no cloud write tests and did not alter any report/photo.
+- Browser checks covered Help and retention/contact copy, report detail/photo display, empty-form validation and focus restoration, and the unauthenticated admin gate. No report/community update, photo upload, auth email, GPS request, or admin status update was sent.
+- The refreshed responsive captures and dimensions are recorded in `docs/beta-verification.md`. True 200% zoom and physical-device checks remain outstanding.
+
+The earlier cloud SQL/API smoke and rollback results in this document are retained as historical evidence; they were not rerun during the Beta review.

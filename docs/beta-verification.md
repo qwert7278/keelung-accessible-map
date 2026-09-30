@@ -1,13 +1,13 @@
 # Beta Verification
 
-Updated: 2026-09-30. Branch: `codex/beta-readiness` at `6e1b255`. Deployment stage: Preview only; Production changes are not authorized by this work.
+Updated: 2026-09-30. Branch: `codex/beta-readiness` (reviewed app commit `aad6edb`; this document is added afterward). Deployment stage: Preview reviewed; Production was not changed or promoted.
 
 ## GitHub and Vercel
 
-- GitHub Actions [Quality run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/36691344074): success for audit, lint, tests, and build.
-- Vercel Preview: [keelung-accessible-ivmeo3q9j-masons-projects-2c78a251.vercel.app](https://keelung-accessible-ivmeo3q9j-masons-projects-2c78a251.vercel.app/), state READY and protected by Vercel Authentication.
-- The local browser is not authenticated to Vercel. Use of a temporary Vercel Preview share link for browser-side Preview testing is pending explicit approval; it expires after about 23 hours. No share URL is recorded in project files.
-- The existing Production deployment/domain was not changed.
+- GitHub Actions [Quality run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/36699750675): success for the reviewed app commit, including audit, lint, tests, and build.
+- Vercel Preview: [keelung-accessible-map Preview](https://keelung-accessible-2066krn98-masons-projects-2c78a251.vercel.app/), state READY. The reviewed deployment corresponds to `aad6edb` and is a Preview deployment.
+- Production remains at [keelung-accessible-map.vercel.app](https://keelung-accessible-map.vercel.app/). It was inspected read-only and was not changed.
+- Production's About dialog still contains the older text saying contact, removal and retention details will be added later. The updated content is on the reviewed Preview; Production should be updated only after the separate release gate.
 
 ## Local checks
 
@@ -17,32 +17,33 @@ Updated: 2026-09-30. Branch: `codex/beta-readiness` at `6e1b255`. Deployment sta
 | `npm test` | Pass — 3 files, 12 tests |
 | `npm run build` | Pass — TypeScript and Vite production build |
 | `npm audit --omit=dev --audit-level=high` | Pass — 0 vulnerabilities |
-| SQL rollback tests | Existing 2026-09-30 evidence in `docs/verification.md`; re-run if a migration changes (none changed) |
-| Cloud smoke | Not run in this review; it writes QA rows and files, and this run did not create QA data |
+| SQL rollback/security tests | Existing evidence in `docs/verification.md`; no migration changed in this review |
+| Cloud smoke | Not run in this review because it writes rows/files and Preview and Production were observed serving the same user reports and Storage origin |
 
 ## Browser and responsive checks
 
-Previously recorded in `docs/verification.md`: public feed loaded; reporting dialog and wide layout had no horizontal overflow. The baseline Escape test exposed focus loss.
+Reviewed Preview in a browser and local build with the available desktop browser tooling. The live feed showed the three real sample reports. Tests did not submit report/community forms, upload a photo, send an auth email, request location, or change status.
 
-Post-change local Preview (`http://127.0.0.1:5173/`):
+- Preview Help opens and shows the task guide, FAQs, contact address, correction/removal process, and agreed retention policy. Escape closes it and restores focus to the Help control.
+- Report detail opens from the feed and displays its address, photo, community-update area, and status explanation. The community form was not submitted.
+- The unauthenticated `/admin` route shows the manager sign-in gate. No email was entered and no sign-in email was sent.
+- The report dialog opens at 320×568, fits without horizontal document overflow, scrolls vertically, and keeps its next-step button visible. Empty required fields are stopped by native validation. Escape closes the dialog and returns focus to “回報障礙”.
+- Local responsive measurements: 320×568, 390×844, 683×384, 1366×768, and 1920×1080 all had `scrollWidth === clientWidth`. The 683px viewport is only a narrow-width approximation; true browser zoom at 200% was not tested.
+- Browser console after adding the favicon: 0 errors and 0 warnings.
+- Captures: [desktop 1366×768](screenshots/preview-desktop.png), [mobile 390×844](screenshots/preview-mobile-390x844.png), [mobile 320×568](screenshots/preview-mobile-320x568.png), [report dialog 320×568](screenshots/report-modal-320x568.png).
+- The browser showed OpenStreetMap tiles and attribution. No Google Maps key was needed.
 
-- Help opens with all three steps, FAQ, retention, contact and removal application text. Escape returns focus to the Help control.
-- Report dialog opens from the mobile header; Escape returns focus to “回報障礙”. Invalid form submission is stopped by native required-field validation. No report or community update was submitted.
-- Opening a report updates the URL to `?report=<id>`; refreshing the page reopens the same report from the public feed.
-- At 320 CSS px the document and dialog have no horizontal overflow; the dialog scrolls vertically. Across calibrated responsive checks the observed widths were 320, 393, 795, 1428, 1790 and 2015 CSS px, all with `scrollWidth === clientWidth`.
-- The current browser test did not grant location/camera permissions and did not exercise 200% zoom or an actual mobile device.
+These checks do not establish real iOS/Safari or Android behavior, physical-device camera/photo selection, real GPS denial/accuracy behavior, 200% zoom, or NVDA acceptance. See `docs/user-test-checklist.md` for the remaining human checks.
 
-This review does not claim real iOS/Safari, Android camera, real GPS denial, 200% zoom, or NVDA acceptance unless those checks are explicitly recorded below after execution.
+## Security boundary and test-data safety
 
-## Security boundary
-
-- No Supabase migration or cloud data change was made.
-- No service-role or secret key is included in the Vite app.
-- Preview must use only `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, map-provider settings, and other public `VITE_` values.
-- Source/dist marker scan found no service-role credential. The `sb_secret_` text found in the Supabase SDK chunk is its generic key-prefix parser, not a credential. The source/docs hits are explicit safety documentation. Git history marker search found no source commit containing the secret marker.
-- Confirm Preview is isolated from production data before any data-writing cloud smoke.
+- No Supabase migration or cloud record was changed during this review.
+- Preview and Production displayed the same sample report records, and their photos used the same Supabase Storage origin. This is evidence of shared backend data, so no write-based cloud E2E test was run. The historic isolated QA and security smoke evidence remains in `docs/verification.md`; it is not represented as having been rerun now.
+- No service-role key or other server-only secret was added to the Vite app. The frontend is limited to public `VITE_` configuration such as Supabase URL/publishable key and map-provider settings.
+- Previously recorded SQL and API negative tests cover private columns, deletion, status updates, forged authorship, self-promotion, upload ownership, and cooldown behavior; see `docs/verification.md`. This review did not modify RLS or grants.
+- The older deployment/environment observations in `docs/verification.md` describe the state at the time they were recorded. Current read-only browser observation confirms a live Production site and the shared report/Storage data described above; Vercel environment values were not read during this review.
 - Production promotion remains a separate human gate.
 
 ## Beta readiness gate
 
-Small closed Beta is recommended after local checks pass, the protected Vercel Preview is reviewed, and the operator completes the manual-device checklist in `docs/user-test-checklist.md`. Preview is READY; browser-side Preview review and updated screenshot files remain pending. The local interface was visually inspected, but the current browser capture was not exported as a repository asset. This document does not itself authorize public Production promotion.
+Code, CI and available browser checks pass for this Preview. A small closed Beta is not fully accepted until the operator completes real-device checks in `docs/user-test-checklist.md` and confirms the operational contact/removal workflow. Use an isolated Supabase QA project before any new write-based cloud smoke test. The reviewed Preview is available above; Production remains unchanged.
