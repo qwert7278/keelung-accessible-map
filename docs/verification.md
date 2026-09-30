@@ -12,15 +12,15 @@
 - `tests/image-privacy.html` 實際執行 `compressImage`：合成 JPEG 含 EXIF APP1 與測試 GPS marker。2400×1200 → 1920×960、72,407 → 24,173 bytes，輸出 JPEG 不含 APP1/原始 marker。
 - Supabase Security Advisor 沒有 WARN/ERROR；只有 private.admin_users/admin_audit/rate_limits 的「RLS 無 policy」INFO，三者刻意預設拒絕前端。參見 [Supabase 說明](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)。
 
-## 尚未通過的發布門檻
+## 尚待正式上線前驗收
 
-- 正式管理者已透過 Email 確認帳號，並由私有 `admin_users` 清單授權；管理頁顯示「管理權限已驗證」。真實管理者將 QA 案件 open → in_progress → resolved；沒有改善照時拒絕結案，提供合成照片後通過。
-- 瀏覽器真實檔案選擇、客戶端縮圖／EXIF 清除、Storage 上傳、改善前後公開照片、社群照片與更新均通過。
+- 真實管理者帳號已由私有 `admin_users` 清單授權，管理頁顯示「管理權限已驗證」；管理狀態更新、改善照片必填與社群更新權限已通過真實 Supabase API / SQL 測試。
+- 合成影像壓縮／EXIF 清除、Storage 上傳與公開下載已通過自動化測試；仍建議用真實手機檢查檔案選擇與相機影像實際回報。
 - 真實 GPS 授權/精度分支需裝置驗收；手動座標可用。Google Maps 真實 key 未測，OSM 預設保留。
-- GitHub repository 已推送至 `https://github.com/qwert7278/keelung-accessible-map`；Vercel 專案已連接，Git 分支 Preview 已部署並通過桌面只讀 smoke test。Preview 受 Vercel 登入保護。手機 375/390px 與 1920px 版面在本機驗收；仍需用真實手機檢查受保護的 Preview，以及真實 GPS 授權/精度分支。
-- Vercel 前端環境變數目前只設在 Preview：Supabase URL、publishable key、OSM provider、Demo Mode 關閉；未設定 service-role secret，也未設定 Production 環境變數。`keelung-accessible-map.vercel.app` 網域已解除指派，Production 尚未核准升版。
-- API fixture 是明確標示 QA 的合成案件與公開照片；精確 fixture 清單在被 Git 忽略的 `output/cloud-fixture.json`。正式開放前仍須從 Supabase 管理介面刪除案件與測試照片，正式管理者帳號保留。
-- Vercel 曾由手動「Create Preview Deployment」流程建立一筆實際標示為 Production 的 deployment（`dpl_65htXXD2vqqzdbkXffEoabTAWUsA`），雖已解除正式網域指派，該 deployment 記錄仍存在。永久刪除需另行確認；在此之前不會升版 Production。
+- GitHub repository 已推送至 `https://github.com/qwert7278/keelung-accessible-map`；Vercel Git Preview 最新部署已就緒並受登入保護。最新 Preview 已檢查桌面與 390×844 手機尺寸；手機回報 dialog、必填驗證與無水平溢出通過。另以 1707px 寬度檢查無水平溢出。
+- Vercel 前端環境變數目前只設在 Preview：Supabase URL、publishable key、OSM provider、Demo Mode 關閉；未設定 service-role secret，也未設定 Production 環境變數。`keelung-accessible-map.vercel.app` 網域已解除指派，尚未建立 Production deployment。
+- 經使用者確認，已刪除合成 QA 案件 `1879aa2d-3f53-48c6-896f-a92869193393`、3 筆更新、2 筆管理稽核紀錄及 3 張 Storage 照片。唯讀驗證各項剩餘數皆為 0；管理者清單仍有 1 個帳號。
+- 經使用者確認，已永久刪除意外標示為 Production 的 deployment `dpl_65htXXD2vqqzdbkXffEoabTAWUsA`；Vercel API 回覆該 ID 不存在。最新 `codex/preview` deployment 保持 READY。
 
 一次性高權限 QA Edge Function 提案被自動審核拒絕，沒有部署。未以替代途徑建立高權限入口，改走正常管理者帳號驗證。
 
