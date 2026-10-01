@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 const dist = resolve(process.cwd(), "dist");
 const base = (process.env.VITE_PUBLIC_SITE_URL || "https://keelung-accessible-map.vercel.app").replace(/\/+$/, "");
-const expectedPaths = ["/", "/how-to", "/about", "/privacy"];
+const expectedPaths = ["/", "/how-to", "/about", "/privacy", "/terms"];
 const failures = [];
 const read = async (path) => readFile(resolve(dist, path), "utf8");
 const check = (condition, message) => { if (!condition) failures.push(message); };
@@ -22,7 +22,7 @@ check(meta(index, "og:type", "website"), "Homepage og:type must be website.");
 check(index.includes('"@type": "WebSite"'), "WebSite JSON-LD is missing.");
 check(!/localhost|\.vercel\.app\//i.test(index.replaceAll(base, "")), "Homepage must not contain a preview or localhost URL.");
 
-for (const path of ["how-to", "about", "privacy"]) {
+for (const path of ["how-to", "about", "privacy", "terms"]) {
   const html = await read(`${path}/index.html`);
   check(html.includes(`<html lang="zh-Hant-TW">`), `${path} language is missing.`);
   check(html.includes(`<h1>`), `${path} must have one H1.`);
@@ -41,7 +41,7 @@ check(!robots.includes("Disallow: /admin"), "robots.txt must not block crawling 
 const sitemap = await read("sitemap.xml");
 check(sitemap.includes("<urlset"), "sitemap.xml must be XML.");
 const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-check(urls.length === expectedPaths.length, "Sitemap must include only the four stable public routes.");
+check(urls.length === expectedPaths.length, "Sitemap must include only the stable public routes.");
 for (const path of expectedPaths) check(urls.includes(`${base}${path}`), `Sitemap is missing ${path}.`);
 check(!/admin|\?|localhost|vercel\.app/i.test(urls.join("\n").replaceAll(base, "")), "Sitemap contains an admin, query, local or preview URL.");
 
@@ -52,6 +52,7 @@ for (const [source, destination] of [
   ["/how-to", "/how-to/index.html"],
   ["/about", "/about/index.html"],
   ["/privacy", "/privacy/index.html"],
+  ["/terms", "/terms/index.html"],
 ]) check(rewrites.get(source) === destination, `Vercel rewrite ${source} -> ${destination} is required.`);
 check(!vercelConfig.rewrites.some(({ source }) => source === "/(.*)" || source.includes(".*")), "A catch-all rewrite can make unknown routes soft 404s.");
 const adminHeaders = vercelConfig.headers.filter(({ source }) => source === "/admin" || source === "/admin/:path*");
@@ -67,7 +68,7 @@ check((await stat(resolve(dist, "404.html"))).isFile(), "A static 404 page must 
 
 const preview = process.env.VERCEL_ENV === "preview" || process.argv.includes("--preview");
 if (preview) {
-  for (const path of ["index.html", ...["how-to", "about", "privacy"].map((p) => `${p}/index.html`)]) {
+  for (const path of ["index.html", ...["how-to", "about", "privacy", "terms"].map((p) => `${p}/index.html`)]) {
     const html = await read(path);
     check(/<meta\s+name="robots"\s+content="noindex, nofollow, noarchive"/i.test(html), `${path} must be noindex on Preview.`);
   }

@@ -3,13 +3,14 @@ import {
   ArrowRightIcon,
   ArrowUpRightIcon,
   CrosshairIcon,
+  HouseIcon,
   InfoIcon,
   ListIcon,
   PlusIcon,
   MagnifyingGlassIcon,
   ShieldCheckIcon,
+  ThreadsLogoIcon,
   WheelchairIcon,
-  PathIcon,
 } from "@phosphor-icons/react";
 import { BETA_FEEDBACK_EMAIL, CITY, DEMO_MODE } from "./config";
 import {
@@ -32,8 +33,11 @@ import Modal from "./components/Modal";
 import HelpPanel from "./components/HelpPanel";
 import OnboardingPanel from "./components/OnboardingPanel";
 import ReportSuccessPanel from "./components/ReportSuccessPanel";
+import GuidedTourPrompt from "./components/GuidedTourPrompt";
 import AdminWorkspace from "./components/AdminWorkspace";
 import { reportIdFromSearch } from "./utils/reportLink";
+
+const HOMEPAGE_URL = "https://keelung-accessible-guide.mason7278.chatgpt.site/";
 
 export default function App() {
   const [repository, setRepository] = useState<ReportRepository | null>(null),
@@ -50,6 +54,7 @@ export default function App() {
     ),
     [creating, setCreating] = useState(false),
     [onboarding, setOnboarding] = useState(false),
+    [guideStep, setGuideStep] = useState<number | null>(null),
     [help, setHelp] = useState(false),
     [about, setAbout] = useState(false),
     [focus, setFocus] = useState<Location>(),
@@ -60,6 +65,7 @@ export default function App() {
   const [signInSent, setSignInSent] = useState(false);
   const [adminDraftStatus, setAdminDraftStatus] = useState<Status | null>(null);
   const adminPage = window.location.pathname.replace(/\/$/, "") === "/admin";
+  const guideReady = !!repository && !!session;
   useEffect(() => {
     let active = true,
       unsubscribe: (() => void) | undefined;
@@ -120,6 +126,39 @@ export default function App() {
     }
     setOnboarding(false);
   }
+
+  function startGuidedTour() {
+    dismissOnboarding();
+    setHelp(false);
+    setAbout(false);
+    setCreatedReportId(null);
+    if (selected) closeReport();
+    setCreating(false);
+    setGuideStep(0);
+  }
+
+  function openReportForm() {
+    setCreating(true);
+    if (guideStep === 0) setGuideStep(1);
+  }
+
+  useEffect(() => {
+    if (guideStep !== 0 || !guideReady) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(
+        ".header-report.guide-target-active",
+      );
+      if (!target) return;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      target.scrollIntoView({
+        block: "nearest",
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [guideReady, guideStep]);
 
   useEffect(() => {
     if (DEMO_MODE) return;
@@ -243,9 +282,9 @@ export default function App() {
         跳至案件列表
       </a>
       <header className="site-header">
-        <a href="/" className="brand" aria-label="基隆好行首頁">
+        <a href={HOMEPAGE_URL} className="brand" aria-label="基隆好行首頁">
           <span className="brand-icon">
-            <PathIcon size={30} weight="bold" />
+            <img src="/brand-mark.png" alt="" width="46" height="46" />
           </span>
           <span>
             <strong>{CITY.productName}</strong>
@@ -268,8 +307,8 @@ export default function App() {
         </nav>
         {!adminPage && (
           <button
-            className="button primary header-report"
-            onClick={() => setCreating(true)}
+            className={`button primary header-report${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
+            onClick={openReportForm}
             disabled={!repository || !session}
           >
             <PlusIcon size={20} weight="bold" />
@@ -302,14 +341,37 @@ export default function App() {
                 ? "檢視案件、確認現況與管理者更新。"
                 : "查看附近障礙，或回報你現在看到的通行問題。"}
             </p>
-            <button
-              className="text-button help-link"
-              onClick={() => setHelp(true)}
-            >
-              如何使用與常見問題 <ArrowRightIcon size={16} />
-            </button>
+            <div className="intro-help-actions">
+              <button
+                className="text-button help-link"
+                onClick={() => setHelp(true)}
+              >
+                如何使用與常見問題 <ArrowRightIcon size={16} />
+              </button>
+              {!adminPage && (
+                <button
+                  className="text-button help-link"
+                  onClick={startGuidedTour}
+                >
+                  跟著操作教學 <ArrowRightIcon size={16} />
+                </button>
+              )}
+            </div>
           </div>
         </section>
+        {!adminPage && guideStep === 0 && (
+          <GuidedTourPrompt
+            step={1}
+            total={9}
+            title={guideReady ? "先開始一筆回報" : "地圖正在準備"}
+            placement="start"
+            onSkip={() => setGuideStep(null)}
+          >
+            {guideReady
+              ? "請按「回報障礙」。接下來會一步一步帶你選位置、拍照與送出。"
+              : "資料準備完成後，就能按「回報障礙」開始操作；你也可以隨時結束教學。"}
+          </GuidedTourPrompt>
+        )}
         {error && (
           <div className="error top-alert" role="alert">
             {error}
@@ -548,8 +610,8 @@ export default function App() {
         )}
         {!adminPage && (
           <button
-            className="button primary mobile-report-cta"
-            onClick={() => setCreating(true)}
+            className={`button primary mobile-report-cta${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
+            onClick={openReportForm}
             disabled={!repository || !session}
           >
             <PlusIcon size={20} weight="bold" />
@@ -569,7 +631,12 @@ export default function App() {
             Demo 資料與重設
           </button>
         )}
-        <a href="/privacy">使用與隱私說明</a>
+        <a href="/terms">使用條款</a>
+        <a href="/privacy">隱私權政策</a>
+        <a href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤基隆好行 @roadrecall2046">
+          <ThreadsLogoIcon size={18} aria-hidden="true" />
+          <span>Threads</span>
+        </a>
         {!DEMO_MODE && (
           <a
             href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行 Beta 試用回饋")}`}
@@ -577,6 +644,10 @@ export default function App() {
             提供試用回饋
           </a>
         )}
+        <a href={HOMEPAGE_URL} className="footer-home-link">
+          <HouseIcon size={16} aria-hidden="true" />
+          回到首頁
+        </a>
         <a href={adminPage ? "/" : "/admin"}>
           {adminPage ? "返回地圖" : DEMO_MODE ? "管理體驗" : "管理案件"}
         </a>
@@ -594,7 +665,12 @@ export default function App() {
         <ReportForm
           repository={repository}
           reports={reports}
-          onClose={() => setCreating(false)}
+          guidedStep={guideStep}
+          onGuidedStepChange={setGuideStep}
+          onClose={() => {
+            setCreating(false);
+            if (guideStep !== null) setGuideStep(null);
+          }}
           onCreated={(id) => {
             setCreating(false);
             setFilter("all");
@@ -602,10 +678,12 @@ export default function App() {
             setAccess("all");
             setSearch("");
             setCreatedReportId(id);
+            setGuideStep(null);
             setFocus(reports.find((item) => item.id === id)?.location);
           }}
           onExisting={(id) => {
             setCreating(false);
+            setGuideStep(null);
             choose(id);
           }}
         />
@@ -619,8 +697,18 @@ export default function App() {
           onClose={closeReport}
         />
       )}
-      {help && <HelpPanel onClose={() => setHelp(false)} />}
-      {onboarding && <OnboardingPanel onClose={dismissOnboarding} />}
+      {help && (
+        <HelpPanel
+          onClose={() => setHelp(false)}
+          onStartGuide={!adminPage ? startGuidedTour : undefined}
+        />
+      )}
+      {onboarding && (
+        <OnboardingPanel
+          onClose={dismissOnboarding}
+          onStartGuide={startGuidedTour}
+        />
+      )}
       {createdReportId && (
         <ReportSuccessPanel
           id={createdReportId}

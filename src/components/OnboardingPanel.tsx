@@ -33,8 +33,10 @@ const steps = [
 
 export default function OnboardingPanel({
   onClose,
+  onStartGuide,
 }: {
   onClose: () => void;
+  onStartGuide: () => void;
 }) {
   const [step, setStep] = useState(0);
   const current = steps[step];
@@ -64,11 +66,11 @@ export default function OnboardingPanel({
               className="button primary"
               onClick={() =>
                 step === steps.length - 1
-                  ? onClose()
+                  ? onStartGuide()
                   : setStep((currentStep) => currentStep + 1)
               }
             >
-              {step === steps.length - 1 ? "開始使用" : "下一步"}
+              {step === steps.length - 1 ? "跟著操作教學" : "下一步"}
               {step < steps.length - 1 && <ArrowRightIcon size={18} />}
             </button>
           </div>

@@ -130,11 +130,17 @@ a {
 .brand-icon {
   width: 46px;
   height: 46px;
-  background: var(--green);
-  color: #fff;
+  background: #fff;
   border-radius: 13px;
   display: grid;
   place-items: center;
+  overflow: hidden;
+}
+.brand-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .brand strong {
   display: block;
@@ -721,6 +727,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   padding: 0 4.2% 20px;
   color: #5e7369;
   font-size: 10px;
@@ -735,6 +742,19 @@ h1 {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+}
+.site-footer a[href*="threads.com"] {
+  gap: 6px;
+  color: #244f3d;
+  text-decoration: none;
+}
+.site-footer a[href*="threads.com"] svg {
+  flex: 0 0 auto;
+}
+.site-footer .footer-home-link {
+  gap: 6px;
+  color: #244f3d;
+  font-weight: 700;
 }
 .footer-separator {
   padding: 0 8px;
@@ -905,6 +925,30 @@ h1 {
 .access-options .chosen {
   background: #e9f3ed;
   border-color: var(--green);
+}
+.access-options label svg {
+  flex: 0 0 auto;
+}
+.access-options label.access-blocked svg {
+  color: #9f3232;
+}
+.access-options label.access-difficult svg {
+  color: #785415;
+}
+.access-options label.access-passable svg {
+  color: #256344;
+}
+.access-options label.chosen.access-blocked {
+  background: #fff3ef;
+  border-color: #9f3232;
+}
+.access-options label.chosen.access-difficult {
+  background: #fff9e9;
+  border-color: #785415;
+}
+.access-options label.chosen.access-passable {
+  background: #e9f3ed;
+  border-color: #256344;
 }
 input[type="checkbox"],
 input[type="radio"] {
@@ -2009,5 +2053,101 @@ progress {
   }
   .admin-case-content .form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.intro-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 16px;
+}
+.help-tour-button {
+  margin: 2px 0 8px;
+}
+.guided-tour-prompt {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid #9bbcaf;
+  border-radius: 10px;
+  background: #f3f8f5;
+  box-shadow: 0 8px 24px #173f3018;
+}
+.guided-tour-prompt > div {
+  min-width: 0;
+}
+
+.guided-tour-progress {
+  display: block;
+  margin-bottom: 4px;
+  color: #4e6c60;
+  font-size: 12px;
+  font-weight: 700;
+}
+.guided-tour-prompt strong {
+  display: block;
+  color: #183d32;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.guided-tour-prompt p {
+  margin-top: 4px;
+  color: #4f655d;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.guided-tour-prompt .text-button {
+  flex: 0 0 auto;
+}
+.guided-tour-start-prompt {
+  position: fixed;
+  top: 100px;
+  right: max(24px, calc((100vw - 1440px) / 2 + 24px));
+  z-index: 1100;
+  width: min(380px, calc(100vw - 32px));
+  margin: 0;
+}
+.modal .guided-tour-prompt {
+  position: sticky;
+  top: 62px;
+  z-index: 20;
+  margin: 12px 22px 0;
+}
+
+.guide-target-active {
+  outline: 3px solid #1e745e !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 7px #1e745e20 !important;
+}
+.guide-target-block {
+  border-radius: 9px;
+  padding: 4px;
+}
+@media (max-width: 700px) {
+  .intro-help-actions {
+    gap: 0 12px;
+  }
+  .guided-tour-prompt {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 13px;
+  }
+  .guided-tour-prompt .text-button {
+    align-self: flex-start;
+  }
+  .guided-tour-start-prompt {
+    top: auto;
+    right: 12px;
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 68px);
+    left: 12px;
+    width: auto;
+  }
+  .modal .guided-tour-prompt {
+    top: 58px;
+    margin: 10px 14px 0;
   }
 }

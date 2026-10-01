@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 
 const root = process.cwd();
 const dist = resolve(root, "dist");
-const pages = ["how-to", "about", "privacy"];
+const pages = ["how-to", "about", "privacy", "terms"];
 const productionUrl = "https://keelung-accessible-map.vercel.app";
 const configuredUrl = process.env.VITE_PUBLIC_SITE_URL || productionUrl;
 const publicUrl = new URL(configuredUrl).origin.replace(/\/$/, "");

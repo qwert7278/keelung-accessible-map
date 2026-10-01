@@ -1,13 +1,28 @@
 import { BETA_FEEDBACK_EMAIL, DEMO_MODE } from "../config";
 import Modal from "./Modal";
 
-export default function HelpPanel({ onClose }: { onClose: () => void }) {
+export default function HelpPanel({
+  onClose,
+  onStartGuide,
+}: {
+  onClose: () => void;
+  onStartGuide?: () => void;
+}) {
   return (
     <Modal title="如何使用基隆好行" onClose={onClose} wide>
       <div className="panel-content help-content">
         <p className="help-lead">
           這是民眾共同記錄基隆通行狀況的地圖。你可以先查看案件，也可以留下新回報或補充現況。
         </p>
+        {onStartGuide && (
+          <button
+            type="button"
+            className="button primary help-tour-button"
+            onClick={onStartGuide}
+          >
+            跟著操作教學
+          </button>
+        )}
         <ol className="help-steps">
           <li>
             <strong>找到障礙位置</strong>
