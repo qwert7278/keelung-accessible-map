@@ -2144,10 +2144,38 @@ progress {
 }
 
 .guide-target-active {
-  outline: 3px solid #1e745e !important;
-  outline-offset: 4px;
-  box-shadow: 0 0 0 7px #1e745e20 !important;
+  outline: 4px solid #1e745e !important;
+  outline-offset: 5px;
+  box-shadow:
+    0 0 0 7px rgba(30, 116, 94, 0.2),
+    0 0 22px rgba(30, 116, 94, 0.42) !important;
+  animation: guide-target-glow 1.15s ease-in-out infinite;
 }
+
+@keyframes guide-target-glow {
+  0%,
+  100% {
+    outline-color: #1e745e;
+    box-shadow:
+      0 0 0 6px rgba(30, 116, 94, 0.18),
+      0 0 16px rgba(30, 116, 94, 0.32);
+  }
+  50% {
+    outline-color: #e8a943;
+    box-shadow:
+      0 0 0 12px rgba(232, 169, 67, 0.2),
+      0 0 30px rgba(30, 116, 94, 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-target-active {
+    animation: none;
+    outline: 4px solid #1e745e !important;
+    box-shadow: 0 0 0 9px rgba(30, 116, 94, 0.28) !important;
+  }
+}
+
 .guide-target-block {
   border-radius: 9px;
   padding: 4px;
