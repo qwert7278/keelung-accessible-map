@@ -3,16 +3,16 @@ import {
   ArrowRightIcon,
   ArrowUpRightIcon,
   CrosshairIcon,
+  HouseIcon,
   InfoIcon,
   ListIcon,
-  MapPinIcon,
   PlusIcon,
   MagnifyingGlassIcon,
   ShieldCheckIcon,
+  ThreadsLogoIcon,
   WheelchairIcon,
-  PathIcon,
 } from "@phosphor-icons/react";
-import { CITY, DEMO_MODE } from "./config";
+import { BETA_FEEDBACK_EMAIL, CITY, DEMO_MODE } from "./config";
 import {
   ACCESS,
   CATEGORIES,
@@ -30,6 +30,14 @@ import StatusBadge from "./components/StatusBadge";
 import ReportForm from "./components/ReportForm";
 import ReportPanel from "./components/ReportPanel";
 import Modal from "./components/Modal";
+import HelpPanel from "./components/HelpPanel";
+import OnboardingPanel from "./components/OnboardingPanel";
+import ReportSuccessPanel from "./components/ReportSuccessPanel";
+import GuidedTourPrompt from "./components/GuidedTourPrompt";
+import AdminWorkspace from "./components/AdminWorkspace";
+import { reportIdFromSearch } from "./utils/reportLink";
+
+const HOMEPAGE_URL = "https://keelung-accessible-guide.mason7278.chatgpt.site/";
 
 export default function App() {
   const [repository, setRepository] = useState<ReportRepository | null>(null),
@@ -41,14 +49,23 @@ export default function App() {
     [filter, setFilter] = useState<Status | "all">("all"),
     [district, setDistrict] = useState("all"),
     [access, setAccess] = useState("all"),
-    [selected, setSelected] = useState<string | null>(null),
+    [selected, setSelected] = useState<string | null>(() =>
+      reportIdFromSearch(window.location.search),
+    ),
     [creating, setCreating] = useState(false),
+    [onboarding, setOnboarding] = useState(false),
+    [guideStep, setGuideStep] = useState<number | null>(null),
+    [help, setHelp] = useState(false),
     [about, setAbout] = useState(false),
     [focus, setFocus] = useState<Location>(),
-    [toast, setToast] = useState("");
+    [toast, setToast] = useState(""),
+    [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [adminEmail, setAdminEmail] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+  const [signInSent, setSignInSent] = useState(false);
+  const [adminDraftStatus, setAdminDraftStatus] = useState<Status | null>(null);
   const adminPage = window.location.pathname.replace(/\/$/, "") === "/admin";
+  const guideReady = !!repository && !!session;
   useEffect(() => {
     let active = true,
       unsubscribe: (() => void) | undefined;
@@ -90,6 +107,91 @@ export default function App() {
       unsubscribe?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (adminPage) return;
+    try {
+      if (localStorage.getItem("keelung-accessible-map-onboarding-seen-v1") !== "yes")
+        setOnboarding(true);
+    } catch {
+      // Keep the map available when browser storage is disabled.
+    }
+  }, [adminPage]);
+
+  function dismissOnboarding() {
+    try {
+      localStorage.setItem("keelung-accessible-map-onboarding-seen-v1", "yes");
+    } catch {
+      // The guide remains skippable when browser storage is disabled.
+    }
+    setOnboarding(false);
+  }
+
+  function startGuidedTour() {
+    dismissOnboarding();
+    setHelp(false);
+    setAbout(false);
+    setCreatedReportId(null);
+    if (selected) closeReport();
+    setCreating(false);
+    setGuideStep(0);
+  }
+
+  function openReportForm() {
+    setCreating(true);
+    if (guideStep === 0) setGuideStep(1);
+  }
+
+  useEffect(() => {
+    if (guideStep !== 0 || !guideReady) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(
+        ".header-report.guide-target-active",
+      );
+      if (!target) return;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      target.scrollIntoView({
+        block: "nearest",
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [guideReady, guideStep]);
+
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+
+    void import("./services/supabase")
+      .then(({ subscribeAuthSession }) => {
+        if (!active) return;
+        unsubscribe = subscribeAuthSession(
+          (current, event) => {
+            if (!active) return;
+            setSession(current);
+            if (event === "SIGNED_IN" && current?.admin && adminPage) {
+              setError("");
+              setToast("管理者登入成功。");
+            }
+          },
+          (e) => {
+            if (active) setError(readableError(e));
+          },
+        );
+      })
+      .catch((e) => {
+        if (active) setError(readableError(e));
+      });
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [adminPage]);
+
   const visible = useMemo(
     () =>
       reports.filter(
@@ -110,7 +212,29 @@ export default function App() {
   function choose(id: string) {
     setSelected(id);
     setFocus(reports.find((r) => r.id === id)?.location);
+    const url = new URL(window.location.href);
+    if (reportIdFromSearch(url.search) !== id) {
+      url.searchParams.set("report", id);
+      window.history.pushState({}, "", url);
+    }
   }
+  function closeReport() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("report");
+    window.history.replaceState({}, "", url);
+    setSelected(null);
+  }
+  useEffect(() => {
+    const syncSelectedReport = () =>
+      setSelected(reportIdFromSearch(window.location.search));
+    window.addEventListener("popstate", syncSelectedReport);
+    return () => window.removeEventListener("popstate", syncSelectedReport);
+  }, []);
+  useEffect(() => {
+    if (!selected) return;
+    const match = reports.find((r) => r.id === selected);
+    if (match) setFocus(match.location);
+  }, [reports, selected]);
   function locate() {
     if (!navigator.geolocation) {
       setToast("此瀏覽器不支援定位。你仍可拖曳地圖查看。");
@@ -139,9 +263,12 @@ export default function App() {
   async function signIn() {
     if (signingIn) return;
     setSigningIn(true);
+    setSignInSent(false);
+    setError("");
     try {
       const { loginAdmin } = await import("./services/supabase");
       await loginAdmin(adminEmail);
+      setSignInSent(true);
       setToast("登入連結已寄出，請查看你的管理者信箱。");
     } catch (e) {
       setError(readableError(e));
@@ -155,9 +282,9 @@ export default function App() {
         跳至案件列表
       </a>
       <header className="site-header">
-        <a href="/" className="brand" aria-label="基隆好行首頁">
+        <a href={HOMEPAGE_URL} className="brand" aria-label="基隆好行首頁">
           <span className="brand-icon">
-            <PathIcon size={30} weight="bold" />
+            <img src="/brand-mark.png" alt="" width="46" height="46" />
           </span>
           <span>
             <strong>{CITY.productName}</strong>
@@ -168,23 +295,26 @@ export default function App() {
           <a className={!adminPage ? "nav-active" : ""} href="/">
             通行地圖
           </a>
-          <button onClick={() => setAbout(true)}>
+          <a href="/about">
             關於計畫
             <ArrowUpRightIcon size={14} />
-          </button>
+          </a>
+          <a href="/how-to">如何使用</a>
           <a className={adminPage ? "nav-active" : ""} href="/admin">
             <ShieldCheckIcon size={18} />
             <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
           </a>
         </nav>
-        <button
-          className="button primary header-report"
-          onClick={() => setCreating(true)}
-          disabled={!repository || !session}
-        >
-          <PlusIcon size={20} weight="bold" />
-          回報障礙
-        </button>
+        {!adminPage && (
+          <button
+            className={`button primary header-report${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
+            onClick={openReportForm}
+            disabled={!repository || !session}
+          >
+            <PlusIcon size={20} weight="bold" />
+            回報障礙
+          </button>
+        )}
       </header>
       <div className="demo-banner">
         <InfoIcon size={18} aria-hidden="true" />
@@ -202,27 +332,46 @@ export default function App() {
           )}
         </p>
       </div>
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="page-intro">
           <div>
-            <div className="city-label">
-              <MapPinIcon size={17} weight="fill" />
-              基隆市<span>首站示範城市</span>
+            <h1>{adminPage ? "案件管理" : "基隆無障礙通行地圖"}</h1>
+            <p>
+              {adminPage
+                ? "檢視案件、確認現況與管理者更新。"
+                : "查看附近障礙，或回報你現在看到的通行問題。"}
+            </p>
+            <div className="intro-help-actions">
+              <button
+                className="text-button help-link"
+                onClick={() => setHelp(true)}
+              >
+                如何使用與常見問題 <ArrowRightIcon size={16} />
+              </button>
+              {!adminPage && (
+                <button
+                  className="text-button help-link"
+                  onClick={startGuidedTour}
+                >
+                  跟著操作教學 <ArrowRightIcon size={16} />
+                </button>
+              )}
             </div>
-            <h1>
-              {adminPage ? "一起，讓改善發生。" : "看見障礙，一起走得更遠。"}
-            </h1>
-            <p>記錄街角的障礙，也留下每一次改善。從基隆開始。</p>
-          </div>
-          <div className="intro-note">
-            <WheelchairIcon size={24} />
-            <span>
-              為輪椅、推車與每一位行人
-              <br />
-              <strong>多留一條好走的路</strong>
-            </span>
           </div>
         </section>
+        {!adminPage && guideStep === 0 && (
+          <GuidedTourPrompt
+            step={1}
+            total={9}
+            title={guideReady ? "先開始一筆回報" : "地圖正在準備"}
+            placement="start"
+            onSkip={() => setGuideStep(null)}
+          >
+            {guideReady
+              ? "請按「回報障礙」。接下來會一步一步帶你選位置、拍照與送出。"
+              : "資料準備完成後，就能按「回報障礙」開始操作；你也可以隨時結束教學。"}
+          </GuidedTourPrompt>
+        )}
         {error && (
           <div className="error top-alert" role="alert">
             {error}
@@ -240,14 +389,24 @@ export default function App() {
             <div>
               <h2>管理者登入</h2>
               <p>
-                需使用已由營運者授權的管理者 Email
-                帳號。一般使用者仍可查看與補充案件。
+                請使用已授權的管理者 Email。登入連結僅能使用一次，點開後會返回本頁。
               </p>
+              {session && !session.anonymous && !session.admin && (
+                <p className="error admin-denied" role="status">
+                  這個帳號已登入，但尚未被授權為管理者。
+                </p>
+              )}
+              {signInSent && (
+                <p className="success admin-login-sent" role="status">
+                  登入連結已寄出。請在此裝置開啟信件中的一次性連結；驗證成功後會自動返回管理案件。
+                </p>
+              )}
             </div>
             <label>
               管理者 Email
               <input
                 type="email"
+                autoComplete="email"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -262,29 +421,35 @@ export default function App() {
             </button>
           </section>
         )}
-        {adminPage && session?.admin && (
-          <div className="admin-banner">
-            <ShieldCheckIcon size={20} />
-            {DEMO_MODE
-              ? "管理體驗：點選任一案件，即可模擬更新狀態與上傳改善後照片。"
-              : "管理權限已驗證。請點選案件處理。"}
-            {!DEMO_MODE && (
-              <button
-                className="text-button"
-                onClick={async () => {
-                  try {
-                    await (await import("./services/supabase")).logoutAdmin();
-                    window.location.assign("/");
-                  } catch (e) {
-                    setError(readableError(e));
-                  }
-                }}
-              >
-                登出管理帳號
-              </button>
-            )}
-          </div>
-        )}
+        {adminPage && session?.admin ? (
+          repository ? (
+            <AdminWorkspace
+              reports={reports}
+              loading={loading}
+              repository={repository}
+              selectedReport={report}
+              initialStatus={adminDraftStatus}
+              onSelect={(id, status) => {
+                choose(id);
+                setAdminDraftStatus(status ?? null);
+              }}
+              onCloseCase={() => {
+                closeReport();
+                setAdminDraftStatus(null);
+              }}
+              onLogout={async () => {
+                try {
+                  await (await import("./services/supabase")).logoutAdmin();
+                  window.location.assign("/");
+                } catch (e) {
+                  setError(readableError(e));
+                }
+              }}
+            />
+          ) : (
+            <p className="admin-loading" role="status">正在載入管理案件…</p>
+          )
+        ) : (
         <section className="workspace" aria-label="通行回報探索">
           <aside className="sidebar">
             <div className="sidebar-head">
@@ -388,26 +553,38 @@ export default function App() {
                       className={`report-card ${selected === r.id ? "selected" : ""}`}
                       key={r.id}
                       onClick={() => choose(r.id)}
+                      aria-label={`查看回報：${r.title}，${r.district}，${CATEGORIES[r.category]}`}
                     >
-                      <div className="card-top">
-                        <StatusBadge status={r.status} />
-                        <small>{r.district}</small>
-                      </div>
-                      <h3>
-                        {r.title}
-                        <ArrowRightIcon size={18} />
-                      </h3>
-                      <p>{CATEGORIES[r.category]}</p>
-                      <div className="card-bottom">
-                        <span>
-                          <WheelchairIcon size={16} />
-                          {ACCESS[r.wheelchairAccess]}
-                        </span>
-                        <small>
-                          {DEMO_MODE
-                            ? "測試資料"
-                            : new Date(r.createdAt).toLocaleDateString("zh-TW")}
-                        </small>
+                      {(r.beforeImageUrl || r.afterImageUrl) && (
+                        <img
+                          className="report-card-thumb"
+                          src={r.beforeImageUrl || r.afterImageUrl || ""}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
+                      <div className="report-card-content">
+                        <div className="card-top">
+                          <StatusBadge status={r.status} />
+                          <small>{r.district}</small>
+                        </div>
+                        <h3>
+                          {r.title}
+                          <ArrowRightIcon size={18} />
+                        </h3>
+                        <p>{CATEGORIES[r.category]}</p>
+                        <div className="card-bottom">
+                          <span>
+                            <WheelchairIcon size={16} />
+                            {ACCESS[r.wheelchairAccess]}
+                          </span>
+                          <small>
+                            {DEMO_MODE
+                              ? "測試資料"
+                              : new Date(r.createdAt).toLocaleDateString("zh-TW")}
+                          </small>
+                        </div>
                       </div>
                     </button>
                   ))
@@ -442,30 +619,47 @@ export default function App() {
             </div>
           </div>
         </section>
-        <section className="contribute-strip">
-          <div className="contribute-icon">
-            <MapPinIcon size={28} />
-          </div>
-          <div>
-            <h2>你的一筆紀錄，是城市改變的起點。</h2>
-            <p>遇見不好走的路？留下位置與照片，讓障礙被看見。</p>
-          </div>
+        )}
+        {!adminPage && (
           <button
-            className="button secondary"
-            onClick={() => setCreating(true)}
+            className={`button primary mobile-report-cta${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
+            onClick={openReportForm}
             disabled={!repository || !session}
           >
-            新增一筆回報
-            <PlusIcon size={19} />
+            <PlusIcon size={20} weight="bold" />
+            回報障礙
           </button>
-        </section>
+        )}
       </main>
       <footer className="site-footer">
         <span>
           基隆好行 <span className="footer-separator">/</span> Keelung
           Accessible Map
         </span>
-        <button onClick={() => setAbout(true)}>使用與隱私說明</button>
+        <a href="/how-to">如何使用</a>
+        <a href="/about">關於計畫</a>
+        {DEMO_MODE && (
+          <button type="button" onClick={() => setAbout(true)}>
+            Demo 資料與重設
+          </button>
+        )}
+        <a href="/terms">使用條款</a>
+        <a href="/privacy">隱私權政策</a>
+        <a href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤基隆好行 @roadrecall2046">
+          <ThreadsLogoIcon size={18} aria-hidden="true" />
+          <span>Threads</span>
+        </a>
+        {!DEMO_MODE && (
+          <a
+            href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行 Beta 試用回饋")}`}
+          >
+            提供試用回饋
+          </a>
+        )}
+        <a href={HOMEPAGE_URL} className="footer-home-link">
+          <HouseIcon size={16} aria-hidden="true" />
+          回到首頁
+        </a>
         <a href={adminPage ? "/" : "/admin"}>
           {adminPage ? "返回地圖" : DEMO_MODE ? "管理體驗" : "管理案件"}
         </a>
@@ -483,33 +677,59 @@ export default function App() {
         <ReportForm
           repository={repository}
           reports={reports}
-          onClose={() => setCreating(false)}
+          guidedStep={guideStep}
+          onGuidedStepChange={setGuideStep}
+          onClose={() => {
+            setCreating(false);
+            if (guideStep !== null) setGuideStep(null);
+          }}
           onCreated={(id) => {
             setCreating(false);
             setFilter("all");
             setDistrict("all");
             setAccess("all");
             setSearch("");
-            setSelected(id);
-            setToast(
-              DEMO_MODE
-                ? "測試回報已保存，地圖已新增標記。"
-                : "回報已送出，感謝你的紀錄。",
-            );
+            setCreatedReportId(id);
+            setGuideStep(null);
+            setFocus(reports.find((item) => item.id === id)?.location);
           }}
           onExisting={(id) => {
             setCreating(false);
+            setGuideStep(null);
             choose(id);
           }}
         />
       )}
-      {report && repository && !creating && (
+      {report && repository && !creating && !adminPage && (
         <ReportPanel
           key={report.id}
           report={report}
           repository={repository}
           admin={adminPage && !!session?.admin}
-          onClose={() => setSelected(null)}
+          onClose={closeReport}
+        />
+      )}
+      {help && (
+        <HelpPanel
+          onClose={() => setHelp(false)}
+          onStartGuide={!adminPage ? startGuidedTour : undefined}
+        />
+      )}
+      {onboarding && (
+        <OnboardingPanel
+          onClose={dismissOnboarding}
+          onStartGuide={startGuidedTour}
+        />
+      )}
+      {createdReportId && (
+        <ReportSuccessPanel
+          id={createdReportId}
+          onClose={() => setCreatedReportId(null)}
+          onView={() => {
+            const id = createdReportId;
+            setCreatedReportId(null);
+            choose(id);
+          }}
         />
       )}
       {about && (
@@ -523,7 +743,7 @@ export default function App() {
             <p>
               {DEMO_MODE
                 ? "所有案件皆為虛構示範。你新增的照片、紀錄與管理操作只保存在本瀏覽器 IndexedDB，不會同步到其他裝置。清除網站資料後即會移除。"
-                : "案件、照片及補充紀錄會公開保存在 Supabase。照片公開後可能被他人下載，請勿上傳個人資訊。帳號識別碼隨案件保存，以支援管理與追蹤。"}
+                : "公開回報會顯示案件內容、照片及補充紀錄。照片公開後可能被他人下載，請勿上傳個人資訊；系統會保存必要的識別資料，以支援案件管理與防止濫用。"}
             </p>
             <p>
               定位只在你點選按鈕時取得。地圖供應商會收到地圖載入所需的網路請求；本版未加入行銷追蹤。
@@ -534,7 +754,16 @@ export default function App() {
               1999 或政府派工。
             </p>
             <p>
-              搜尋目前僅搜尋既有回報。照片請避開人臉、車牌及個人資訊。正式對外收件前，將補上營運者聯絡、申訴刪除與資料保留政策。
+              搜尋目前僅搜尋既有回報。照片請避開人臉、車牌及個人資訊。
+              {DEMO_MODE
+                ? " Demo 的回報和照片只保存在此瀏覽器；可在本說明視窗使用清除功能移除。"
+                : " 公開案件與照片會在案件公開期間持續保留；收到並確認移除申請後會處理，並至少每年檢視一次資料是否仍有保留必要。"}
+            </p>
+            <p>
+              Beta 回饋、資料更正、照片移除與隱私申訴：{" "}
+              <a href={`mailto:${BETA_FEEDBACK_EMAIL}`}>
+                {BETA_FEEDBACK_EMAIL}
+              </a>
             </p>
             {DEMO_MODE && (
               <button

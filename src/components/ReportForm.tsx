@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CrosshairIcon,
   MapPinIcon,
   CheckCircleIcon,
+  WarningCircleIcon,
+  XCircleIcon,
 } from "@phosphor-icons/react";
 import { CITY, DEMO_MODE } from "../config";
 import {
@@ -22,22 +24,66 @@ import {
 import MapView from "./MapView";
 import Modal from "./Modal";
 import PhotoUploader from "./PhotoUploader";
+import GuidedTourPrompt from "./GuidedTourPrompt";
+
+const GUIDE_COPY: Record<number, { title: string; body: string }> = {
+  1: {
+    title: "選擇障礙位置",
+    body: "按「使用目前位置」，或直接點地圖上的障礙位置。不想開 GPS 也可以完成。",
+  },
+  2: {
+    title: "寫一個看得懂的地點名稱",
+    body: "例如「基隆車站南站出口旁」。填好後離開欄位，教學會帶你到下一個按鈕。",
+  },
+  3: {
+    title: "前往現場資訊",
+    body: "確認位置與地點名稱後，按「下一步」。",
+  },
+  4: {
+    title: "上傳現場照片",
+    body: "選一張能看見障礙本身與周圍通行空間的照片。",
+  },
+  5: {
+    title: "選擇輪椅通行程度",
+    body: "依你看到的現況，選擇「無法通過」、「通行困難」或「可通過」。",
+  },
+  6: {
+    title: "檢查現場資料",
+    body: "照片與通行程度完成後，按「下一步」。",
+  },
+  7: {
+    title: "確認公開內容",
+    body: "閱讀確認事項，確認沒有不必要的個人資訊後勾選同意。",
+  },
+  8: {
+    title: "送出回報",
+    body: "最後按「確認送出」。完成後這筆紀錄會顯示在地圖上。",
+  },
+};
 
 export default function ReportForm({
   repository,
   reports,
+  guidedStep = null,
+  onGuidedStepChange,
   onClose,
   onCreated,
   onExisting,
 }: {
   repository: ReportRepository;
   reports: Report[];
+  guidedStep?: number | null;
+  onGuidedStepChange?: (step: number | null) => void;
   onClose: () => void;
   onCreated: (id: string) => void;
   onExisting: (id: string) => void;
 }) {
   const [locating, setLocating] = useState(false),
     [locationNote, setLocationNote] = useState("");
+  const [manualCoordinates, setManualCoordinates] = useState({
+    lat: false,
+    lng: false,
+  });
   const [step, setStep] = useState(1),
     [photo, setPhoto] = useState<Blob | null>(null),
     [error, setError] = useState(""),
@@ -66,6 +112,25 @@ export default function ReportForm({
     setDraft((d) => ({ ...d, [key]: value }));
     setError("");
   }
+  function updateManualCoordinate(axis: "lat" | "lng", value: string) {
+    const location = { ...draft.location, [axis]: Number(value) };
+    const touched = { ...manualCoordinates, [axis]: true };
+    const bounds = CITY.bounds;
+    const valid =
+      touched.lat &&
+      touched.lng &&
+      Number.isFinite(location.lat) &&
+      Number.isFinite(location.lng) &&
+      location.lat >= bounds.south &&
+      location.lat <= bounds.north &&
+      location.lng >= bounds.west &&
+      location.lng <= bounds.east;
+
+    setManualCoordinates(touched);
+    update("location", location);
+    setPicked(valid);
+    if (valid && guidedStep === 1) onGuidedStepChange?.(2);
+  }
   function next() {
     const error = validateDraft(draft);
     if (!picked) {
@@ -82,6 +147,10 @@ export default function ReportForm({
     }
     setError("");
     setStep((s) => s + 1);
+    if (guidedStep !== null) {
+      if (step === 1) onGuidedStepChange?.(4);
+      if (step === 2) onGuidedStepChange?.(7);
+    }
   }
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -109,6 +178,7 @@ export default function ReportForm({
       } catch {
         /* Successful write must not be reported as a failure. */
       }
+      onGuidedStepChange?.(null);
       onCreated(id);
     } catch (e) {
       setError(readableError(e));
@@ -143,6 +213,7 @@ export default function ReportForm({
         setLocationNote(
           `定位誤差約 ${Math.round(p.coords.accuracy)} 公尺。請確認標記位於障礙現場，必要時點選地圖調整。`,
         );
+        if (guidedStep === 1) onGuidedStepChange?.(2);
       },
       () => {
         setLocating(false);
@@ -151,10 +222,31 @@ export default function ReportForm({
       { timeout: 10000, enableHighAccuracy: true, maximumAge: 30000 },
     );
   }
+  const currentGuide =
+    guidedStep !== null ? GUIDE_COPY[guidedStep] : undefined;
+
+  useEffect(() => {
+    if (guidedStep === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      const dialog = document.querySelector<HTMLDialogElement>("dialog[open]");
+      const target =
+        dialog?.querySelector<HTMLElement>(".guide-target-active") ?? null;
+      if (!target) return;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      target.scrollIntoView({
+        block: "center",
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [guidedStep, step]);
+
   return (
     <Modal title="回報通行障礙" onClose={onClose} busy={busy} wide>
       <ol className="steps" aria-label="回報步驟">
-        {["選擇位置", "照片與問題", "確認送出"].map((label, i) => (
+        {["障礙在哪裡？", "現場是什麼狀況？", "確認後送出"].map((label, i) => (
           <li
             key={label}
             aria-current={step === i + 1 ? "step" : undefined}
@@ -165,6 +257,16 @@ export default function ReportForm({
           </li>
         ))}
       </ol>
+      {currentGuide && (
+        <GuidedTourPrompt
+          step={guidedStep! + 1}
+          total={9}
+          title={currentGuide.title}
+          onSkip={() => onGuidedStepChange?.(null)}
+        >
+          {currentGuide.body}
+        </GuidedTourPrompt>
+      )}
       <form onSubmit={submit} className="report-form">
         <fieldset disabled={busy}>
           {step === 1 && (
@@ -172,7 +274,9 @@ export default function ReportForm({
               <p className="muted">
                 點選地圖標記障礙的位置，也可以直接輸入座標。
               </p>
-              <div className="picker-map">
+              <div
+                className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
+              >
                 <MapView
                   reports={[]}
                   onSelect={() => {}}
@@ -180,6 +284,7 @@ export default function ReportForm({
                   onPick={(location) => {
                     update("location", location);
                     setPicked(true);
+                    if (guidedStep === 1) onGuidedStepChange?.(2);
                   }}
                   position={picked ? draft.location : undefined}
                   focus={draft.location}
@@ -187,7 +292,7 @@ export default function ReportForm({
               </div>
               <button
                 type="button"
-                className="button secondary full"
+                className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`}
                 disabled={locating}
                 onClick={locate}
               >
@@ -207,13 +312,9 @@ export default function ReportForm({
                     step="any"
                     required
                     value={draft.location.lat}
-                    onChange={(e) => {
-                      update("location", {
-                        ...draft.location,
-                        lat: Number(e.target.value),
-                      });
-                      setPicked(true);
-                    }}
+                    onChange={(e) =>
+                      updateManualCoordinate("lat", e.target.value)
+                    }
                   />
                 </label>
                 <label>
@@ -223,24 +324,26 @@ export default function ReportForm({
                     step="any"
                     required
                     value={draft.location.lng}
-                    onChange={(e) => {
-                      update("location", {
-                        ...draft.location,
-                        lng: Number(e.target.value),
-                      });
-                      setPicked(true);
-                    }}
+                    onChange={(e) =>
+                      updateManualCoordinate("lng", e.target.value)
+                    }
                   />
                 </label>
               </div>
               <label>
                 位置名稱／標題（必填）
                 <input
+                  className={guidedStep === 2 ? "guide-target-active" : undefined}
                   required
                   maxLength={80}
                   placeholder="例如：基隆車站南站出口旁"
                   value={draft.title}
                   onChange={(e) => update("title", e.target.value)}
+                  onBlur={() => {
+                    if (guidedStep === 2 && draft.title.trim()) {
+                      onGuidedStepChange?.(3);
+                    }
+                  }}
                 />
               </label>
               <div className="form-grid">
@@ -269,12 +372,22 @@ export default function ReportForm({
           )}
           {step === 2 && (
             <>
-              <PhotoUploader
-                label="現場照片"
-                required
-                value={photo}
-                onChange={setPhoto}
-              />
+              <p className="photo-guidance">
+                拍到障礙本身，也盡量拍到周圍通行空間。請避免刻意拍攝可辨識的人臉、車牌或其他不必要個資。
+              </p>
+              <div className={guidedStep === 4 ? "guide-target-active guide-target-block" : undefined}>
+                <PhotoUploader
+                  label="現場照片"
+                  required
+                  value={photo}
+                  onChange={(blob) => {
+                    setPhoto(blob);
+                    if (blob && guidedStep === 4) {
+                      onGuidedStepChange?.(5);
+                    }
+                  }}
+                />
+              </div>
               <label>
                 障礙類型
                 <select
@@ -293,25 +406,37 @@ export default function ReportForm({
                   ))}
                 </select>
               </label>
-              <fieldset className="access-options">
+              <fieldset
+                className={`access-options${guidedStep === 5 ? " guide-target-active guide-target-block" : ""}`}
+              >
                 <legend>輪椅通行程度</legend>
                 {Object.entries(ACCESS).map(([key, label]) => (
                   <label
                     key={key}
-                    className={draft.wheelchairAccess === key ? "chosen" : ""}
+                    className={`${draft.wheelchairAccess === key ? "chosen " : ""}access-${key}`}
                   >
                     <input
                       type="radio"
                       name="access"
                       value={key}
                       checked={draft.wheelchairAccess === key}
-                      onChange={() =>
+                      onChange={() => {
                         update(
                           "wheelchairAccess",
                           key as ReportDraft["wheelchairAccess"],
-                        )
-                      }
+                        );
+                        if (guidedStep === 5) {
+                          onGuidedStepChange?.(6);
+                        }
+                      }}
                     />
+                    {key === "blocked" ? (
+                      <XCircleIcon size={18} aria-hidden="true" />
+                    ) : key === "difficult" ? (
+                      <WarningCircleIcon size={18} aria-hidden="true" />
+                    ) : (
+                      <CheckCircleIcon size={18} aria-hidden="true" />
+                    )}
                     {label}
                   </label>
                 ))}
@@ -356,12 +481,19 @@ export default function ReportForm({
                   <p>若是不同障礙，可以繼續送出。</p>
                 </div>
               )}
-              <label className="check-label">
+              <label
+                className={`check-label${guidedStep === 7 ? " guide-target-active guide-target-block" : ""}`}
+              >
                 <input
                   type="checkbox"
                   required
                   checked={confirmed}
-                  onChange={(e) => setConfirmed(e.target.checked)}
+                  onChange={(e) => {
+                    setConfirmed(e.target.checked);
+                    if (e.target.checked && guidedStep === 7) {
+                      onGuidedStepChange?.(8);
+                    }
+                  }}
                 />
                 我已確認照片未包含可辨識的人臉、車牌或個人資訊，並同意
                 {DEMO_MODE ? "將測試回報保存在此瀏覽器" : "公開此回報與照片"}。
@@ -406,8 +538,12 @@ export default function ReportForm({
               className="button secondary"
               disabled={busy}
               onClick={() => {
-                setStep((s) => s - 1);
+                const previousStep = step - 1;
+                setStep(previousStep);
                 setError("");
+                if (guidedStep !== null) {
+                  onGuidedStepChange?.(previousStep === 1 ? 1 : 4);
+                }
               }}
             >
               <ArrowLeftIcon size={18} />
@@ -417,7 +553,13 @@ export default function ReportForm({
             <span />
           )}
           <button
-            className="button primary"
+            className={`button primary${
+              (step === 1 && guidedStep === 3) ||
+              (step === 2 && guidedStep === 6) ||
+              (step === 3 && guidedStep === 8)
+                ? " guide-target-active"
+                : ""
+            }`}
             disabled={busy || (step === 3 && !confirmed)}
             type="submit"
           >

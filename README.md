@@ -4,11 +4,11 @@
 
 可迭代的無障礙通行回報地圖，從基隆開始，資料模型保留多城市擴充。
 
-**v0.1 展示版**：所有初始案件為虛構測試資料，不是政府公告。Demo 的新增照片與紀錄儲存在本瀏覽器 IndexedDB，不會分享給其他使用者。
+**Beta 準備中**：Demo 模式的初始案件為虛構測試資料，操作只保存在本瀏覽器；連接 Supabase 的正式模式會公開顯示民眾回報、位置與照片。平台不是政府通報系統，也不保證路線安全。
 
 ## Demo 與原始碼
 
-部署網址與 GitHub 位置將在部署驗證後更新。
+正式網址：[keelung-accessible-map.vercel.app](https://keelung-accessible-map.vercel.app/)。目前變更先部署至受保護的 Vercel Preview；Production 發佈需另行人工確認。
 
 ## 功能
 
@@ -21,6 +21,7 @@
 - `/admin` 展示管理狀態與改善前後；正式管理由資料庫 RLS 控制。
 - Supabase adapter、城市 schema、server-side 驗證與原子管理紀錄。
 - 手機版、鍵盤焦點、原生 dialog、文字＋圖示狀態、reduced motion。
+- 長期可重開的「如何使用」與常見問題、案件分享連結、Beta 回饋與資料申請聯絡方式。
 
 ## 本機啟動
 
@@ -46,13 +47,21 @@ npm run preview
 - [架構、資料模型與全台擴充](docs/architecture.md)
 - [Supabase／Google Maps／Vercel 設定](docs/deployment.md)
 - [環境變數範例](.env.example)
+- [Technical SEO 架構與路由政策](docs/seo-architecture.md)
+- [SEO 基線、驗收與網域遷移](docs/seo-baseline.md) · [SEO QA](docs/seo-qa.md) · [網域遷移清單](docs/domain-migration-seo.md) · [SEO 變更紀錄](docs/seo-changelog.md)
 - [資料庫 migration 與安全規則](supabase/migrations/)
 - [安全與 PostGIS 下一版準備](docs/security-and-next-iteration.md)
 - [實際驗證結果與尚未完成項目](docs/verification.md)
+- [Code Review：Beta 準備度](docs/code-review-beta.md)
+- [UX Review：Beta 使用流程](docs/ux-review-beta.md)
+- [Accessibility Review：鍵盤、觸控與語意](docs/accessibility-review-beta.md)
+- [Beta 驗收狀態](docs/beta-verification.md)
+- [封閉 Beta 使用者測試清單](docs/user-test-checklist.md)
+- [參考專案模式與取捨](docs/reference-patterns.md)
 
 ## Roadmap
 
-v0.2：正式 Supabase 驗收、管理者帳號、防濫用與營運政策、Places／反向地理編碼、官方施工 layer 授權查核。
+v0.2：封閉 Beta 回饋、CAPTCHA／跨帳號濫用防護與營運政策細化、Places／反向地理編碼、官方施工 layer 授權查核。
 
 v0.3：城市切換、PostGIS 附近案件與 viewport 查詢、分頁、moderation、資料匯出。
 

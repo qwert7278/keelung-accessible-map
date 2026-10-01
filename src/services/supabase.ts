@@ -8,6 +8,7 @@ import type {
   Session,
   Status,
 } from "../types";
+import { PUBLIC_SITE_URL } from "../config";
 import { validateDraft } from "../utils/validation";
 
 let client: SupabaseClient | undefined;
@@ -17,19 +18,27 @@ function supabase() {
     key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key)
     throw new Error(
-      "Supabase 設定尚未完成。請補齊 URL 與 Publishable Key，或使用 Demo Mode。",
+      "目前無法連線至回報服務，請稍後再試。",
     );
-  client = createClient(url, key);
+  client = createClient(url, key, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+  });
   return client;
 }
 export async function loginAdmin(email: string) {
   const { error } = await supabase().auth.signInWithOtp({
-    email,
-    // New admin identities can be created by magic link; the private
-    // admin_users table still independently gates all privileged operations.
+    email: email.trim(),
     options: {
-      shouldCreateUser: true,
-      emailRedirectTo: `${window.location.origin}/admin`,
+      // Admin accounts are provisioned separately. The login page must not
+      // create arbitrary Auth users when someone enters an unknown address.
+      shouldCreateUser: false,
+      // Always return admin Magic Links to the configured public site.
+      // This avoids Preview/local origins leaking into production login emails.
+      emailRedirectTo: new URL("/admin", PUBLIC_SITE_URL).toString(),
     },
   });
   if (error) throw new Error(error.message);
@@ -38,6 +47,61 @@ export async function logoutAdmin() {
   const { error } = await supabase().auth.signOut();
   if (error) throw new Error(error.message);
 }
+
+export function subscribeAuthSession(
+  next: (session: Session | null, event: string) => void,
+  onError: (error: Error) => void,
+) {
+  const db = supabase();
+  let revision = 0;
+  const {
+    data: { subscription },
+  } = db.auth.onAuthStateChange((event, authSession) => {
+    const currentRevision = ++revision;
+    if (event === "SIGNED_OUT") {
+      next(null, event);
+      return;
+    }
+    if (!authSession?.user) return;
+
+    // Keep the auth callback synchronous. Resolve the private admin check
+    // immediately afterwards so magic-link redirects refresh the UI.
+    window.setTimeout(() => {
+      void (async () => {
+        try {
+          const { data, error } = await db.rpc("is_admin");
+          if (error) {
+            onError(new Error(error.message));
+            return;
+          }
+          const { data: current, error: sessionError } =
+            await db.auth.getSession();
+          if (sessionError) {
+            onError(new Error(sessionError.message));
+            return;
+          }
+          if (
+            currentRevision !== revision ||
+            current.session?.user.id !== authSession.user.id
+          )
+            return;
+          next(
+            {
+              uid: authSession.user.id,
+              admin: data === true && authSession.user.is_anonymous !== true,
+              anonymous: authSession.user.is_anonymous === true,
+            },
+            event,
+          );
+        } catch (error) {
+          onError(error instanceof Error ? error : new Error(String(error)));
+        }
+      })();
+    }, 0);
+  });
+  return () => subscription.unsubscribe();
+}
+
 type Row = {
   id: string;
   city_id: string;
@@ -95,7 +159,8 @@ export function createSupabaseRepository(): ReportRepository {
       if (!user) throw new Error("無法建立登入狀態。");
       const { data: admin, error } = await db.rpc("is_admin");
       if (error) throw new Error(error.message);
-      return { uid: user.id, admin: admin === true };
+      const anonymous = user.is_anonymous === true;
+      return { uid: user.id, admin: admin === true && !anonymous, anonymous };
     })();
     try {
       return await pendingSession;

@@ -1,7 +1,7 @@
 name: Quality
 on:
   push:
-    branches: [main]
+    branches: [main, "codex/**"]
   pull_request:
 permissions:
   contents: read
@@ -15,6 +15,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: npm run seo:check

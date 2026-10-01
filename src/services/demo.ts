@@ -26,7 +26,7 @@ async function save(store: Store) {
 }
 export const demoRepository: ReportRepository = {
   async session() {
-    return { uid, admin: true };
+    return { uid, admin: true, anonymous: false };
   },
   subscribe(cityId, next, error) {
     let active = true;

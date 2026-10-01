@@ -12,16 +12,31 @@
 - `tests/image-privacy.html` 實際執行 `compressImage`：合成 JPEG 含 EXIF APP1 與測試 GPS marker。2400×1200 → 1920×960、72,407 → 24,173 bytes，輸出 JPEG 不含 APP1/原始 marker。
 - Supabase Security Advisor 沒有 WARN/ERROR；只有 private.admin_users/admin_audit/rate_limits 的「RLS 無 policy」INFO，三者刻意預設拒絕前端。參見 [Supabase 說明](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)。
 
-## 尚未通過的發布門檻
+## 尚待正式上線前驗收
 
-- 正式管理者已透過 Email 確認帳號，並由私有 `admin_users` 清單授權；管理頁顯示「管理權限已驗證」。真實管理者將 QA 案件 open → in_progress → resolved；沒有改善照時拒絕結案，提供合成照片後通過。
-- 瀏覽器真實檔案選擇、客戶端縮圖／EXIF 清除、Storage 上傳、改善前後公開照片、社群照片與更新均通過。
+- 真實管理者帳號已由私有 `admin_users` 清單授權，管理頁顯示「管理權限已驗證」；管理狀態更新、改善照片必填與社群更新權限已通過真實 Supabase API / SQL 測試。
+- 合成影像壓縮／EXIF 清除、Storage 上傳與公開下載已通過自動化測試；仍建議用真實手機檢查檔案選擇與相機影像實際回報。
 - 真實 GPS 授權/精度分支需裝置驗收；手動座標可用。Google Maps 真實 key 未測，OSM 預設保留。
-- GitHub repository/push、Vercel Preview/Production 尚未執行。部署後須重跑手機/桌面與管理跳轉。
-- API fixture 是明確標示 QA 的合成案件與公開照片；精確 fixture 清單在被 Git 忽略的 `output/cloud-fixture.json`。須從 Supabase 管理介面刪除案件與測試照片後，才可開放 Preview/Production 收件。正式管理者帳號保留。
+- GitHub repository 已推送至 `https://github.com/qwert7278/keelung-accessible-map`；Vercel Git Preview 最新部署已就緒並受登入保護。最新 Preview 已檢查桌面與 390×844 手機尺寸；手機回報 dialog、必填驗證與無水平溢出通過。另以 1707px 寬度檢查無水平溢出。
+- Vercel 前端環境變數目前只設在 Preview：Supabase URL、publishable key、OSM provider、Demo Mode 關閉；未設定 service-role secret，也未設定 Production 環境變數。`keelung-accessible-map.vercel.app` 網域已解除指派，尚未建立 Production deployment。
+- 經使用者確認，已刪除合成 QA 案件 `1879aa2d-3f53-48c6-896f-a92869193393`、3 筆更新、2 筆管理稽核紀錄及 3 張 Storage 照片。唯讀驗證各項剩餘數皆為 0；管理者清單仍有 1 個帳號。
+- 經使用者確認，已永久刪除意外標示為 Production 的 deployment `dpl_65htXXD2vqqzdbkXffEoabTAWUsA`；Vercel API 回覆該 ID 不存在。最新 `codex/preview` deployment 保持 READY。
 
 一次性高權限 QA Edge Function 提案被自動審核拒絕，沒有部署。未以替代途徑建立高權限入口，改走正常管理者帳號驗證。
 
 ## 重現圖片檢查
 
 執行 `npm run dev`，開啟 `/tests/image-privacy.html` 並點選「執行本機合成圖片測試」。合成 fixture 不含真實人像、個資或真實 GPS。此頁不包含在 production dist。
+
+## Beta review update (2026-09-30)
+
+The deployment observations in the earlier sections above are historical snapshots and should not be used as the current deployment state. During the later read-only Beta review:
+
+- The reviewed app commit was `aad6edb` on `codex/beta-readiness`. Its GitHub Quality run passed: https://github.com/qwert7278/keelung-accessible-map/actions/runs/36699750675.
+- The latest reviewed Preview was READY at https://keelung-accessible-2066krn98-masons-projects-2c78a251.vercel.app/.
+- Production remains publicly available at https://keelung-accessible-map.vercel.app/ and was not changed. Its About dialog still showed the older “details will be added later” wording; the updated Help/policy content was verified on Preview.
+- Preview and Production displayed the same three user-provided sample reports and the report photos used the same Supabase Storage origin (`ifcicahnrpkwjcxmnmug.supabase.co`). This is direct browser observation, not a read of Vercel environment settings. Because the backend appears shared, this review ran no cloud write tests and did not alter any report/photo.
+- Browser checks covered Help and retention/contact copy, report detail/photo display, empty-form validation and focus restoration, and the unauthenticated admin gate. No report/community update, photo upload, auth email, GPS request, or admin status update was sent.
+- The refreshed responsive captures and dimensions are recorded in `docs/beta-verification.md`. True 200% zoom and physical-device checks remain outstanding.
+
+The earlier cloud SQL/API smoke and rollback results in this document are retained as historical evidence; they were not rerun during the Beta review.

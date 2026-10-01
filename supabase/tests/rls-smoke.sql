@@ -37,6 +37,15 @@ do $$ begin
   raise exception 'TEST FAILED: admin history forgery';
  exception when insufficient_privilege then null; end;
 end $$;
+-- A normal signed-in (non-anonymous) user must also fail the admin update policy.
+select set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000003","role":"authenticated","is_anonymous":false}',true);
+do $$ begin
+ if public.is_admin() then raise exception 'TEST FAILED: ordinary authenticated user is admin'; end if;
+ update public.reports set status='in_progress' where id='10000000-0000-4000-8000-000000000001';
+ if found then raise exception 'TEST FAILED: ordinary authenticated user changed status'; end if;
+ update public.reports set admin_note='forged' where id='10000000-0000-4000-8000-000000000001';
+ if found then raise exception 'TEST FAILED: ordinary authenticated user changed admin note'; end if;
+end $$;
 select set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 update public.reports set status='in_progress',admin_note='開始處理' where id='10000000-0000-4000-8000-000000000001';
 do $$ begin

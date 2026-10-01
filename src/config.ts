@@ -1,4 +1,9 @@
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
+export const PUBLIC_SITE_URL = (
+  import.meta.env.VITE_PUBLIC_SITE_URL ||
+  "https://keelung-accessible-map.vercel.app"
+).replace(/\/+$/, "");
+export const BETA_FEEDBACK_EMAIL = "lingwei2046@gmail.com";
 export const CITIES = [
   {
     id: "TW-KEE",

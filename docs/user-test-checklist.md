@@ -1,0 +1,46 @@
+# 封閉 Beta 試用清單
+
+本清單供小規模邀請制試用。請先說明：這是民眾共同紀錄，不是政府 1999／派工系統；位置、說明和照片會公開；平台不保證路線安全。照片不得含可辨識人臉、車牌或其他個人資訊。
+
+## 一般使用者（約 5 分鐘）
+
+1. 首頁 5 秒內找出平台用途、主要回報入口、紅黃綠狀態意思，以及政府服務聲明。
+2. 從主選單／首頁／頁尾開啟「如何使用」，確認不註冊、不開 GPS 仍可完成手動選點。
+3. 從清單而非地圖開啟案件，辨認正式狀態、通行程度、照片和現場紀錄。
+4. 關閉案件視窗後確認鍵盤焦點回到原控制項。
+5. 嘗試分享案件連結，另開或重新整理後仍能直接開到同一案件。
+6. 回報流程走到提交前，確認照片公開說明與個資提醒清楚；除非使用專用 QA Preview，勿在 Production 送出測試資料。
+7. 留下回饋：能否找到地點、哪一段最卡、使用裝置、是否使用輔助科技（選填）、哪些文字不清楚。
+
+## 行動不便者／輔具使用者
+
+- 用觸控、鍵盤、switch 或慣用輔具完成看清單、開 Help、選點與關閉視窗。
+- GPS 被拒絕／逾時後，確認仍可手動點選或輸入座標。
+- 200% 縮放與 320px 寬畫面下，確認主要按鈕不被遮住，內容可垂直捲動。
+- 以文字、圖示辨認狀態，不只靠紅黃綠顏色。
+- 試用後詢問哪個控制項需要更大觸控區、哪句話易誤解；輔助科技使用狀況只作自願回答。
+
+## 管理者驗收
+
+- 以已授權帳號登入 `/admin`，確認權限提示、狀態更新及錯誤訊息。
+- `resolved` 必須提供改善後照片；一般帳號僅能新增社群補充，不能更改正式狀態。
+- 管理測試只在隔離 Preview／QA 專案進行；不得在正式案件上製造測試資料。
+
+## Beta V2 畫面與回報流程
+
+- 第一次開啟時理解 onboarding，可用鍵盤逐步操作、Escape 關閉或選擇「直接看地圖」；之後仍能從 Help 重開說明。
+- 390×844 手機打開後，確認地圖與固定「回報障礙」按鈕容易找到，底部按鈕不遮住 dialog 內的送出按鈕。
+- 回報位置可選 GPS、地圖點選或手動座標；拒絕 GPS 後仍能繼續，地址可以空白。
+- 照片步驟說明現場照片與公開範圍；測試使用 Demo Mode，不要在共用 Supabase 上建立案件。
+- Demo Mode 完成回報後，確認有穩定成功畫面，並可查看、分享或返回地圖。
+- 詳情分辨原始回報照片、民眾補充照片、管理者改善後照片；民眾觀察不應被誤認為官方改善確認。
+- 320×568、200% 縮放、橫向手機與更大字級需另行人工檢查；本機桌機／390×844 截圖不可替代這些裝置驗收。
+# Beta V2.1 Admin checks — 2026-10-01
+
+- [ ] Admin owner opens a fresh Magic Link and returns to `/admin` with verified `is_admin()` authorization.
+- [ ] Find an open case and use “開始處理”; verify the edit form preselects `處理中`.
+- [ ] Save with a private admin note and explicit consent; verify success only after save and a public status/history event.
+- [ ] Try `已改善` without an after photo; verify guidance and disabled save.
+- [ ] Attach after evidence, add the required note, consent, then save and verify `已改善`.
+- [ ] On mobile, return from selected case to the queue, and confirm the queue search/filter and case action remain reachable.
+- [ ] Reset Demo data after local-only practice using “Demo 資料與重設”.
