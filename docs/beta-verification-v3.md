@@ -22,7 +22,9 @@
 
 ## Deployment state
 
-This document is local verification. Preview deployment and browser checks are tracked separately in `docs/seo-qa.md` after deployment. Production promotion is intentionally excluded pending the plan's explicit approval gate.
+Commit `1023b92` was pushed to `codex/beta-readiness`; Vercel created a READY Preview at https://keelung-accessible-h4b0eajh0-masons-projects-2c78a251.vercel.app/. The authenticated Vercel fetch returned the Preview home page as HTTP 200, with Production canonical metadata and `noindex`.
+
+Direct interactive browser navigation to the Preview redirected to Vercel login, so deployed Admin/public interaction and screenshot checks could not be completed without changing Deployment Protection. Protection was left unchanged. Local Demo Admin behavior was interactively checked; Production was not changed or promoted.
 
 ## Human acceptance still required
 

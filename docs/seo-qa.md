@@ -5,7 +5,10 @@
 - `npm run build`：通過，metadata、safe routes、robots、sitemap 與 1200×630 OG image 檢查通過。
 - Magic Link 與 share URL 使用 canonical Production URL，避免分享 localhost / Preview host。
 - 本輪未變更 SEO 頁面、canonical、索引控制或 Production deployment。
-- 最新 Preview browser 驗收須等這輪 Git push / Vercel Preview 完成；請勿將舊 Preview 的結論當成這輪結果。
+- Commit `1023b92` 已推送；Vercel Preview READY：`https://keelung-accessible-h4b0eajh0-masons-projects-2c78a251.vercel.app/`。
+- 以 Vercel authenticated fetch 驗證首頁 HTTP 200，raw HTML 有 Production canonical、OG/Twitter、WebSite JSON-LD 及 `robots=noindex`；response 含 `X-Robots-Tag: noindex`。
+- 瀏覽器直接進 Preview 會轉到 Vercel Login（Deployment Protection）。未變更保護設定，因此這輪沒有宣稱已通過部署後的互動流程或行動版 screenshot QA；本機 Demo Admin 流程已互動驗收。
+- Production deployment 未變更，亦未 promotion。
 
 ## 本地驗證（2026-09-30）
 
