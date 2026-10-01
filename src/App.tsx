@@ -553,26 +553,38 @@ export default function App() {
                       className={`report-card ${selected === r.id ? "selected" : ""}`}
                       key={r.id}
                       onClick={() => choose(r.id)}
+                      aria-label={`查看回報：${r.title}，${r.district}，${CATEGORIES[r.category]}`}
                     >
-                      <div className="card-top">
-                        <StatusBadge status={r.status} />
-                        <small>{r.district}</small>
-                      </div>
-                      <h3>
-                        {r.title}
-                        <ArrowRightIcon size={18} />
-                      </h3>
-                      <p>{CATEGORIES[r.category]}</p>
-                      <div className="card-bottom">
-                        <span>
-                          <WheelchairIcon size={16} />
-                          {ACCESS[r.wheelchairAccess]}
-                        </span>
-                        <small>
-                          {DEMO_MODE
-                            ? "測試資料"
-                            : new Date(r.createdAt).toLocaleDateString("zh-TW")}
-                        </small>
+                      {(r.beforeImageUrl || r.afterImageUrl) && (
+                        <img
+                          className="report-card-thumb"
+                          src={r.beforeImageUrl || r.afterImageUrl || ""}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
+                      <div className="report-card-content">
+                        <div className="card-top">
+                          <StatusBadge status={r.status} />
+                          <small>{r.district}</small>
+                        </div>
+                        <h3>
+                          {r.title}
+                          <ArrowRightIcon size={18} />
+                        </h3>
+                        <p>{CATEGORIES[r.category]}</p>
+                        <div className="card-bottom">
+                          <span>
+                            <WheelchairIcon size={16} />
+                            {ACCESS[r.wheelchairAccess]}
+                          </span>
+                          <small>
+                            {DEMO_MODE
+                              ? "測試資料"
+                              : new Date(r.createdAt).toLocaleDateString("zh-TW")}
+                          </small>
+                        </div>
                       </div>
                     </button>
                   ))
@@ -731,7 +743,7 @@ export default function App() {
             <p>
               {DEMO_MODE
                 ? "所有案件皆為虛構示範。你新增的照片、紀錄與管理操作只保存在本瀏覽器 IndexedDB，不會同步到其他裝置。清除網站資料後即會移除。"
-                : "案件、照片及補充紀錄會公開保存在 Supabase。照片公開後可能被他人下載，請勿上傳個人資訊。帳號識別碼隨案件保存，以支援管理與追蹤。"}
+                : "公開回報會顯示案件內容、照片及補充紀錄。照片公開後可能被他人下載，請勿上傳個人資訊；系統會保存必要的識別資料，以支援案件管理與防止濫用。"}
             </p>
             <p>
               定位只在你點選按鈕時取得。地圖供應商會收到地圖載入所需的網路請求；本版未加入行銷追蹤。

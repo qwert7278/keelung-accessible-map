@@ -475,13 +475,28 @@ h1 {
   scrollbar-color: #c9d7cf transparent;
 }
 .report-card {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 13px;
   text-align: left;
   width: 100%;
   padding: 17px 20px;
   background: white;
   border: 0;
   border-bottom: 1px solid #e8eeeb;
+}
+.report-card-thumb {
+  display: block;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #e8eeeb;
+}
+.report-card-content {
+  flex: 1;
+  min-width: 0;
 }
 .report-card:hover,
 .report-card.selected {
@@ -522,6 +537,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   font-size: 16px;
   margin: 8px 0 3px;
   letter-spacing: 0.2px;
@@ -1574,6 +1590,15 @@ progress {
   }
   .report-card h3 {
     overflow-wrap: anywhere;
+  }
+  .report-card {
+    padding: 14px 16px;
+    gap: 11px;
+  }
+  .report-card-thumb {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
   }
 }
 

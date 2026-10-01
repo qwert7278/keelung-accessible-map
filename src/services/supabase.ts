@@ -18,7 +18,7 @@ function supabase() {
     key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key)
     throw new Error(
-      "Supabase 設定尚未完成。請補齊 URL 與 Publishable Key，或使用 Demo Mode。",
+      "目前無法連線至回報服務，請稍後再試。",
     );
   client = createClient(url, key, {
     auth: {

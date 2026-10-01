@@ -40,7 +40,7 @@ export function readableError(error: unknown): string {
     if (/quota/i.test(error.message))
       return "瀏覽器儲存空間不足，請清理本站測試資料或縮小照片後再試。";
     if (/permission|unauthorized|row-level/i.test(error.message))
-      return "權限不足。請確認帳號與 Supabase RLS 安全規則設定。";
+      return "權限不足，請確認登入狀態或稍後再試。";
     if (/network|offline/i.test(error.message))
       return "網路連線失敗，請保留表單，稍後再試。";
     return error.message;
