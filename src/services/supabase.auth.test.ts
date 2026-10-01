@@ -18,6 +18,10 @@ describe("Supabase administrator authentication", () => {
     vi.resetModules();
     vi.stubEnv("VITE_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
+    vi.stubEnv(
+      "VITE_PUBLIC_SITE_URL",
+      "https://keelung-accessible-map.vercel.app",
+    );
     vi.stubGlobal("window", {
       setTimeout,
       location: { origin: "https://preview.example" },
@@ -49,7 +53,7 @@ describe("Supabase administrator authentication", () => {
       email: "admin@example.com",
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: "https://preview.example/admin",
+        emailRedirectTo: "https://keelung-accessible-map.vercel.app/admin",
       },
     });
   });

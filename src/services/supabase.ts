@@ -8,6 +8,7 @@ import type {
   Session,
   Status,
 } from "../types";
+import { PUBLIC_SITE_URL } from "../config";
 import { validateDraft } from "../utils/validation";
 
 let client: SupabaseClient | undefined;
@@ -35,7 +36,9 @@ export async function loginAdmin(email: string) {
       // Admin accounts are provisioned separately. The login page must not
       // create arbitrary Auth users when someone enters an unknown address.
       shouldCreateUser: false,
-      emailRedirectTo: new URL("/admin", window.location.origin).toString(),
+      // Always return admin Magic Links to the configured public site.
+      // This avoids Preview/local origins leaking into production login emails.
+      emailRedirectTo: new URL("/admin", PUBLIC_SITE_URL).toString(),
     },
   });
   if (error) throw new Error(error.message);

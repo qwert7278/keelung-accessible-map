@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import {
+  ArrowLeftIcon,
   ImageIcon,
   WheelchairIcon,
   MapPinIcon,
@@ -15,7 +16,7 @@ import {
   type ReportUpdate,
   type Status,
 } from "../types";
-import { DEMO_MODE } from "../config";
+import { DEMO_MODE, PUBLIC_SITE_URL } from "../config";
 import { readableError } from "../utils/validation";
 import Modal from "./Modal";
 import PhotoUploader from "./PhotoUploader";
@@ -48,11 +49,15 @@ export default function ReportPanel({
   report,
   repository,
   admin,
+  embedded = false,
+  initialStatus,
   onClose,
 }: {
   report: Report;
   repository: ReportRepository;
   admin: boolean;
+  embedded?: boolean;
+  initialStatus?: Status | null;
   onClose: () => void;
 }) {
   const [updates, setUpdates] = useState<ReportUpdate[]>([]),
@@ -60,7 +65,7 @@ export default function ReportPanel({
     [message, setMessage] = useState(""),
     [photo, setPhoto] = useState<Blob | null>(null),
     [suggestion, setSuggestion] = useState<Status | "">(""),
-    [status, setStatus] = useState(report.status),
+    [status, setStatus] = useState(initialStatus ?? report.status),
     [access, setAccess] = useState(report.wheelchairAccess),
     [busy, setBusy] = useState(false),
     [progress, setProgress] = useState(0),
@@ -87,7 +92,7 @@ export default function ReportPanel({
     .reverse()
     .find((u) => u.type === "community" && u.imageUrl)?.imageUrl;
   async function shareReport() {
-    const url = reportShareUrl(window.location.origin, report.id);
+    const url = reportShareUrl(PUBLIC_SITE_URL, report.id);
     try {
       if (navigator.share) {
         await navigator.share({ title: report.title, url });
@@ -145,9 +150,115 @@ export default function ReportPanel({
       setBusy(false);
     }
   }
-  return (
-    <Modal title={report.title} onClose={onClose} busy={busy} wide sheet>
-      <div className="panel-content">
+  const updateForm = (
+    <form onSubmit={submit} className="update-form">
+      <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
+      {!admin && (
+        <p className="muted">
+          你的補充會公開顯示；若提出狀況改善，正式案件狀態仍由管理者確認後更新。
+        </p>
+      )}
+      {admin && DEMO_MODE && (
+        <p className="notice">Demo 管理操作只影響你的瀏覽器測試資料。</p>
+      )}
+      <fieldset disabled={busy}>
+        {admin ? (
+          <div className="form-grid">
+            <label>
+              正式案件狀態
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as Status)}
+              >
+                {Object.entries(STATUSES).map(([k, v]) => (
+                  <option value={k} key={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              最新通行程度
+              <select
+                value={access}
+                onChange={(e) => setAccess(e.target.value as Access)}
+              >
+                {Object.entries(ACCESS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : (
+          <label>
+            我看到的現況
+            <select
+              value={suggestion}
+              onChange={(e) => setSuggestion(e.target.value as Status | "")}
+            >
+              <option value="">僅補充資訊</option>
+              <option value="open">問題仍存在</option>
+              <option value="resolved">看起來已改善（待管理者確認）</option>
+            </select>
+          </label>
+        )}
+        <label>
+          {admin ? "管理註記（僅供管理使用）" : "現場說明"}（必填）
+          <textarea
+            required
+            maxLength={1000}
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={admin ? "記錄處理情況或判斷依據" : "請描述這次更新的內容"}
+          />
+        </label>
+        <PhotoUploader
+          label={admin ? "改善後照片" : "最新照片（選填）"}
+          value={photo}
+          onChange={setPhoto}
+          required={admin && status === "resolved" && !report.afterImageUrl}
+        />
+        {admin && status === "resolved" && !report.afterImageUrl && (
+          <p className="notice" role="status">
+            要標記已改善，請先上傳改善後照片。
+          </p>
+        )}
+        <label className="check-label">
+          <input
+            type="checkbox"
+            required
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+          />
+          {admin
+            ? "我確認註記僅供管理使用，案件狀態與改善照片會公開顯示。"
+            : `我確認內容不包含可辨識的個人資訊，並同意${DEMO_MODE ? "儲存在此瀏覽器" : "公開此紀錄與照片"}。`}
+        </label>
+        <button className="button primary full" disabled={busy || !consent}>
+          {busy
+            ? `儲存中 ${progress}%`
+            : admin
+              ? "儲存案件變更"
+              : "送出補充"}
+        </button>
+      </fieldset>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="success" role="status" aria-live="polite">
+          {success}
+        </p>
+      )}
+    </form>
+  );
+  const content = (
+      <div className={`panel-content${embedded ? " admin-case-content" : ""}`}>
         <div className="detail-top">
           <StatusBadge status={report.status} />
           {DEMO_MODE && <span className="demo-tag">測試資料</span>}
@@ -177,6 +288,7 @@ export default function ReportPanel({
             <strong>{ACCESS[report.wheelchairAccess]}</strong>
           </div>
         </div>
+        {embedded && admin && updateForm}
         <p className="detail-category">問題類型：{CATEGORIES[report.category]}</p>
         <p>{report.description || "此案件尚無補充說明。"}</p>
         <section className="evidence-section" aria-label="現場照片與改善證據">
@@ -236,105 +348,34 @@ export default function ReportPanel({
           <br />
           案件狀態更新：{date(report.updatedAt)}
         </p>
-        <form onSubmit={submit} className="update-form">
-          <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
-          {!admin && (
-            <p className="muted">
-              你的補充會公開顯示；若提出狀況改善，正式案件狀態仍由管理者確認後更新。
-            </p>
-          )}
-          {admin && DEMO_MODE && (
-            <p className="notice">Demo 管理操作只影響你的瀏覽器測試資料。</p>
-          )}
-          <fieldset disabled={busy}>
-            {admin ? (
-              <div className="form-grid">
-                <label>
-                  正式案件狀態
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as Status)}
-                  >
-                    {Object.entries(STATUSES).map(([k, v]) => (
-                      <option value={k} key={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  最新通行程度
-                  <select
-                    value={access}
-                    onChange={(e) => setAccess(e.target.value as Access)}
-                  >
-                    {Object.entries(ACCESS).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            ) : (
-              <label>
-                我看到的現況
-                <select
-                  value={suggestion}
-                  onChange={(e) => setSuggestion(e.target.value as Status | "")}
-                >
-                  <option value="">僅補充資訊</option>
-                  <option value="open">問題仍存在</option>
-                  <option value="resolved">看起來已改善（待管理者確認）</option>
-                </select>
-              </label>
-            )}
-            <label>
-              {admin ? "管理註記" : "現場說明"}（必填）
-              <textarea
-                required
-                maxLength={1000}
-                rows={3}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="請描述這次更新的內容"
-              />
-            </label>
-            <PhotoUploader
-              label={admin ? "改善後照片" : "最新照片（選填）"}
-              value={photo}
-              onChange={setPhoto}
-            />
-            <label className="check-label">
-              <input
-                type="checkbox"
-                required
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-              />
-              我確認內容不包含可辨識的個人資訊，並同意
-              {DEMO_MODE ? "儲存在此瀏覽器" : "公開此紀錄與照片"}。
-            </label>
-            <button className="button primary full" disabled={busy || !consent}>
-              {busy
-                ? `儲存中 ${progress}%`
-                : admin
-                  ? "儲存案件變更"
-                  : "送出補充"}
-            </button>
-          </fieldset>
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-          {success && (
-            <p className="success" role="status">
-              {success}
-            </p>
-          )}
-        </form>
+        {!embedded && updateForm}
       </div>
+  );
+  if (embedded) {
+    return (
+      <section className="admin-case-panel" aria-labelledby="admin-case-title">
+        <header className="admin-case-header">
+          <button
+            className="text-button admin-back-button"
+            onClick={onClose}
+            disabled={busy}
+          >
+            <ArrowLeftIcon size={18} />
+            返回案件
+          </button>
+          <div className="admin-case-heading">
+            <StatusBadge status={report.status} />
+            <h2 id="admin-case-title" tabIndex={-1}>{report.title}</h2>
+            <p>{report.address || report.district}</p>
+          </div>
+        </header>
+        {content}
+      </section>
+    );
+  }
+  return (
+    <Modal title={report.title} onClose={onClose} busy={busy} wide sheet>
+      {content}
     </Modal>
   );
 }

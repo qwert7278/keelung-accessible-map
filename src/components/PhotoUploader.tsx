@@ -48,6 +48,7 @@ export default function PhotoUploader({
           id={id}
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          required={required}
           disabled={disabled || busy}
           aria-describedby={`${id}-help`}
           onChange={async (e) => {

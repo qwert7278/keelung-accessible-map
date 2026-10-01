@@ -32,6 +32,7 @@ import Modal from "./components/Modal";
 import HelpPanel from "./components/HelpPanel";
 import OnboardingPanel from "./components/OnboardingPanel";
 import ReportSuccessPanel from "./components/ReportSuccessPanel";
+import AdminWorkspace from "./components/AdminWorkspace";
 import { reportIdFromSearch } from "./utils/reportLink";
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
   const [adminEmail, setAdminEmail] = useState("");
   const [signingIn, setSigningIn] = useState(false);
   const [signInSent, setSignInSent] = useState(false);
+  const [adminDraftStatus, setAdminDraftStatus] = useState<Status | null>(null);
   const adminPage = window.location.pathname.replace(/\/$/, "") === "/admin";
   useEffect(() => {
     let active = true,
@@ -264,14 +266,16 @@ export default function App() {
             <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
           </a>
         </nav>
-        <button
-          className="button primary header-report"
-          onClick={() => setCreating(true)}
-          disabled={!repository || !session}
-        >
-          <PlusIcon size={20} weight="bold" />
-          回報障礙
-        </button>
+        {!adminPage && (
+          <button
+            className="button primary header-report"
+            onClick={() => setCreating(true)}
+            disabled={!repository || !session}
+          >
+            <PlusIcon size={20} weight="bold" />
+            回報障礙
+          </button>
+        )}
       </header>
       <div className="demo-banner">
         <InfoIcon size={18} aria-hidden="true" />
@@ -355,29 +359,35 @@ export default function App() {
             </button>
           </section>
         )}
-        {adminPage && session?.admin && (
-          <div className="admin-banner">
-            <ShieldCheckIcon size={20} />
-            {DEMO_MODE
-              ? "管理體驗：點選任一案件，即可模擬更新狀態與上傳改善後照片。"
-              : "管理權限已驗證。請點選案件處理。"}
-            {!DEMO_MODE && (
-              <button
-                className="text-button"
-                onClick={async () => {
-                  try {
-                    await (await import("./services/supabase")).logoutAdmin();
-                    window.location.assign("/");
-                  } catch (e) {
-                    setError(readableError(e));
-                  }
-                }}
-              >
-                登出管理帳號
-              </button>
-            )}
-          </div>
-        )}
+        {adminPage && session?.admin ? (
+          repository ? (
+            <AdminWorkspace
+              reports={reports}
+              loading={loading}
+              repository={repository}
+              selectedReport={report}
+              initialStatus={adminDraftStatus}
+              onSelect={(id, status) => {
+                choose(id);
+                setAdminDraftStatus(status ?? null);
+              }}
+              onCloseCase={() => {
+                closeReport();
+                setAdminDraftStatus(null);
+              }}
+              onLogout={async () => {
+                try {
+                  await (await import("./services/supabase")).logoutAdmin();
+                  window.location.assign("/");
+                } catch (e) {
+                  setError(readableError(e));
+                }
+              }}
+            />
+          ) : (
+            <p className="admin-loading" role="status">正在載入管理案件…</p>
+          )
+        ) : (
         <section className="workspace" aria-label="通行回報探索">
           <aside className="sidebar">
             <div className="sidebar-head">
@@ -535,14 +545,17 @@ export default function App() {
             </div>
           </div>
         </section>
-        <button
-          className="button primary mobile-report-cta"
-          onClick={() => setCreating(true)}
-          disabled={!repository || !session}
-        >
-          <PlusIcon size={20} weight="bold" />
-          回報障礙
-        </button>
+        )}
+        {!adminPage && (
+          <button
+            className="button primary mobile-report-cta"
+            onClick={() => setCreating(true)}
+            disabled={!repository || !session}
+          >
+            <PlusIcon size={20} weight="bold" />
+            回報障礙
+          </button>
+        )}
       </main>
       <footer className="site-footer">
         <span>
@@ -551,6 +564,11 @@ export default function App() {
         </span>
         <a href="/how-to">如何使用</a>
         <a href="/about">關於計畫</a>
+        {DEMO_MODE && (
+          <button type="button" onClick={() => setAbout(true)}>
+            Demo 資料與重設
+          </button>
+        )}
         <a href="/privacy">使用與隱私說明</a>
         {!DEMO_MODE && (
           <a
@@ -592,7 +610,7 @@ export default function App() {
           }}
         />
       )}
-      {report && repository && !creating && (
+      {report && repository && !creating && !adminPage && (
         <ReportPanel
           key={report.id}
           report={report}

@@ -35,3 +35,12 @@
 - Demo Mode 完成回報後，確認有穩定成功畫面，並可查看、分享或返回地圖。
 - 詳情分辨原始回報照片、民眾補充照片、管理者改善後照片；民眾觀察不應被誤認為官方改善確認。
 - 320×568、200% 縮放、橫向手機與更大字級需另行人工檢查；本機桌機／390×844 截圖不可替代這些裝置驗收。
+# Beta V2.1 Admin checks — 2026-10-01
+
+- [ ] Admin owner opens a fresh Magic Link and returns to `/admin` with verified `is_admin()` authorization.
+- [ ] Find an open case and use “開始處理”; verify the edit form preselects `處理中`.
+- [ ] Save with a private admin note and explicit consent; verify success only after save and a public status/history event.
+- [ ] Try `已改善` without an after photo; verify guidance and disabled save.
+- [ ] Attach after evidence, add the required note, consent, then save and verify `已改善`.
+- [ ] On mobile, return from selected case to the queue, and confirm the queue search/filter and case action remain reachable.
+- [ ] Reset Demo data after local-only practice using “Demo 資料與重設”.

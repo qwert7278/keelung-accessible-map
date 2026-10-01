@@ -1,5 +1,12 @@
 # SEO QA 紀錄
 
+## 2026-10-01 Beta V2.1 local build
+
+- `npm run build`：通過，metadata、safe routes、robots、sitemap 與 1200×630 OG image 檢查通過。
+- Magic Link 與 share URL 使用 canonical Production URL，避免分享 localhost / Preview host。
+- 本輪未變更 SEO 頁面、canonical、索引控制或 Production deployment。
+- 最新 Preview browser 驗收須等這輪 Git push / Vercel Preview 完成；請勿將舊 Preview 的結論當成這輪結果。
+
 ## 本地驗證（2026-09-30）
 
 - `npm run lint`：通過（修正一個未使用 import 後重跑）。
