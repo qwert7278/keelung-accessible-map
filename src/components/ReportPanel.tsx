@@ -114,6 +114,10 @@ export default function ReportPanel({
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (busy || !consent) return;
+    if (admin && status === "resolved" && !photo && !report.afterImageUrl) {
+      setError("要標記已改善，請先上傳改善後照片。");
+      return;
+    }
     setBusy(true);
     setError("");
     setSuccess("");
@@ -150,6 +154,8 @@ export default function ReportPanel({
       setBusy(false);
     }
   }
+  const missingAfterPhoto =
+    admin && status === "resolved" && !photo && !report.afterImageUrl;
   const updateForm = (
     <form onSubmit={submit} className="update-form">
       <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
@@ -219,9 +225,9 @@ export default function ReportPanel({
           label={admin ? "改善後照片" : "最新照片（選填）"}
           value={photo}
           onChange={setPhoto}
-          required={admin && status === "resolved" && !report.afterImageUrl}
+          required={missingAfterPhoto}
         />
-        {admin && status === "resolved" && !report.afterImageUrl && (
+        {missingAfterPhoto && (
           <p className="notice" role="status">
             要標記已改善，請先上傳改善後照片。
           </p>
@@ -237,7 +243,10 @@ export default function ReportPanel({
             ? "我確認註記僅供管理使用，案件狀態與改善照片會公開顯示。"
             : `我確認內容不包含可辨識的個人資訊，並同意${DEMO_MODE ? "儲存在此瀏覽器" : "公開此紀錄與照片"}。`}
         </label>
-        <button className="button primary full" disabled={busy || !consent}>
+        <button
+          className="button primary full"
+          disabled={busy || !consent || !message.trim() || missingAfterPhoto}
+        >
           {busy
             ? `儲存中 ${progress}%`
             : admin
