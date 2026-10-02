@@ -4,25 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f6f3ea" />
-    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <meta
       name="description"
-      content="基隆好行以 OpenStreetMap 為底圖，整理民眾回報的基隆道路、騎樓與人行道通行狀況，留下公共紀錄，供市民參考並協助公部門掌握、追蹤與改善。"
+      content="路見不平 Road Tag，以台灣騎樓與人行道為核心的通行回報平台。選擇縣市與行政區，查看障礙位置、照片及改善紀錄；從基隆市仁愛區起步，一起標註高低差、破損與通行阻礙。"
     />
     <link rel="canonical" href="__PUBLIC_SITE_URL__/" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_TW" />
-    <meta property="og:site_name" content="RoadTag｜基隆好行" />
-    <meta property="og:title" content="RoadTag｜基隆好行｜基隆無障礙通行地圖" />
-    <meta property="og:description" content="查看基隆人行道、騎樓、路口與斜坡的通行狀況，留下公共紀錄並協助城市改善。" />
+    <meta property="og:site_name" content="路見不平 Road Tag" />
+    <meta property="og:title" content="路見不平 Road Tag｜台灣騎樓與人行道通行回報平台" />
+    <meta property="og:description" content="選擇縣市與行政區，查看與回報騎樓、人行道的高低差、破損和通行障礙。" />
     <meta property="og:url" content="__PUBLIC_SITE_URL__/" />
     <meta property="og:image" content="__PUBLIC_SITE_URL__/og-image.png" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="路見不平 Road Tag｜台灣騎樓與人行道通行回報平台" />
+    <meta name="twitter:description" content="路見不平，一起標註。查看附近障礙，或回報你現在看到的通行問題。" />
+    <meta name="twitter:image" content="__PUBLIC_SITE_URL__/og-image.png" />
+    <meta property="og:image:alt" content="路見不平 Road Tag：路見不平，一起標註" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","@id":"__PUBLIC_SITE_URL__/#website","url":"__PUBLIC_SITE_URL__/","name":"RoadTag｜基隆好行","alternateName":"Keelung Accessible Map","description":"基隆無障礙通行地圖，提供民眾查看與回報人行道、騎樓與路口等通行狀況。","inLanguage":"zh-Hant-TW"}
+      {"@context":"https://schema.org","@type":"WebSite","@id":"__PUBLIC_SITE_URL__/#website","url":"__PUBLIC_SITE_URL__/","name":"路見不平","alternateName":"Road Tag","description":"路見不平，一起標註。以台灣騎樓與人行道為核心，查看與標註通行障礙，留下現場照片與改善紀錄。","inLanguage":"zh-Hant-TW"}
     </script>
-    <title>RoadTag｜基隆好行｜基隆無障礙通行地圖</title>
+    <title>路見不平 Road Tag｜台灣騎樓與人行道通行回報平台</title>
     <style>
       :root {
         color-scheme: light;
@@ -1003,12 +1009,17 @@
         }
       }
     </style>
-  </head>
+    <link rel="stylesheet" href="/brand-tokens.css" />
+    <link rel="stylesheet" href="/roadtag-home.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"__PUBLIC_SITE_URL__/#faq","mainEntity":[{"@type":"Question","name":"這個平台主要回報哪些問題？","acceptedAnswer":{"@type":"Answer","text":"路見不平以騎樓與人行道為核心，記錄高低差、路面破損、通道阻塞、缺乏坡道等通行障礙，並留下位置、照片及現場說明。"}},{"@type":"Question","name":"可以選擇哪些縣市？","acceptedAnswer":{"@type":"Answer","text":"地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。正式回報目前由基隆起步，其他縣市逐步開放。"}},{"@type":"Question","name":"回報會自動送交政府嗎？","acceptedAnswer":{"@type":"Answer","text":"目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。"}},{"@type":"Question","name":"為什麼切換縣市後先顯示某個行政區？","acceptedAnswer":{"@type":"Answer","text":"每個縣市先設定一個中心行政區作為瀏覽起點，例如基隆市仁愛區、臺北市中山區。這是操作起點，不是人流或改善需求排名；你可以切換其他行政區。"}}]}</script>
+  <script type="application/ld+json" data-roadtag-page>{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"__PUBLIC_SITE_URL__/#page","url":"__PUBLIC_SITE_URL__/","name":"路見不平 Road Tag｜台灣騎樓與人行道通行回報平台","inLanguage":"zh-TW","isPartOf":{"@id":"__PUBLIC_SITE_URL__/#website"}},{"@type":"BreadcrumbList","@id":"__PUBLIC_SITE_URL__/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"路見不平","item":"__PUBLIC_SITE_URL__/"}]}]}</script>
+</head>
   <body>
     <a class="skip-link" href="#main">跳至主要內容</a>
     <header class="wrap header">
-      <a class="brand" href="#top" aria-label="基隆好行首頁">
-        <img class="brand-wordmark" src="images/brand-horizontal.webp" alt="基隆好行 Road Recall" width="2172" height="724" fetchpriority="high" />
+      <a class="brand" href="#top" aria-label="路見不平首頁">
+        <img class="brand-wordmark" src="/images/roadtag-logo-horizontal.webp" alt="路見不平 Road Tag" width="1086" height="362" fetchpriority="high" />
+
       </a>
       <nav class="nav" aria-label="主要導覽">
         <a href="#how">使用方式</a>
@@ -1021,47 +1032,23 @@
       <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="wrap hero-grid">
           <div>
-            <p class="eyebrow">從基隆出發，讓路況更容易被看見</p>
-            <h1 id="hero-title">讓每一段路，<br />都多一點選擇。</h1>
-            <p class="hero-copy">每一筆回報，都是一份公共紀錄。基隆好行整理道路、騎樓與人行道的通行障礙，讓市民掌握現場，也協助市府看見問題、追蹤查察，作為後續改善的參考。</p>
+            <h1 id="hero-title">路見不平，<br />一起標註</h1>
+            <p class="hero-copy">每一筆回報，讓通行問題更容易被看見。路見不平是台灣騎樓與人行道通行回報平台，記錄高低差、破損與阻礙，讓輪椅使用者、長者、推嬰兒車的人和每位行人，多一份現場資訊。</p>
             <div class="hero-actions">
-              <a class="button" href="#map">查看基隆即時地圖 <span aria-hidden="true">↓</span></a>
+              <a class="button" href="#map">查看通行回報地圖 <span aria-hidden="true">↓</span></a>
               <a class="button secondary" href="/map" data-map-link>新增一筆通行回報 <span aria-hidden="true">↗</span></a>
             </div>
           </div>
 
-          <aside class="location-card" aria-labelledby="sample-title">
-            <div class="location-head">
-              <div>
-                <h2 id="sample-title">仁愛區首批現場回報</h2>
-                <p>三個路緣高低差觀察點</p>
-              </div>
-              <span class="live-pill">公開地圖</span>
-            </div>
-            <div class="report-mini-list">
-              <div class="report-mini" data-report-id="40d51fbd-2f84-4a5e-88f2-f0d6d0be1092">
-                <div><strong>忠二路 44 號</strong><small>騎樓入口 · 無法通過</small></div>
-                <span class="status open">待改善</span>
-              </div>
-              <div class="report-mini" data-report-id="cd854b5b-f304-4395-a8eb-71bafaad8626">
-                <div><strong>愛三路 1 號</strong><small>騎樓入口 · 通行困難</small></div>
-                <span class="status open">待改善</span>
-              </div>
-              <div class="report-mini" data-report-id="57654ee6-b8b5-48bf-941a-18806f295a07">
-                <div><strong>仁二路 198 號</strong><small>超商騎樓入口 · 通行困難</small></div>
-                <span class="status open">待改善</span>
-              </div>
-            </div>
-            <p class="small-note">由民眾回報的現場資訊，公開供大家查閱，也讓公部門更容易掌握問題，作為後續查察與改善的參考。</p>
-          </aside>
+          <aside class="location-card" id="home-report-summary" aria-label="最新通行回報"></aside>
         </div>
-        <img class="hero-banner" src="images/accessible-coastal-city-banner.webp" alt="海岸城市與通行路線意象，呈現輪椅使用者也能探索城市的願景。" width="1916" height="821" fetchpriority="high" decoding="async" />
+        <img class="hero-banner" src="/images/roadtag-hero.webp" alt="海岸城市與通行路線意象，呈現輪椅使用者也能探索城市的願景。" width="1916" height="821" fetchpriority="high" decoding="async" />
       </section>
 
       <section class="barrier-story" aria-labelledby="story-title">
         <div class="story-intro">
           <h2 id="story-title">這座城市，人人都好走嗎？</h2>
-          <p>從輪椅的高度看出去，一段路要能走，得先有連續、平順而且安全的空間。把道路、騎樓與人行道的障礙留下位置和現場紀錄，讓市民彼此提醒，也協助公部門掌握、追蹤需要查察與改善的地方。</p>
+          <p>從輪椅的高度看出去，一段路要能走，得先有連續、平順而且安全的空間。把騎樓與人行道的障礙留下位置和現場紀錄，讓市民彼此提醒，也協助公部門掌握、追蹤需要查察與改善的地方。</p>
         </div>
         <div class="story-list" aria-label="常見通行障礙情境">
           <article class="story-row">
@@ -1093,7 +1080,7 @@
             <div class="story-copy"><small>路面高低差</small><h3>一個落差，也可能成為一道門檻</h3><p>鋪面破損、突起或斜坡接縫，都可能讓輪椅卡住、讓行人失去平衡。記下位置與現場狀況，讓不連續的路面有跡可循。</p></div>
           </article>
         </div>
-        <p class="story-note">以上圖片為情境示意，不代表基隆特定地點的現況或地圖上的實際案件。</p>
+        <p class="story-note">以上圖片為情境示意，不代表特定地點的現況或地圖上的實際案件。</p>
         <div class="story-cta">
           <div><h3>讓每個問題，都有位置可追蹤。</h3><p>把障礙和現場狀況留在地圖上，供市民參考，也讓需要改善的地方更容易被看見。</p></div>
           <a class="button" href="/map" data-map-link>前往地圖查看或回報 <span aria-hidden="true">↗</span></a>
@@ -1103,37 +1090,13 @@
       <section class="section wrap" id="map" aria-labelledby="map-title">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">OpenStreetMap 底圖 · 基隆市</p>
+            <p class="eyebrow">OpenStreetMap 底圖 · 台灣通行回報</p>
             <h2 id="map-title">先看路況，再決定怎麼走。</h2>
-            <p>在首頁直接查看仁愛區首批回報位置與處理狀態；點選地圖標記即可開啟該案件。</p>
+            <p>先選縣市，再選行政區。首頁與完整地圖同步顯示回報位置及狀態；初次使用從基隆市仁愛區開始。</p>
           </div>
           <a class="button secondary" href="/map" data-map-link>在新頁開啟地圖 <span aria-hidden="true">↗</span></a>
         </div>
-        <div class="map-frame">
-          <div class="map-preview" id="report-map-preview">
-            <iframe
-              id="report-map-tiles"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=121.68%2C25.10%2C121.81%2C25.16&amp;layer=mapnik"
-              title="OpenStreetMap 基隆仁愛區即時回報地圖"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-              tabindex="-1"
-              aria-hidden="true"
-            ></iframe>
-            <div class="map-marker-layer" id="report-map-markers" aria-label="仁愛區實際回報位置"></div>
-          </div>
-          <div class="map-caption">
-            <div class="map-caption-main">
-              <span id="map-live-note" class="map-live-note" role="status" aria-live="polite">正在同步案件狀態…</span>
-              <div class="map-status-legend" aria-label="案件狀態圖例">
-                <span class="map-status-key"><i class="map-status-dot open" aria-hidden="true">!</i>待改善</span>
-                <span class="map-status-key"><i class="map-status-dot in_progress" aria-hidden="true">…</i>處理中</span>
-                <span class="map-status-key"><i class="map-status-dot resolved" aria-hidden="true">✓</i>已改善</span>
-              </div>
-            </div>
-            <a href="/map" data-map-link>開啟完整地圖</a>
-          </div>
-        </div>
+        <div id="home-map-root" aria-label="通行回報地圖"></div>
       </section>
 
       <section class="section wrap" id="how" aria-labelledby="how-title">
@@ -1145,17 +1108,17 @@
         </div>
         <div class="steps">
           <article class="step-card">
-            <span class="step-num" aria-hidden="true">1</span>
+            <img class="step-icon" src="/images/roadtag-icon-map.webp" alt="" width="56" height="56" loading="lazy" decoding="async" />
             <h3>找到回報位置</h3>
-            <p>在基隆地圖上搜尋地點，或查看附近的通行回報。</p>
+            <p>先選縣市與行政區，再查看附近的騎樓與人行道回報。</p>
           </article>
           <article class="step-card">
-            <span class="step-num" aria-hidden="true">2</span>
+            <img class="step-icon" src="/images/roadtag-icon-info.webp" alt="" width="56" height="56" loading="lazy" decoding="async" />
             <h3>看現場狀況</h3>
             <p>查看障礙類型、輪椅通行程度與回報照片，先評估合適路線。</p>
           </article>
           <article class="step-card">
-            <span class="step-num" aria-hidden="true">3</span>
+            <img class="step-icon" src="/images/roadtag-icon-report.webp" alt="" width="56" height="56" loading="lazy" decoding="async" />
             <h3>補上最新觀察</h3>
             <p>親自經過後，可補充路況變化，讓大家掌握最新狀況，也讓改善過程有跡可循。</p>
           </article>
@@ -1169,24 +1132,28 @@
       <section class="wrap" aria-labelledby="closing-title">
         <div class="closing closing-row">
           <div>
-            <h2 id="closing-title">一起把不好走的路，說清楚。</h2>
-            <p>讓道路、騎樓與人行道的通行問題被看見，逐步走向更好走的城市。</p>
+            <h2 id="closing-title">路見不平，一起標註</h2>
+            <p>讓騎樓與人行道的通行問題被看見，逐步走向更好走的城市。</p>
           </div>
           <a class="button" href="/map" data-map-link>前往正式版地圖 <span aria-hidden="true">↗</span></a>
         </div>
       </section>
+<section class="section wrap home-faq" aria-labelledby="faq-title"><h2 id="faq-title">常見問題</h2><details><summary>這個平台主要回報哪些問題？</summary><p>路見不平以騎樓與人行道為核心，記錄高低差、路面破損、通道阻塞、缺乏坡道等通行障礙，並留下位置、照片及現場說明。</p></details>
+<details><summary>可以選擇哪些縣市？</summary><p>地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。正式回報目前由基隆起步，其他縣市逐步開放。</p></details>
+<details><summary>回報會自動送交政府嗎？</summary><p>目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。</p></details>
+<details><summary>為什麼切換縣市後先顯示某個行政區？</summary><p>每個縣市先設定一個中心行政區作為瀏覽起點，例如基隆市仁愛區、臺北市中山區。這是操作起點，不是人流或改善需求排名；你可以切換其他行政區。</p></details></section>
     </main>
 
     <footer class="site-footer" id="footer">
-      <img class="footer-scene" src="images/brand-footer.webp" alt="基隆好行 Road Recall 品牌標誌與基隆山海意象" width="2172" height="724" loading="lazy" decoding="async" />
+      <img class="footer-scene" src="/images/roadtag-footer.webp" alt="路見不平的基隆山海港灣插畫，呈現海岸道路與定位標記的品牌意象" width="1916" height="821" loading="lazy" decoding="async" />
       <div class="footer-row">
-        <p><strong>基隆好行</strong> · 基隆無障礙通行回報地圖</p>
+        <p><strong>路見不平 Road Tag</strong> · 路見不平，一起標註</p>
         <p>底圖 © OpenStreetMap contributors · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap 著作權</a></p>
         <nav class="footer-legal" aria-label="網站政策">
           <a href="/terms">使用條款</a>
           <a href="/privacy">隱私權政策</a>
         </nav>
-        <a class="threads-link" href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤基隆好行 @roadrecall2046"><svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M188.84,120.46a68.14,68.14,0,0,0-10-6.23c-3.72-21.68-16.41-37.41-35.52-43.2C121.94,64.55,97.29,72.42,86,89.34a12,12,0,0,0,20,13.32c5.47-8.2,19.11-12.08,30.41-8.66a24.72,24.72,0,0,1,14.88,12.24,86.73,86.73,0,0,0-8.86-.45C108.56,105.79,84,125.22,84,152c0,22.9,17.54,39.52,41.71,39.52a52,52,0,0,0,37.23-16c6-6.23,12.88-16.46,15.72-32.07,6.2,6.42,9.34,14.67,9.34,24.59,0,17.74-19.07,44-60,44-45.76,0-68-27.48-68-84s22.24-84,68-84c31.08,0,51,12.42,60.8,38a12,12,0,0,0,22.4-8.62C197.77,38.44,169,20,128,20,68.67,20,36,58.35,36,128s32.67,108,92,108c31.36,0,51.08-12.05,62.11-22.15C203.81,201.28,212,184.14,212,168,212,148.36,204,131.92,188.84,120.46Zm-43.2,38.39a27.9,27.9,0,0,1-19.93,8.67c-8.17,0-17.71-4.06-17.71-15.52,0-15.26,17.84-22.21,34.41-22.21a60.23,60.23,0,0,1,13.51,1.52C155.36,142.93,151.84,152.41,145.64,158.85Z"/></svg><span>Threads</span></a>
+        <a class="threads-link" href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤路見不平 @roadrecall2046"><svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M188.84,120.46a68.14,68.14,0,0,0-10-6.23c-3.72-21.68-16.41-37.41-35.52-43.2C121.94,64.55,97.29,72.42,86,89.34a12,12,0,0,0,20,13.32c5.47-8.2,19.11-12.08,30.41-8.66a24.72,24.72,0,0,1,14.88,12.24,86.73,86.73,0,0,0-8.86-.45C108.56,105.79,84,125.22,84,152c0,22.9,17.54,39.52,41.71,39.52a52,52,0,0,0,37.23-16c6-6.23,12.88-16.46,15.72-32.07,6.2,6.42,9.34,14.67,9.34,24.59,0,17.74-19.07,44-60,44-45.76,0-68-27.48-68-84s22.24-84,68-84c31.08,0,51,12.42,60.8,38a12,12,0,0,0,22.4-8.62C197.77,38.44,169,20,128,20,68.67,20,36,58.35,36,128s32.67,108,92,108c31.36,0,51.08-12.05,62.11-22.15C203.81,201.28,212,184.14,212,168,212,148.36,204,131.92,188.84,120.46Zm-43.2,38.39a27.9,27.9,0,0,1-19.93,8.67c-8.17,0-17.71-4.06-17.71-15.52,0-15.26,17.84-22.21,34.41-22.21a60.23,60.23,0,0,1,13.51,1.52C155.36,142.93,151.84,152.41,145.64,158.85Z"/></svg><span>Threads</span></a>
       </div>
     </footer>
     <button class="creator-contact" type="button" aria-haspopup="dialog" aria-controls="feedback-dialog" id="open-feedback">
@@ -1197,7 +1164,7 @@
       <form class="feedback-form" id="feedback-form">
         <div class="feedback-topline">
           <div>
-            <h2 id="feedback-title">一起讓基隆好行更好用</h2>
+            <h2 id="feedback-title">一起讓路見不平更好用</h2>
             <p>歡迎回報錯誤、提出修改建議，或分享使用上的想法。</p>
           </div>
           <button class="feedback-close" type="button" aria-label="關閉回報視窗" id="close-feedback">×</button>
@@ -1241,7 +1208,7 @@
           event.preventDefault();
           if (!form.reportValidity()) return;
           const values = new FormData(form);
-          const subject = `[基隆好行意見] ${values.get("kind")}｜${values.get("subject")}`;
+          const subject = `[路見不平意見] ${values.get("kind")}｜${values.get("subject")}`;
           const body = [
             `回報類型：${values.get("kind")}`,
             `標題：${values.get("subject")}`,
@@ -1255,120 +1222,6 @@
         });
       })();
     </script>
-    <script>
-      (() => {
-        const projectUrl = "https://ifcicahnrpkwjcxmnmug.supabase.co";
-        const publishableKey = "sb_publishable_dGPMlt3HJPiDegtjol4WNQ_HLhgHGNt";
-        const appUrl = new URL("/map", window.location.origin).href;
-        document.querySelectorAll("a[data-map-link]").forEach((link) => { link.href = appUrl; });
-        const map = document.getElementById("report-map-preview");
-        const tiles = document.getElementById("report-map-tiles");
-        const markers = document.getElementById("report-map-markers");
-        const liveNote = document.getElementById("map-live-note");
-        const center = { lat: 25.13, lng: 121.744 };
-        const featuredIds = [
-          "40d51fbd-2f84-4a5e-88f2-f0d6d0be1092",
-          "cd854b5b-f304-4395-a8eb-71bafaad8626",
-          "57654ee6-b8b5-48bf-941a-18806f295a07"
-        ];
-        const statusLabels = { open: "待改善", in_progress: "處理中", resolved: "已改善" };
-        const statusSymbols = { open: "!", in_progress: "…", resolved: "✓" };
-        const initialReports = [
-          { id: featuredIds[0], title: "忠二路 44 號騎樓入口", lat: 25.1306234, lng: 121.7393539, status: "open" },
-          { id: featuredIds[1], title: "愛三路 1 號騎樓入口", lat: 25.127189, lng: 121.741575, status: "open" },
-          { id: featuredIds[2], title: "仁二路 198 號超商騎樓入口", lat: 25.1287884, lng: 121.7448982, status: "open" }
-        ];
-        let reports = initialReports;
-        let lastAspect = 0;
-
-        function mercatorY(latitude) {
-          const radians = latitude * Math.PI / 180;
-          return Math.log(Math.tan(Math.PI / 4 + radians / 2));
-        }
-
-        function drawMap() {
-          const width = map.clientWidth;
-          const height = map.clientHeight;
-          if (!width || !height) return;
-          const aspect = width / height;
-          const latitudeSpan = 0.06;
-          const longitudeSpan = latitudeSpan * aspect / Math.cos(center.lat * Math.PI / 180);
-          const bounds = {
-            south: center.lat - latitudeSpan / 2,
-            north: center.lat + latitudeSpan / 2,
-            west: center.lng - longitudeSpan / 2,
-            east: center.lng + longitudeSpan / 2
-          };
-          if (Math.abs(aspect - lastAspect) > 0.035) {
-            const query = new URLSearchParams({
-              bbox: [bounds.west, bounds.south, bounds.east, bounds.north].map((n) => n.toFixed(6)).join(","),
-              layer: "mapnik"
-            });
-            tiles.src = "https://www.openstreetmap.org/export/embed.html?" + query.toString();
-            lastAspect = aspect;
-          }
-          const northY = mercatorY(bounds.north);
-          const southY = mercatorY(bounds.south);
-          markers.replaceChildren();
-          reports.forEach((report) => {
-            if (!Number.isFinite(report.lat) || !Number.isFinite(report.lng) || !statusLabels[report.status]) return;
-            const x = (report.lng - bounds.west) / (bounds.east - bounds.west);
-            const y = (northY - mercatorY(report.lat)) / (northY - southY);
-            if (x < 0 || x > 1 || y < 0 || y > 1) return;
-            const link = document.createElement("a");
-            link.className = "home-map-marker " + report.status;
-            link.style.left = (x * 100) + "%";
-            link.style.top = (y * 100) + "%";
-            link.href = appUrl + "?report=" + encodeURIComponent(report.id);
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = statusSymbols[report.status];
-            link.setAttribute("aria-label", report.title + "，" + statusLabels[report.status] + "，開啟案件");
-            link.title = report.title + " · " + statusLabels[report.status];
-            markers.append(link);
-            const mini = document.querySelector('.report-mini[data-report-id="' + report.id + '"] .status');
-            if (mini) {
-              mini.className = "status " + report.status;
-              mini.textContent = statusLabels[report.status];
-            }
-          });
-        }
-
-        async function syncStatuses() {
-          try {
-            const query = new URLSearchParams();
-            query.set("select", "id,title,lat,lng,status");
-            query.set("id", "in.(" + featuredIds.join(",") + ")");
-            query.set("city_id", "eq.TW-KEE");
-            const response = await fetch(projectUrl + "/rest/v1/report_feed?" + query.toString(), {
-              headers: {
-                apikey: publishableKey,
-                Authorization: "Bearer " + publishableKey
-              },
-              cache: "no-store",
-              signal: AbortSignal.timeout(8000)
-            });
-            if (!response.ok) throw new Error("案件狀態暫時無法同步");
-            const rows = await response.json();
-            if (!Array.isArray(rows)) throw new Error("回報資料格式不正確");
-            const liveById = new Map(rows.map((row) => [row.id, row]));
-            reports = initialReports
-              .filter((report) => liveById.has(report.id))
-              .map((report) => Object.assign({}, report, liveById.get(report.id)));
-            drawMap();
-            liveNote.textContent = reports.length
-              ? "已同步 " + reports.length + " 個仁愛區回報點 · 點選標記查看案件"
-              : "目前沒有可顯示的回報點，請開啟完整地圖查看。";
-          } catch {
-            drawMap();
-            liveNote.textContent = "即時狀態暫時無法同步；標記顯示最近的資料，最新狀況請開啟完整地圖。";
-          }
-        }
-
-        drawMap();
-        new ResizeObserver(drawMap).observe(map);
-        void syncStatuses();
-      })();
-    </script>
+    <script type="module" src="/src/home-map.tsx"></script>
   </body>
 </html>

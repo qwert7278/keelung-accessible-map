@@ -41,7 +41,7 @@ export default function OnboardingPanel({
   const [step, setStep] = useState(0);
   const current = steps[step];
   return (
-    <Modal title="開始使用基隆好行" onClose={onClose}>
+    <Modal title="開始使用路見不平" onClose={onClose}>
       <div className="onboarding-content">
         <p className="onboarding-progress" aria-live="polite">
           使用說明 {step + 1}／{steps.length}

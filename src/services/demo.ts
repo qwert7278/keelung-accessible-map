@@ -12,13 +12,16 @@ const key = "accessible-map-demo-v1";
 const event = "accessible-map-change";
 const uid = "demo-local-user";
 async function read(): Promise<Store> {
-  return (
-    (await get<Store>(key)) ?? {
-      version: 1,
-      reports: structuredClone(demoReports),
-      updates: {},
-    }
-  );
+  const store = (await get<Store>(key)) ?? { version: 1, reports: [], updates: {} };
+  // Remove only the eight known historical fixtures; preserve locally created reports.
+  const seedIds = new Set(Array.from({ length: 8 }, (_, i) => `demo-${i + 1}`));
+  const reports = store.reports.filter((report) => !seedIds.has(report.id));
+  if (reports.length !== store.reports.length) {
+    store.reports = reports;
+    for (const id of seedIds) delete store.updates[id];
+    await set(key, store);
+  }
+  return store;
 }
 async function save(store: Store) {
   await set(key, store);
@@ -39,9 +42,12 @@ export const demoRepository: ReportRepository = {
     };
     refresh();
     window.addEventListener(event, refresh);
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       active = false;
       window.removeEventListener(event, refresh);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   },
   async create(draft, photo, progress) {

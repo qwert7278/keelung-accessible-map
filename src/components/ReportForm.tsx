@@ -8,7 +8,7 @@ import {
   WarningCircleIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
-import { CITY, DEMO_MODE } from "../config";
+import { type City, DEMO_MODE } from "../config";
 import {
   ACCESS,
   CATEGORIES,
@@ -29,11 +29,11 @@ import GuidedTourPrompt from "./GuidedTourPrompt";
 const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   1: {
     title: "選擇障礙位置",
-    body: "按「使用目前位置」，或直接點地圖上的障礙位置。不想開 GPS 也可以完成。",
+    body: "點選閃動的地圖標記障礙位置，或按「使用目前位置」。不想開 GPS 也可以完成。",
   },
   2: {
     title: "寫一個看得懂的地點名稱",
-    body: "例如「基隆車站南站出口旁」。填好後離開欄位，教學會帶你到下一個按鈕。",
+    body: "在閃動欄位輸入清楚的位置，例如「車站出口旁的騎樓入口」。填好後點欄位外，教學會帶你到下一個按鈕。",
   },
   3: {
     title: "前往現場資訊",
@@ -41,7 +41,7 @@ const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   },
   4: {
     title: "上傳現場照片",
-    body: "選一張能看見障礙本身與周圍通行空間的照片。",
+    body: "按閃動區域內的「選擇檔案」，上傳一張能看見障礙本身與周圍通行空間的照片。",
   },
   5: {
     title: "選擇輪椅通行程度",
@@ -63,6 +63,8 @@ const GUIDE_COPY: Record<number, { title: string; body: string }> = {
 
 export default function ReportForm({
   repository,
+  city,
+  initialDistrict,
   reports,
   guidedStep = null,
   onGuidedStepChange,
@@ -71,6 +73,8 @@ export default function ReportForm({
   onExisting,
 }: {
   repository: ReportRepository;
+  city: City;
+  initialDistrict: string;
   reports: Report[];
   guidedStep?: number | null;
   onGuidedStepChange?: (step: number | null) => void;
@@ -93,14 +97,14 @@ export default function ReportForm({
     [confirmed, setConfirmed] = useState(false),
     [picked, setPicked] = useState(false);
   const [draft, setDraft] = useState<ReportDraft>({
-    cityId: CITY.id,
-    district: "仁愛區",
+    cityId: city.id,
+    district: initialDistrict === "all" ? city.defaultDistrict : initialDistrict,
     title: "",
     address: "",
     description: "",
     category: "uneven_surface",
     wheelchairAccess: "difficult",
-    location: { ...CITY.center },
+    location: { ...city.center },
   });
   const nearby = reports.find(
     (r) =>
@@ -115,7 +119,7 @@ export default function ReportForm({
   function updateManualCoordinate(axis: "lat" | "lng", value: string) {
     const location = { ...draft.location, [axis]: Number(value) };
     const touched = { ...manualCoordinates, [axis]: true };
-    const bounds = CITY.bounds;
+    const bounds = city.bounds;
     const valid =
       touched.lat &&
       touched.lng &&
@@ -198,14 +202,14 @@ export default function ReportForm({
       (p) => {
         setLocating(false);
         const location = { lat: p.coords.latitude, lng: p.coords.longitude },
-          b = CITY.bounds;
+          b = city.bounds;
         if (
           location.lat < b.south ||
           location.lat > b.north ||
           location.lng < b.west ||
           location.lng > b.east
         ) {
-          setError("目前位置不在基隆服務範圍，請在地圖選擇障礙位置。");
+          setError(`目前位置不在${city.name}範圍，請切換縣市後回報，或在地圖選擇障礙位置。`);
           return;
         }
         update("location", location);
@@ -272,12 +276,13 @@ export default function ReportForm({
           {step === 1 && (
             <>
               <p className="muted">
-                點選地圖標記障礙的位置，也可以直接輸入座標。
+                回報縣市：{city.name}。點選地圖標記騎樓或人行道障礙，也可以直接輸入座標。
               </p>
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
                 <MapView
+                  city={city}
                   reports={[]}
                   onSelect={() => {}}
                   picking
@@ -336,7 +341,7 @@ export default function ReportForm({
                   className={guidedStep === 2 ? "guide-target-active" : undefined}
                   required
                   maxLength={80}
-                  placeholder="例如：基隆車站南站出口旁"
+                  placeholder="例如：車站出口旁的騎樓入口"
                   value={draft.title}
                   onChange={(e) => update("title", e.target.value)}
                   onBlur={() => {
@@ -353,7 +358,7 @@ export default function ReportForm({
                     value={draft.district}
                     onChange={(e) => update("district", e.target.value)}
                   >
-                    {CITY.districts.map((d) => (
+                    {city.districts.map((d) => (
                       <option key={d}>{d}</option>
                     ))}
                   </select>
@@ -459,7 +464,7 @@ export default function ReportForm({
                 <MapPinIcon size={28} />
                 <h3>{draft.title}</h3>
                 <p>
-                  {draft.district} · {CATEGORIES[draft.category]}
+                  {city.name} {draft.district} · {CATEGORIES[draft.category]}
                 </p>
                 <strong>{ACCESS[draft.wheelchairAccess]}</strong>
                 <p>

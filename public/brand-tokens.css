@@ -1,0 +1,35 @@
+/* 路見不平 / Road Tag — CIS v1.2, owner-supplied harbor palette. */
+:root {
+  color-scheme: light;
+  --roadtag-primary: #09595b;
+  --roadtag-primary-dark: #103637;
+  --roadtag-navy: #16364b;
+  --roadtag-sea: #50b4cd;
+  --roadtag-cyan: #099bac;
+  --roadtag-mist-blue: #96cbde;
+  --roadtag-water: #73c4de;
+  --roadtag-hill: #619f57;
+  --roadtag-green: #148e5a;
+  --roadtag-resolved: #148e5a;
+  --roadtag-mountain: #155336;
+  --roadtag-yellow: #e29929;
+  --roadtag-orange: #d6691e;
+  --roadtag-coral: #d86958;
+  --roadtag-paper: #f6f3ea;
+  --roadtag-mist: #dfe9ed;
+  --roadtag-white: #fff;
+  --roadtag-text: #1f2d2d;
+  --roadtag-muted: #526262;
+  --roadtag-border: #d7e1de;
+  --roadtag-control-border: #718885;
+}
+::selection { background: var(--roadtag-primary); color: #fff; }
+input, textarea { caret-color: var(--roadtag-primary); }
+html { scrollbar-color: var(--roadtag-primary) var(--roadtag-paper); }
+a, button { text-underline-offset: 4px; }
+/* Two-tone focus remains visible on both cream and dark harbor surfaces. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--roadtag-navy);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px #fff;
+}

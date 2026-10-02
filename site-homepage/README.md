@@ -1,13 +1,9 @@
-# Road Recall public homepage
+# Road Recall public homepage source
 
-This folder contains the reviewed static homepage for the Road Recall public hub. It is kept separate from the Vite reporting application so the brochure homepage and the reporting/map app can evolve independently.
+> ARCHIVED — 2026-10-02: The owner selected GitHub `main` → Vercel as the only production release pipeline. This historical export is not an editable source or deployment target. Do not merge, synchronize, or publish it. See [the current maintenance workflow](../docs/single-release-workflow.md). The notes below describe the former setup.
 
-## Contents
+This directory is part of the main Road Recall repository. Treat its reviewed HTML and assets as canonical source only if the active site build explicitly consumes them. Do not make a second, independently maintained homepage here or in a hosting provider editor.
 
-- `index.html` — homepage layout, OpenStreetMap preview, and three sample report markers with status colors synced from the public Supabase view.
-- `images/` — image assets used by the homepage.
-- `apple-touch-icon.png`, `favicon.png` — page icons.
+At the time this note was written, the Vite app entry and this exported static homepage were separate inputs, and the Vercel build did not prove that this folder was served at `/`. The ChatGPT Site also had a separately bound source. This is a known source-of-truth gap, not a completed synchronization setup. See [`../docs/agent-memory.md`](../docs/agent-memory.md). Before claiming homepage parity, first wire the canonical homepage into the main repo's local/Vercel route and create a reproducible publisher for any other host; then verify each live URL.
 
-The browser code uses only the Supabase publishable key. Never place a Supabase service-role key in this folder. The configured homepage links people to the reporting application at `https://keelung-accessible-map.vercel.app/`.
-
-The source was exported from the reviewed Site homepage. Site-specific private hosting metadata and local preview artifacts are intentionally excluded.
+The page uses only a Supabase publishable key if connected to public report data. Never add a service-role key or other server secret to this folder.

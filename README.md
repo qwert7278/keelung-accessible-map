@@ -8,10 +8,11 @@
 
 ## Demo 與原始碼
 
-正式網址：[keelung-accessible-map.vercel.app](https://keelung-accessible-map.vercel.app/)。目前變更先部署至受保護的 Vercel Preview；Production 發佈需另行人工確認。
+唯一正式網址：[keelung-accessible-map.vercel.app](https://keelung-accessible-map.vercel.app/)。唯一發布流程：本機修改與驗收 → 你確認 OK → 推送 GitHub `main` → Vercel 自動部署 Production → 核對正式網址。ChatGPT Sites 已退出正式發布流程，保留為僅擁有者可存取的歷史封存；不合併、不同步、不再發布。程式與 Supabase migration 由同一 repo 版本管理，線上資料與照片留在 Supabase。細節見[單一發布與維護流程](docs/single-release-workflow.md)。
 
 ## 功能
 
+- `/` 是基隆好行沉浸式首頁；`/map` 是通行地圖與回報程式。兩者由同一個 Vite build 從本 repo 產生。
 - 真實可操作底圖（無 key 時 Leaflet／OpenStreetMap），8 筆清楚標示的基隆示範案件。
 - 地圖標記、案件列表、狀態／行政區／通行程度篩選與既有回報搜尋。
 - 三步回報：選位置、照片與問題、確認送出。
@@ -32,7 +33,7 @@ npm ci
 npm run dev
 ```
 
-開啟終端顯示的 localhost 網址；預設 Demo 可直接使用。
+開啟終端顯示的 localhost 網址預覽首頁；通行地圖在 `/map`，預設 Demo 可直接使用。
 
 ```sh
 npm run lint
@@ -40,6 +41,12 @@ npm test
 npm run build
 npm run preview
 ```
+
+## Agent 工作規則
+
+- [專案記憶：已知坑與標準流程](docs/agent-memory.md)
+- [專案短備忘：固定決策與文件入口](docs/PROJECT_MEMO.md)
+- 專用 skill：`.agents/skills/road-recall-site/SKILL.md`
 
 ## 文件
 

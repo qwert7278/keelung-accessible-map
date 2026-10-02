@@ -1,7 +1,8 @@
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
-import { CITY } from "../config";
+import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
 type Props = {
+  city?: City;
   reports: Report[];
   onSelect: (id: string) => void;
   picking?: boolean;
@@ -29,8 +30,8 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
     clearTimeout(timer);
   }
   const map = new google.maps.Map(node, {
-    center: CITY.center,
-    zoom: CITY.zoom,
+    center: (latest().city || CITY).center,
+    zoom: (latest().city || CITY).zoom,
     mapId: "DEMO_MAP_ID",
     streetViewControl: false,
     mapTypeControl: false,

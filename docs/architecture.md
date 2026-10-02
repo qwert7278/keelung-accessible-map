@@ -2,7 +2,7 @@
 
 ## 目前結構
 
-React 19 + Vite + TypeScript → ReportRepository 介面 → Demo 或 Supabase adapter。
+首頁 `/` 與通行地圖 `/map` 同在主 repo 的 Vite 專案中建置；React 19 + Vite + TypeScript 地圖程式 → ReportRepository 介面 → Demo 或 Supabase adapter。
 
 - `src/config.ts`：城市、顯示名稱、中心、服務範圍、行政區。
 - `src/types.ts`：跨儲存實作共用的 Report／ReportUpdate／Repository。

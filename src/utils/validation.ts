@@ -20,7 +20,7 @@ export function validateDraft(draft: ReportDraft): string | null {
     lng < b.west ||
     lng > b.east
   )
-    return "位置超出基隆示範服務範圍，請重新選點。";
+    return `位置超出${city.name}範圍，請重新選點或切換縣市。`;
   return null;
 }
 export function distanceMeters(

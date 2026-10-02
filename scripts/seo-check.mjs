@@ -33,13 +33,24 @@ for (const match of index.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
   }
 }
 check(index.includes(`<html lang="zh-Hant-TW">`), "Homepage language must remain zh-Hant-TW.");
-check(index.includes("基隆無障礙通行地圖"), "Homepage title/topic is missing.");
+check(index.includes("台灣騎樓與人行道通行回報平台"), "Homepage title/topic is missing.");
 check(index.includes(`${base}/`), "Homepage canonical and social URLs must use the production host.");
 check(meta(index, "og:type", "website"), "Homepage og:type must be website.");
 check(/"@type"\s*:\s*"WebSite"/.test(index), "WebSite JSON-LD is missing.");
+check((index.match(/<h1\b/g) || []).length === 1, "Homepage must have exactly one H1.");
+check(meta(index, "og:site_name", "路見不平 Road Tag"), "Homepage social brand must match the CIS.");
+const websiteSchema = JSON.parse(index.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] || "{}");
+check(websiteSchema.name === "路見不平" && websiteSchema.alternateName === "Road Tag", "WebSite JSON-LD must use the current Chinese and English brand names.");
+check(index.includes("home-map-root") && !index.includes("featuredIds"), "Homepage must use the shared report map instead of hard-coded featured records.");
+check(index.includes("路見不平，一起標註"), "Homepage must include the approved slogan as readable text.");
 check(!/localhost|\.vercel\.app\//i.test(index.replaceAll(base, "")), "Homepage must not contain a preview or localhost URL.");
 
+const faqSchema = [...index.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1])).find(e => e['@type'] === 'FAQPage');
+check(faqSchema?.mainEntity?.length === 4, 'Homepage needs the matching visible FAQ schema.');
+for (const q of faqSchema?.mainEntity || []) { check(index.includes(q.name) && index.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
 const mapPage = await read("map.html");
+const mapSchema = JSON.parse(mapPage.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] || "{}");
+check(mapSchema["@graph"]?.some((entity) => entity["@type"] === "WebSite" && entity["@id"] === `${base}/#website` && entity.name === "路見不平"), "Map must reference the same branded WebSite as the homepage.");
 check(mapPage.includes(`<link rel="canonical" href="${base}/map" />`), "Map canonical URL must use /map.");
 check(meta(mapPage, "og:url", `${base}/map`), "Map social URL must use /map.");
 
@@ -82,6 +93,9 @@ const adminHeaders = vercelConfig.headers.filter(({ source }) => source === "/ad
 check(adminHeaders.some(({ headers }) => headers.some(({ key, value }) => key.toLowerCase() === "x-robots-tag" && /noindex/i.test(value))), "Admin response must include an X-Robots-Tag noindex header.");
 
 const shareImagePath = resolve(dist, "og-image.png");
+for (const path of ["index.html", "map.html", "404.html", ...["how-to", "about", "privacy", "terms"].map((p) => `${p}/index.html`)]) {
+  check(!/基隆好行|Road Recall|Road Record/.test(await read(path)), `${path} must not expose the retired brand.`);
+}
 const shareImage = await readFile(shareImagePath);
 const width = shareImage.readUInt32BE(16);
 const height = shareImage.readUInt32BE(20);

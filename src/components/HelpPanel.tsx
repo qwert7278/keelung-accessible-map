@@ -9,10 +9,10 @@ export default function HelpPanel({
   onStartGuide?: () => void;
 }) {
   return (
-    <Modal title="如何使用基隆好行" onClose={onClose} wide>
+    <Modal title="如何使用路見不平" onClose={onClose} wide>
       <div className="panel-content help-content">
         <p className="help-lead">
-          這是民眾共同記錄基隆通行狀況的地圖。你可以先查看案件，也可以留下新回報或補充現況。
+          這是民眾共同記錄台灣騎樓與人行道通行狀況的地圖。你可以先查看案件，也可以留下新回報或補充現況。
         </p>
         {onStartGuide && (
           <button
@@ -89,7 +89,7 @@ export default function HelpPanel({
             <dd>
               請寄信至{" "}
               <a
-                href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行回報更正或移除申請")}`}
+                href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("路見不平回報更正或移除申請")}`}
               >
                 {BETA_FEEDBACK_EMAIL}
               </a>
@@ -109,7 +109,7 @@ export default function HelpPanel({
             ? "Beta 回饋與資料申請聯絡信箱："
             : "Beta 試用回饋、資料更正、移除與隱私申訴："}
           <a
-            href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行 Beta 試用回饋")}`}
+            href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("路見不平 Beta 試用回饋")}`}
           >
             {BETA_FEEDBACK_EMAIL}
           </a>

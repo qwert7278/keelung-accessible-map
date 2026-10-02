@@ -18,7 +18,7 @@ export default function ReportSuccessPanel({
     const url = reportShareUrl(window.location.origin, id);
     try {
       if (navigator.share) {
-        await navigator.share({ title: "基隆好行通行回報", url });
+        await navigator.share({ title: "路見不平通行回報", url });
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(url);
         setMessage("案件連結已複製。");

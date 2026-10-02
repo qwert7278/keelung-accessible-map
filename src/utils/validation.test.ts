@@ -24,7 +24,7 @@ describe("回報資料驗證", () => {
       validateDraft({ ...draft, location: { lat: 23.5, lng: 120.5 } }),
     ).not.toBeNull());
   it("拒絕未開放的城市", () =>
-    expect(validateDraft({ ...draft, cityId: "TW-TPE" })).not.toBeNull());
+    expect(validateDraft({ ...draft, cityId: "TW-UNKNOWN" })).not.toBeNull());
   it("拒絕不符城市的行政區", () =>
     expect(validateDraft({ ...draft, district: "大安區" })).not.toBeNull());
   it("限制過長描述", () =>

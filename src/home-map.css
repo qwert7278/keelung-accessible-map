@@ -1,0 +1,24 @@
+.geography-picker { display:flex; flex-wrap:wrap; gap:16px; }
+.geography-picker label { display:grid; gap:6px; flex:1; min-width:140px; font-size:15px; font-weight:700; color:var(--roadtag-primary-dark); }
+.geography-picker select { width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--roadtag-control-border); border-radius:6px; background:#fff; color:var(--roadtag-text); font:inherit; }
+.home-live-map { height:440px; margin-top:20px; border:1px solid var(--roadtag-border); border-radius:10px; overflow:hidden; }
+.home-live-map .map-frame,.home-live-map .map-canvas { height:100%; width:100%; position:relative; }
+.home-live-map .map-canvas { z-index:1; }
+.home-live-map .map-notice { position:absolute; z-index:450; bottom:25px; left:10px; right:10px; padding:8px; background:var(--roadtag-paper); font-size:14px; }
+.map-pin { height:44px; width:44px; border:3px solid white; border-radius:50% 50% 50% 9px; transform:rotate(-12deg); font:800 24px/30px system-ui; color:var(--roadtag-text); display:grid; place-items:center; box-shadow:0 3px 9px #19352c55; }
+.map-pin:hover { scale:1.1; }
+.pin-open { background:var(--roadtag-coral); }
+.pin-in_progress { background:var(--roadtag-yellow); }
+.pin-resolved { background:var(--roadtag-green); color:white; }
+.home-map-summary { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+.home-map-summary p { flex-basis:100%; margin:0; color:var(--roadtag-muted); font-size:14px; }
+.home-map-summary .button { margin-left:auto; }
+.home-map-legend { display:flex; flex-wrap:wrap; gap:16px; font-size:14px; }
+.home-map-legend span { display:flex; align-items:center; gap:6px; }
+.report-mini { text-decoration:none; color:var(--roadtag-text); }
+.report-mini:hover { background:var(--roadtag-mist); border-color:var(--roadtag-primary); }
+.report-mini strong { overflow-wrap:anywhere; }
+@media(max-width:600px) { .home-live-map { height:360px; } .home-map-summary .button { margin-left:0; width:100%; } }
+
+.geography-picker select { appearance:none; border-radius:8px; background-color:var(--roadtag-paper); padding-right:34px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2309595b' stroke-width='1.7'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 11px center; }
+.geography-picker select:hover { border-color:var(--roadtag-primary); }

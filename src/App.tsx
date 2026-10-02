@@ -12,7 +12,7 @@ import {
   ThreadsLogoIcon,
   WheelchairIcon,
 } from "@phosphor-icons/react";
-import { BETA_FEEDBACK_EMAIL, CITY, DEMO_MODE } from "./config";
+import { BETA_FEEDBACK_EMAIL, CITIES, DEMO_MODE, canReportInCity } from "./config";
 import {
   ACCESS,
   CATEGORIES,
@@ -37,9 +37,14 @@ import GuidedTourPrompt from "./components/GuidedTourPrompt";
 import AdminWorkspace from "./components/AdminWorkspace";
 import { reportIdFromSearch } from "./utils/reportLink";
 
+import ReportThumbnail from './components/ReportThumbnail';
+import GeographyPicker from './components/GeographyPicker';
+import { initialGeography, rememberGeography } from './utils/geography';
 const HOMEPAGE_URL = "/";
 
 export default function App() {
+  const [geography] = useState(initialGeography);
+  const [city, setCity] = useState(geography.city);
   const [repository, setRepository] = useState<ReportRepository | null>(null),
     [session, setSession] = useState<Session | null>(null),
     [reports, setReports] = useState<Report[]>([]),
@@ -47,7 +52,7 @@ export default function App() {
     [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState<Status | "all">("all"),
-    [district, setDistrict] = useState("all"),
+    [district, setDistrict] = useState(geography.district),
     [access, setAccess] = useState("all"),
     [selected, setSelected] = useState<string | null>(() =>
       reportIdFromSearch(window.location.search),
@@ -60,6 +65,7 @@ export default function App() {
     [focus, setFocus] = useState<Location>(),
     [toast, setToast] = useState(""),
     [createdReportId, setCreatedReportId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const [adminEmail, setAdminEmail] = useState("");
   const [signingIn, setSigningIn] = useState(false);
   const [signInSent, setSignInSent] = useState(false);
@@ -67,28 +73,11 @@ export default function App() {
   const adminPage = window.location.pathname.replace(/\/$/, "") === "/admin";
   const guideReady = !!repository && !!session;
   useEffect(() => {
-    let active = true,
-      unsubscribe: (() => void) | undefined;
+    let active = true;
     loadRepository()
       .then(async (repo) => {
         if (!active) return;
         setRepository(repo);
-        // Public browsing must remain available even if anonymous sign-in fails.
-        unsubscribe = repo.subscribe(
-          CITY.id,
-          (data) => {
-            if (active) {
-              setReports(data);
-              setLoading(false);
-            }
-          },
-          (e) => {
-            if (active) {
-              setError(readableError(e));
-              setLoading(false);
-            }
-          },
-        );
         try {
           const current = await repo.session();
           if (active) setSession(current);
@@ -104,9 +93,36 @@ export default function App() {
       });
     return () => {
       active = false;
-      unsubscribe?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (!repository) return;
+    let active = true;
+    const unsubscribe = repository.subscribe(city.id, data => {
+      if (active) { setReports(data); setLoading(false); }
+    }, e => { if (active) { setError(readableError(e)); setLoading(false); } });
+    return () => { active = false; unsubscribe(); };
+  }, [repository, city.id]);
+  useEffect(() => { rememberGeography(city.id, district); }, [city.id, district]);
+  function changeCity(id: string) {
+    const next = CITIES.find(c => c.id === id);
+    if (!next || next.id === city.id) return;
+    setPage(1); closeReport(); setCreating(false); setCreatedReportId(null); setGuideStep(null);
+    setReports([]); setLoading(true); setError(''); setSearch(''); setAccess('all'); setFilter('all');
+    setCity(next); setDistrict(next.defaultDistrict); setFocus(next.center);
+    const url = new URL(window.location.href);
+    url.searchParams.set('city', next.id); url.searchParams.set('district', next.defaultDistrict);
+    window.history.replaceState({}, '', url);
+  }
+  function changeDistrict(value: string) {
+    setPage(1); setDistrict(value); closeReport();
+    if (value === city.defaultDistrict || value === 'all') setFocus({ ...city.center });
+    else { const first = reports.find(r => r.district === value); if (first) setFocus({ ...first.location }); }
+    const url = new URL(window.location.href);
+    url.searchParams.set('city', city.id); url.searchParams.set('district', value);
+    window.history.replaceState({}, '', url);
+  }
 
   useEffect(() => {
     if (adminPage) return;
@@ -138,6 +154,7 @@ export default function App() {
   }
 
   function openReportForm() {
+    if (!canReportInCity(city.id)) { setToast("此縣市目前提供地圖預覽，正式回報尚未開放。"); return; }
     setCreating(true);
     if (guideStep === 0) setGuideStep(1);
   }
@@ -192,21 +209,20 @@ export default function App() {
     };
   }, [adminPage]);
 
-  const visible = useMemo(
-    () =>
-      reports.filter(
-        (r) =>
-          (filter === "all" || r.status === filter) &&
-          (district === "all" || r.district === district) &&
-          (access === "all" || r.wheelchairAccess === access) &&
-          `${r.title} ${r.address} ${r.description}`.includes(search.trim()),
-      ),
-    [reports, filter, district, access, search],
-  );
+  const scoped = useMemo(() => reports.filter(r =>
+    (district === 'all' || r.district === district) &&
+    (access === 'all' || r.wheelchairAccess === access) &&
+    (r.title + ' ' + r.address + ' ' + r.description).includes(search.trim())),
+    [reports, district, access, search]);
+  const visible = useMemo(() => scoped.filter(r => filter === 'all' || r.status === filter), [scoped, filter]);
+  const sorted = [...visible].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pageCount = Math.max(1, Math.ceil(sorted.length / 5));
+  const currentPage = Math.min(page, pageCount);
+  const pageReports = sorted.slice((currentPage - 1) * 5, currentPage * 5);
   const counts = {
-    open: reports.filter((r) => r.status === "open").length,
-    in_progress: reports.filter((r) => r.status === "in_progress").length,
-    resolved: reports.filter((r) => r.status === "resolved").length,
+    open: scoped.filter((r) => r.status === "open").length,
+    in_progress: scoped.filter((r) => r.status === "in_progress").length,
+    resolved: scoped.filter((r) => r.status === "resolved").length,
   };
   const report = reports.find((r) => r.id === selected);
   function choose(id: string) {
@@ -242,7 +258,7 @@ export default function App() {
     }
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        const b = CITY.bounds,
+        const b = city.bounds,
           location = { lat: p.coords.latitude, lng: p.coords.longitude };
         if (
           location.lat < b.south ||
@@ -250,7 +266,7 @@ export default function App() {
           location.lng < b.west ||
           location.lng > b.east
         ) {
-          setToast("目前位置不在基隆示範範圍，已保留基隆地圖。");
+          setToast(`目前位置不在${city.name}範圍，請先切換縣市或手動查看地圖。`);
           return;
         }
         setFocus(location);
@@ -276,20 +292,41 @@ export default function App() {
       setSigningIn(false);
     }
   }
+  const pageIntro = (<section className="page-intro">
+          <div>
+            <h1>{adminPage ? "案件管理" : "台灣騎樓與人行道通行回報地圖"}</h1>
+            <p>
+              {adminPage
+                ? "檢視案件、確認現況與管理者更新。"
+                : "選擇縣市與行政區，查看或標註騎樓、人行道的通行障礙。"}
+            </p>
+            <div className="intro-help-actions">
+              <button
+                className="text-button help-link"
+                onClick={() => setHelp(true)}
+              >
+                如何使用與常見問題 <ArrowRightIcon size={16} />
+              </button>
+              {!adminPage && (
+                <button
+                  className="text-button help-link"
+                  onClick={startGuidedTour}
+                >
+                  跟著操作教學 <ArrowRightIcon size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        </section>);
   return (
     <>
       <a href="#report-list" className="skip-link">
         跳至案件列表
       </a>
       <header className="site-header">
-        <a href={HOMEPAGE_URL} className="brand" aria-label="基隆好行首頁">
-          <span className="brand-icon">
-            <img src="/brand-mark.webp" alt="" width="46" height="46" />
-          </span>
-          <span>
-            <strong>{CITY.productName}</strong>
-            <small>讓每一段路，都更好走</small>
-          </span>
+        <a href={HOMEPAGE_URL} className="brand" aria-label="路見不平首頁">
+          <img className="brand-wordmark" src="/images/roadtag-logo-horizontal.webp" alt="路見不平 Road Tag" width="1086" height="362" />
+
         </a>
         <nav aria-label="主要選單">
           <a className={!adminPage ? "nav-active" : ""} href="/map">
@@ -304,12 +341,20 @@ export default function App() {
             <ShieldCheckIcon size={18} />
             <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
           </a>
+          <a href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤路見不平"><ThreadsLogoIcon size={20} /><span>Threads</span></a>
+          <details className="header-more"><summary>更多</summary><div className="header-more-menu">
+            <button onClick={() => setHelp(true)}>常見問題</button>
+            {!adminPage && <button onClick={startGuidedTour}>跟著操作教學</button>}
+            <a href="/privacy">隱私權政策</a><a href="/terms">使用條款</a>
+            {DEMO_MODE ? <button onClick={() => setAbout(true)}>Demo 資料與重設</button> : <a href={'mailto:' + BETA_FEEDBACK_EMAIL + '?subject=' + encodeURIComponent('路見不平 使用回饋')}>提供使用回饋</a>}
+            <a href="/">回到首頁</a>
+          </div></details>
         </nav>
         {!adminPage && (
           <button
             className={`button primary header-report${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
             onClick={openReportForm}
-            disabled={!repository || !session}
+            disabled={!repository || !session || !canReportInCity(city.id)}
           >
             <PlusIcon size={20} weight="bold" />
             回報障礙
@@ -333,32 +378,11 @@ export default function App() {
         </p>
       </div>
       <main id="main-content" tabIndex={-1}>
-        <section className="page-intro">
-          <div>
-            <h1>{adminPage ? "案件管理" : "基隆無障礙通行地圖"}</h1>
-            <p>
-              {adminPage
-                ? "檢視案件、確認現況與管理者更新。"
-                : "查看附近障礙，或回報你現在看到的通行問題。"}
-            </p>
-            <div className="intro-help-actions">
-              <button
-                className="text-button help-link"
-                onClick={() => setHelp(true)}
-              >
-                如何使用與常見問題 <ArrowRightIcon size={16} />
-              </button>
-              {!adminPage && (
-                <button
-                  className="text-button help-link"
-                  onClick={startGuidedTour}
-                >
-                  跟著操作教學 <ArrowRightIcon size={16} />
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
+        {adminPage && pageIntro}
+        {adminPage && (<section className="geography-bar" aria-label="選擇地圖範圍">
+          <GeographyPicker city={city} district={district} onCity={changeCity} onDistrict={changeDistrict} />
+          <p>{canReportInCity(city.id) ? '目前查看：' + city.name + ' · ' + (district === 'all' ? '所有行政區' : district) : '此縣市目前提供地圖預覽，正式回報尚未開放。'}</p>
+        </section>)}
         {!adminPage && guideStep === 0 && (
           <GuidedTourPrompt
             step={1}
@@ -450,11 +474,15 @@ export default function App() {
             <p className="admin-loading" role="status">正在載入管理案件…</p>
           )
         ) : (
+        <>
         <section className="workspace" aria-label="通行回報探索">
           <aside className="sidebar">
             <div className="sidebar-head">
               <h2>{adminPage ? "案件管理" : "探索通行狀況"}</h2>
               <span className="count">{reports.length} 件</span>
+            </div>
+            <div className="sidebar-geography"><GeographyPicker city={city} district={district} onCity={changeCity} onDistrict={changeDistrict} />
+              {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}
             </div>
             <label className="search-field">
               <MagnifyingGlassIcon size={20} />
@@ -462,28 +490,16 @@ export default function App() {
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setPage(1); setSearch(e.target.value); }}
                 placeholder="搜尋已回報地點、路名…"
               />
             </label>
             <div className="filter-grid">
               <label>
-                <span className="sr-only">行政區篩選</span>
-                <select
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                >
-                  <option value="all">所有行政區</option>
-                  {CITY.districts.map((d) => (
-                    <option key={d}>{d}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
                 <span className="sr-only">通行程度篩選</span>
                 <select
                   value={access}
-                  onChange={(e) => setAccess(e.target.value)}
+                  onChange={(e) => { setPage(1); setAccess(e.target.value); }}
                 >
                   <option value="all">所有通行程度</option>
                   {Object.entries(ACCESS).map(([k, v]) => (
@@ -497,7 +513,7 @@ export default function App() {
             <div className="status-filters" aria-label="案件狀態篩選">
               <button
                 aria-pressed={filter === "all"}
-                onClick={() => setFilter("all")}
+                onClick={() => { setPage(1); setFilter("all"); }}
               >
                 全部
               </button>
@@ -505,7 +521,7 @@ export default function App() {
                 <button
                   key={key}
                   aria-pressed={filter === key}
-                  onClick={() => setFilter(key as Status)}
+                  onClick={() => { setPage(1); setFilter(key as Status); }}
                 >
                   <i className={`dot dot-${key}`} />
                   {label}
@@ -532,7 +548,7 @@ export default function App() {
                 <div className="empty">
                   <MagnifyingGlassIcon size={32} />
                   <h3>沒有符合的回報</h3>
-                  <p>試著換個關鍵字，或清除篩選。</p>
+                  <p>目前沒有符合條件的回報；沒有標記不代表沒有障礙。你可以切換行政區、清除篩選，或手動移動地圖。</p>
                   <button
                     className="button secondary"
                     onClick={() => {
@@ -546,24 +562,14 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                [...visible]
-                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-                  .map((r) => (
+                pageReports.map((r) => (
                     <button
                       className={`report-card ${selected === r.id ? "selected" : ""}`}
                       key={r.id}
                       onClick={() => choose(r.id)}
                       aria-label={`查看回報：${r.title}，${r.district}，${CATEGORIES[r.category]}`}
                     >
-                      {(r.beforeImageUrl || r.afterImageUrl) && (
-                        <img
-                          className="report-card-thumb"
-                          src={r.beforeImageUrl || r.afterImageUrl || ""}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      )}
+                      <ReportThumbnail report={r} />
                       <div className="report-card-content">
                         <div className="card-top">
                           <StatusBadge status={r.status} />
@@ -590,20 +596,28 @@ export default function App() {
                   ))
               )}
             </div>
+            <div className="list-pagination" aria-label="案件分頁">
+              <span>第 {visible.length ? (currentPage - 1) * 5 + 1 : 0}–{Math.min(currentPage * 5, visible.length)} 筆／{visible.length} 筆</span>
+              <button onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1} aria-label="上一頁案件">上一頁</button>
+              <button onClick={() => setPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="下一頁案件">下一頁</button>
+            </div>
             <div className="sidebar-foot">
               <span className="live-dot" />
               {DEMO_MODE
-                ? "8 筆示範起始資料 · 可自由體驗"
+                ? "示範資料 · 可自由體驗"
                 : "顯示最近 200 筆 · 民眾共同記錄"}
             </div>
           </aside>
           <div className="map-area">
-            <MapView reports={visible} onSelect={choose} focus={focus} />
+            <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={changeCity} onDistrict={changeDistrict} />
+          {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}</div></div>
+            <div className="map-stage">
+            <MapView key={city.id} city={city} reports={visible} onSelect={choose} focus={focus || city.center} />
             <div className="map-caption">
               <span className="live-dot" />
-              基隆市
+              {city.name}
               <span className="caption-divider" />
-              無障礙通行回報
+              騎樓與人行道通行回報
             </div>
             <button
               className="locate-button"
@@ -617,54 +631,22 @@ export default function App() {
                 <StatusBadge key={s} status={s as Status} />
               ))}
             </div>
+            </div>
           </div>
-        </section>
+        </section></>
         )}
         {!adminPage && (
           <button
             className={`button primary mobile-report-cta${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
             onClick={openReportForm}
-            disabled={!repository || !session}
+            disabled={!repository || !session || !canReportInCity(city.id)}
           >
             <PlusIcon size={20} weight="bold" />
             回報障礙
           </button>
         )}
       </main>
-      <footer className="site-footer">
-        <span>
-          基隆好行 <span className="footer-separator">/</span> Keelung
-          Accessible Map
-        </span>
-        <a href="/how-to">如何使用</a>
-        <a href="/about">關於計畫</a>
-        {DEMO_MODE && (
-          <button type="button" onClick={() => setAbout(true)}>
-            Demo 資料與重設
-          </button>
-        )}
-        <a href="/terms">使用條款</a>
-        <a href="/privacy">隱私權政策</a>
-        <a href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤基隆好行 @roadrecall2046">
-          <ThreadsLogoIcon size={18} aria-hidden="true" />
-          <span>Threads</span>
-        </a>
-        {!DEMO_MODE && (
-          <a
-            href={`mailto:${BETA_FEEDBACK_EMAIL}?subject=${encodeURIComponent("基隆好行 Beta 試用回饋")}`}
-          >
-            提供試用回饋
-          </a>
-        )}
-        <a href={HOMEPAGE_URL} className="footer-home-link">
-          <HouseIcon size={16} aria-hidden="true" />
-          回到首頁
-        </a>
-        <a href={adminPage ? "/" : "/admin"}>
-          {adminPage ? "返回地圖" : DEMO_MODE ? "管理體驗" : "管理案件"}
-        </a>
-        <span>從基隆出發，逐步走向全台灣。</span>
-      </footer>
+      <footer className="site-footer clean-footer"><span>© 2026 路見不平 · Road Tag</span><a href="/" className="footer-home-link"><HouseIcon size={16} />回到首頁</a></footer>
       {toast && (
         <div className="toast" role="status">
           {toast}
@@ -676,6 +658,8 @@ export default function App() {
       {creating && repository && (
         <ReportForm
           repository={repository}
+          city={city}
+          initialDistrict={district}
           reports={reports}
           guidedStep={guideStep}
           onGuidedStepChange={setGuideStep}
@@ -733,7 +717,7 @@ export default function App() {
         />
       )}
       {about && (
-        <Modal title="關於基隆好行" onClose={() => setAbout(false)}>
+        <Modal title="關於路見不平" onClose={() => setAbout(false)}>
           <div className="panel-content">
             <h3>看見障礙，留下改善。</h3>
             <p>

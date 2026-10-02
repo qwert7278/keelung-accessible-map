@@ -1,0 +1,89 @@
+/* Homepage refinement against the owner-approved CIS; existing layout preserved. */
+:root {
+  font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --ink: var(--roadtag-text);
+  --muted: var(--roadtag-muted);
+  --green: var(--roadtag-primary);
+  --green-dark: var(--roadtag-primary-dark);
+  --navy: var(--roadtag-navy);
+  --paper: var(--roadtag-paper);
+  --mint: var(--roadtag-mist);
+  --line: var(--roadtag-border);
+}
+.header { min-height: 108px; }
+.brand {
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background-color 160ms ease;
+}
+.brand-wordmark { width: 234px; }
+.brand-slogan { color: var(--green-dark); font-size: 12px; font-weight: 650; }
+.brand:hover, .brand:focus-visible { background: var(--mint); }
+.nav { gap: 14px; }
+.nav a:not(.button) { padding: 8px 10px; border-radius: 6px; }
+.nav a:not(.button):hover { background: var(--green); color: #fff; }
+.hero { background: var(--paper); padding-top: 48px; }
+h1, h2, h3 { color: var(--green-dark); text-wrap: balance; }
+h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.35; letter-spacing: 0; }
+.section-heading h2, .story-intro h2, .closing h2 {
+  font-size: clamp(22px, 2.5vw, 28px);
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+.story-copy h3, .story-cta h3 { font-size: clamp(20px, 2vw, 24px); letter-spacing: 0; }
+.hero-copy, .story-copy p { color: var(--roadtag-muted); font-size: 17px; }
+.location-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: none; }
+.report-mini, .step-card, .map-frame, .closing, .story-cta { border-radius: 10px; }
+.map-frame { box-shadow: none; }
+.barrier-story { background: var(--mint); }
+.step-icon { display: block; width: 56px; height: 56px; margin-bottom: 14px; border-radius: 8px; }
+.button { transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; }
+.button:hover { transform: none; }
+.button.secondary { border-color: var(--roadtag-control-border); color: var(--green); }
+.button.secondary:hover, .button.secondary:focus-visible { background: var(--green); color: #fff; border-color: var(--green); }
+.story-cta .button:hover, .closing .button:hover,
+.story-cta .button:focus-visible, .closing .button:focus-visible {
+  background: var(--roadtag-yellow); color: var(--roadtag-primary-dark);
+}
+.closing h2, .story-cta h3 { color: #fff; }
+.closing p, .story-cta p { color: var(--roadtag-mist); }
+.site-footer { background: var(--paper); }
+.footer-row { background: var(--green-dark); color: var(--roadtag-mist); border: 0; }
+.footer-row strong { color: #fff; }
+.footer-row a { color: #fff; }
+.footer-row a:hover { color: var(--roadtag-mist-blue); text-decoration: underline; }
+.footer-row a:focus-visible, .closing .button:focus-visible, .story-cta .button:focus-visible {
+  outline-color: var(--roadtag-yellow);
+}
+.creator-contact { background: var(--green); }
+.creator-contact:hover { background: var(--green-dark); }
+.feedback-submit { background: var(--green); }
+.feedback-submit:hover { background: var(--green-dark); }
+.feedback-input { border-color: var(--roadtag-control-border); }
+@media (max-width: 640px) {
+  .header { min-height: 100px; gap: 8px; }
+  .brand { padding-inline: 0; }
+  .brand-wordmark { width: 174px; }
+  .brand-slogan { font-size: 11px; }
+  .hero { padding-top: 30px; }
+  h1 { font-size: clamp(24px, 7vw, 30px); }
+  .hero-copy, .story-copy p { font-size: 16px; }
+  .nav .button { padding-inline: 10px; font-size: 12px; }
+  .nav { gap: 0; }
+  .footer-row { padding-bottom: 90px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand, .button { transition: none; }
+}
+.home-faq h2 { font-size: 28px; color: var(--roadtag-primary-dark); margin-bottom: 20px; }
+.home-faq details { border-bottom: 1px solid var(--roadtag-border); padding: 16px 0; }
+.home-faq summary { cursor: pointer; font-weight: 700; font-size: 17px; color: var(--roadtag-primary-dark); min-height: 44px; }
+.home-faq summary:hover { color: var(--roadtag-primary); }
+.home-faq details p { max-width: 76ch; color: var(--roadtag-muted); line-height: 1.8; }
+
+.status.open { background:transparent; color:#a83c2e; border:1px solid #a83c2e; }
+.home-faq details p { max-width:none; }

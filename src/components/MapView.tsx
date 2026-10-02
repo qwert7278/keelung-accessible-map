@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { CITY } from "../config";
+import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
 
 type Props = {
+  city?: City;
   reports: Report[];
   onSelect: (id: string) => void;
   picking?: boolean;
@@ -60,8 +61,8 @@ export default function MapView(props: Props) {
       }
       if (disposed || !node.current) return;
       const map = L.map(node.current, {
-        center: [CITY.center.lat, CITY.center.lng],
-        zoom: CITY.zoom,
+        center: [(latest.current.city || CITY).center.lat, (latest.current.city || CITY).center.lng],
+        zoom: (latest.current.city || CITY).zoom,
         scrollWheelZoom: false,
       });
       const tiles = L.tileLayer(
@@ -149,7 +150,7 @@ export default function MapView(props: Props) {
         aria-label={
           props.picking
             ? "選擇回報位置的地圖，也可在下方輸入座標"
-            : "基隆無障礙回報地圖，亦可使用旁邊案件列表"
+            : `${props.city?.name || CITY.name}騎樓與人行道回報地圖，亦可使用旁邊案件列表`
         }
       />
       {notice && (

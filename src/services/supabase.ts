@@ -8,7 +8,7 @@ import type {
   Session,
   Status,
 } from "../types";
-import { PUBLIC_SITE_URL } from "../config";
+import { PUBLIC_SITE_URL, canReportInCity } from "../config";
 import { validateDraft } from "../utils/validation";
 import { imageUploadFormat } from "../utils/images";
 
@@ -249,6 +249,7 @@ export function createSupabaseRepository(): ReportRepository {
       };
     },
     async create(draft, photo, progress) {
+      if (!canReportInCity(draft.cityId)) throw new Error("此縣市的正式回報尚未開放。");
       const validation = validateDraft(draft);
       if (validation) throw new Error(validation);
       await session();
