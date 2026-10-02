@@ -68,7 +68,7 @@ export default function PhotoUploader({
         />
       </div>
       <small id={`${id}-help`}>
-        JPG、PNG、WebP，最大 10 MB。自動縮圖並移除原始 EXIF 中繼資料。
+        JPG、PNG、WebP，原檔最大 10 MB。自動轉成 WebP、保持直橫比例並移除原始 EXIF；上傳最大 1 MB。
       </small>
       {busy && <p role="status">正在處理照片…</p>}
       {error && (

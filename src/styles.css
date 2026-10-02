@@ -1,15 +1,28 @@
 :root {
   font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-  color: #253c38;
-  background: #f7f9f8;
+  color: #1f2d2d;
+  background: #f6f3ea;
   font-synthesis: none;
   font-weight: 400;
   line-height: 1.6;
-  --green: #155e52;
-  --muted: #5c716b;
-  --border: #dce5e1;
-  --red: #b63838;
-  --yellow: #8c5b09;
+  --green: #09595b;
+  --green-dark: #103637;
+  --navy: #16364b;
+  --sea: #50b4cd;
+  --cyan: #099bac;
+  --mist-blue: #96cbde;
+  --water: #73c4de;
+  --hill: #619f57;
+  --resolved: #148e5a;
+  --mountain: #155336;
+  --yellow: #e29929;
+  --orange: #d6691e;
+  --red: #d86958;
+  --paper: #f6f3ea;
+  --mist: #dfe9ed;
+  --text: #1f2d2d;
+  --muted: #526262;
+  --border: #dfe9ed;
 }
 * {
   box-sizing: border-box;
@@ -49,7 +62,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
-  outline: 3px solid #bc6500;
+  outline: 3px solid var(--navy);
   outline-offset: 3px;
 }
 h1,
@@ -79,10 +92,10 @@ a {
 }
 .primary {
   background: var(--green);
-  color: white;
+  color: #fff;
 }
 .primary:hover {
-  background: #10493f;
+  background: var(--green-dark);
 }
 .secondary {
   background: #fff;
@@ -90,7 +103,7 @@ a {
   border-color: #bdcfc7;
 }
 .secondary:hover {
-  background: #edf4f0;
+  background: var(--mist);
 }
 .full {
   width: 100%;
@@ -118,7 +131,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: var(--paper);
   border-bottom: 1px solid var(--border);
   gap: 20px;
 }
@@ -184,8 +197,8 @@ a {
   justify-content: center;
   align-items: center;
   gap: 9px;
-  background: #eef3e9;
-  color: #465d38;
+  background: var(--mist);
+  color: var(--text);
   padding: 9px 20px;
   font-size: 12px;
   min-height: 39px;
@@ -445,10 +458,10 @@ h1 {
   background: var(--red);
 }
 .dot-in_progress {
-  background: #b38326;
+  background: var(--yellow);
 }
 .dot-resolved {
-  background: #21816b;
+  background: var(--resolved);
 }
 .list-heading {
   display: flex;
@@ -522,16 +535,16 @@ h1 {
   white-space: nowrap;
 }
 .status-open {
-  color: #a02d2d;
-  background: #fff0ed;
+  color: var(--text);
+  background: #f8e4df;
 }
 .status-in_progress {
-  color: #805000;
-  background: #fff6dd;
+  color: var(--text);
+  background: #f8edda;
 }
 .status-resolved {
-  color: #1b6a4e;
-  background: #e7f4ed;
+  color: var(--text);
+  background: #e1eee5;
 }
 .report-card h3 {
   display: flex;
@@ -676,7 +689,7 @@ h1 {
   font-family: system-ui, sans-serif;
   font-weight: 800;
   line-height: 30px;
-  color: white;
+  color: var(--text);
   display: grid;
   place-items: center;
 }
@@ -684,13 +697,13 @@ h1 {
   scale: 1.1;
 }
 .pin-open {
-  background: #bd4743;
+  background: var(--red);
 }
 .pin-in_progress {
-  background: #9a6d13;
+  background: var(--yellow);
 }
 .pin-resolved {
-  background: #287b5b;
+  background: var(--hill);
 }
 .leaflet-control-zoom a {
   min-width: 44px;

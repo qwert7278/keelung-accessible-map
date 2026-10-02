@@ -3,7 +3,7 @@ export function reportIdFromSearch(search: string): string | null {
 }
 
 export function reportShareUrl(origin: string, reportId: string): string {
-  const url = new URL("/", origin);
+  const url = new URL("/map", origin);
   url.searchParams.set("report", reportId);
   return url.toString();
 }

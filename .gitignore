@@ -10,3 +10,7 @@ output/
 .firebase/
 supabase/.temp/
 docs/screenshots/auth-setting.png
+
+# Retired ChatGPT Sites checkouts: retained locally for recovery, never staged into main.
+/sites-public-hub/
+/sites-public-hub-source/

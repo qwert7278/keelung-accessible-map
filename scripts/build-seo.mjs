@@ -1,11 +1,14 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { loadEnv } from "vite";
 
 const root = process.cwd();
 const dist = resolve(root, "dist");
 const pages = ["how-to", "about", "privacy", "terms"];
 const productionUrl = "https://keelung-accessible-map.vercel.app";
-const configuredUrl = process.env.VITE_PUBLIC_SITE_URL || productionUrl;
+const configuredUrl = process.env.VITE_PUBLIC_SITE_URL
+  || loadEnv("production", root, "VITE_PUBLIC_SITE_URL").VITE_PUBLIC_SITE_URL
+  || productionUrl;
 const publicUrl = new URL(configuredUrl).origin.replace(/\/$/, "");
 const previewBuild = process.env.VERCEL_ENV === "preview";
 

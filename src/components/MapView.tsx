@@ -110,7 +110,9 @@ export default function MapView(props: Props) {
               weight: 5,
             }).addTo(layer);
           if (p.focus && p.focus !== lastFocus) {
-            map.setView([p.focus.lat, p.focus.lng], 16, { animate: false });
+            const center: L.LatLngExpression = [p.focus.lat, p.focus.lng];
+            if (lastFocus) map.panTo(center, { animate: false });
+            else map.setView(center, 16, { animate: false });
             lastFocus = p.focus;
           }
           node.current?.classList.toggle("picking", !!p.picking);

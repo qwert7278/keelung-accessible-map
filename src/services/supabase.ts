@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import { PUBLIC_SITE_URL } from "../config";
 import { validateDraft } from "../utils/validation";
+import { imageUploadFormat } from "../utils/images";
 
 let client: SupabaseClient | undefined;
 function supabase() {
@@ -174,10 +175,11 @@ export function createSupabaseRepository(): ReportRepository {
     blob: Blob,
     progress: (n: number) => void,
   ) {
+    const { extension, contentType } = imageUploadFormat(blob);
     await session();
     const { data, error } = await db.auth.getSession();
     if (error || !data.session) throw new Error("登入已過期，請重新登入。");
-    const path = `${reportId}/${kind}/${crypto.randomUUID()}.jpg`;
+    const path = `${reportId}/${kind}/${crypto.randomUUID()}.${extension}`;
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open(
@@ -192,8 +194,10 @@ export function createSupabaseRepository(): ReportRepository {
         "apikey",
         import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       );
-      xhr.setRequestHeader("Content-Type", "image/jpeg");
+      xhr.setRequestHeader("Content-Type", contentType);
       xhr.setRequestHeader("x-upsert", "false");
+      // UUID paths are never overwritten, so browser/CDN caches can reuse them.
+      xhr.setRequestHeader("cache-control", "public, max-age=3600");
       xhr.timeout = 120000;
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable)

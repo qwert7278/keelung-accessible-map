@@ -1,9 +1,12 @@
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
+import { loadEnv } from "vite";
 
 const dist = resolve(process.cwd(), "dist");
-const base = (process.env.VITE_PUBLIC_SITE_URL || "https://keelung-accessible-map.vercel.app").replace(/\/+$/, "");
-const expectedPaths = ["/", "/how-to", "/about", "/privacy", "/terms"];
+const base = new URL(process.env.VITE_PUBLIC_SITE_URL
+  || loadEnv("production", process.cwd(), "VITE_PUBLIC_SITE_URL").VITE_PUBLIC_SITE_URL
+  || "https://keelung-accessible-map.vercel.app").origin;
+const expectedPaths = ["/", "/map", "/how-to", "/about", "/privacy", "/terms"];
 const failures = [];
 const read = async (path) => readFile(resolve(dist, path), "utf8");
 const check = (condition, message) => { if (!condition) failures.push(message); };
@@ -15,12 +18,30 @@ const meta = (html, key, value) => {
 };
 
 const index = await read("index.html");
+for (const match of index.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
+  const source = match[1];
+  if (/^(?:https?:|data:|\/\/)/i.test(source)) continue;
+  const assetPath = new URL(source, "https://local.test/").pathname.slice(1);
+  try {
+    const asset = await readFile(resolve(dist, assetPath));
+    check(asset.length > 0, `Homepage image is empty: ${source}.`);
+    if (/\.webp$/i.test(assetPath)) {
+      check(asset.toString("ascii", 0, 4) === "RIFF" && asset.toString("ascii", 8, 12) === "WEBP", `Homepage image must contain actual WebP data: ${source}.`);
+    }
+  } catch {
+    check(false, `Homepage image is missing from build output: ${source}.`);
+  }
+}
 check(index.includes(`<html lang="zh-Hant-TW">`), "Homepage language must remain zh-Hant-TW.");
 check(index.includes("基隆無障礙通行地圖"), "Homepage title/topic is missing.");
 check(index.includes(`${base}/`), "Homepage canonical and social URLs must use the production host.");
 check(meta(index, "og:type", "website"), "Homepage og:type must be website.");
-check(index.includes('"@type": "WebSite"'), "WebSite JSON-LD is missing.");
+check(/"@type"\s*:\s*"WebSite"/.test(index), "WebSite JSON-LD is missing.");
 check(!/localhost|\.vercel\.app\//i.test(index.replaceAll(base, "")), "Homepage must not contain a preview or localhost URL.");
+
+const mapPage = await read("map.html");
+check(mapPage.includes(`<link rel="canonical" href="${base}/map" />`), "Map canonical URL must use /map.");
+check(meta(mapPage, "og:url", `${base}/map`), "Map social URL must use /map.");
 
 for (const path of ["how-to", "about", "privacy", "terms"]) {
   const html = await read(`${path}/index.html`);
@@ -31,6 +52,7 @@ for (const path of ["how-to", "about", "privacy", "terms"]) {
   check(/<title>[^<]+<\/title>/.test(html), `${path} title is missing.`);
   check(/<meta[^>]+name="description"[^>]+content="[^"]+"/.test(html), `${path} description is missing.`);
   check(!/localhost|\.vercel\.app\//i.test(html.replaceAll(base, "")), `${path} must not contain a preview or localhost URL.`);
+  check(!/<a\b[^>]*href=["']\/["'][^>]*>(?:通行地圖|地圖|前往通行地圖|查看基隆通行地圖)<\/a>/i.test(html), `${path} map links must target /map instead of the homepage.`);
 }
 
 const robots = await read("robots.txt");
@@ -48,7 +70,8 @@ check(!/admin|\?|localhost|vercel\.app/i.test(urls.join("\n").replaceAll(base, "
 const vercelConfig = JSON.parse(await readFile(resolve(process.cwd(), "vercel.json"), "utf8"));
 const rewrites = new Map(vercelConfig.rewrites.map(({ source, destination }) => [source, destination]));
 for (const [source, destination] of [
-  ["/admin", "/index.html"],
+  ["/map", "/map.html"],
+  ["/admin", "/map.html"],
   ["/how-to", "/how-to/index.html"],
   ["/about", "/about/index.html"],
   ["/privacy", "/privacy/index.html"],
@@ -68,7 +91,7 @@ check((await stat(resolve(dist, "404.html"))).isFile(), "A static 404 page must 
 
 const preview = process.env.VERCEL_ENV === "preview" || process.argv.includes("--preview");
 if (preview) {
-  for (const path of ["index.html", ...["how-to", "about", "privacy", "terms"].map((p) => `${p}/index.html`)]) {
+  for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms"].map((p) => `${p}/index.html`)]) {
     const html = await read(path);
     check(/<meta\s+name="robots"\s+content="noindex, nofollow, noarchive"/i.test(html), `${path} must be noindex on Preview.`);
   }
@@ -78,5 +101,5 @@ if (failures.length) {
   console.error(`SEO check failed (${failures.length}):\n- ${failures.join("\n- ")}`);
   process.exitCode = 1;
 } else {
-  console.log(`SEO check passed: metadata, safe routes, robots, sitemap, ${width}x${height} OG image${preview ? ", and Preview noindex" : ""}.`);
+  console.log(`SEO check passed: homepage images, metadata, safe routes, robots, sitemap, ${width}x${height} OG image${preview ? ", and Preview noindex" : ""}.`);
 }

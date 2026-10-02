@@ -37,7 +37,7 @@ import GuidedTourPrompt from "./components/GuidedTourPrompt";
 import AdminWorkspace from "./components/AdminWorkspace";
 import { reportIdFromSearch } from "./utils/reportLink";
 
-const HOMEPAGE_URL = "https://keelung-accessible-guide.mason7278.chatgpt.site/";
+const HOMEPAGE_URL = "/";
 
 export default function App() {
   const [repository, setRepository] = useState<ReportRepository | null>(null),
@@ -284,7 +284,7 @@ export default function App() {
       <header className="site-header">
         <a href={HOMEPAGE_URL} className="brand" aria-label="基隆好行首頁">
           <span className="brand-icon">
-            <img src="/brand-mark.png" alt="" width="46" height="46" />
+            <img src="/brand-mark.webp" alt="" width="46" height="46" />
           </span>
           <span>
             <strong>{CITY.productName}</strong>
@@ -292,7 +292,7 @@ export default function App() {
           </span>
         </a>
         <nav aria-label="主要選單">
-          <a className={!adminPage ? "nav-active" : ""} href="/">
+          <a className={!adminPage ? "nav-active" : ""} href="/map">
             通行地圖
           </a>
           <a href="/about">

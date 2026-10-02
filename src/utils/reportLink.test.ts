@@ -6,7 +6,7 @@ describe("案件分享連結", () => {
     expect(reportIdFromSearch("?report=report-123")).toBe("report-123");
     expect(reportIdFromSearch("?filter=open")).toBeNull();
     expect(reportShareUrl("https://example.test", "report-123")).toBe(
-      "https://example.test/?report=report-123",
+      "https://example.test/map?report=report-123",
     );
   });
 });

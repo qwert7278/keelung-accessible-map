@@ -79,7 +79,7 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
         );
       if (p.focus && p.focus !== lastFocus) {
         map.setCenter(p.focus);
-        map.setZoom(16);
+        if (!lastFocus) map.setZoom(16);
         lastFocus = p.focus;
       }
     },

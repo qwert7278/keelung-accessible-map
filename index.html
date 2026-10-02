@@ -2,39 +2,1373 @@
 <html lang="zh-Hant-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#155e52" />
-    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="description" content="基隆好行提供基隆無障礙通行地圖，查看人行道、騎樓、路口與斜坡等通行障礙，並可拍照回報輪椅通行狀況與最新改善進度。平台為民眾共同紀錄工具，非政府正式派工系統。" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f3ea" />
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta
+      name="description"
+      content="基隆好行以 OpenStreetMap 為底圖，整理民眾回報的基隆道路、騎樓與人行道通行狀況，留下公共紀錄，供市民參考並協助公部門掌握、追蹤與改善。"
+    />
     <link rel="canonical" href="__PUBLIC_SITE_URL__/" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_TW" />
-    <meta property="og:site_name" content="基隆好行" />
-    <meta property="og:title" content="基隆無障礙通行地圖｜輪椅通行與障礙回報｜基隆好行" />
-    <meta property="og:description" content="查看基隆人行道、騎樓、路口與斜坡的通行狀況，或留下現場回報。社群紀錄不代表政府公告，也不保證路線安全。" />
+    <meta property="og:site_name" content="RoadTag｜基隆好行" />
+    <meta property="og:title" content="RoadTag｜基隆好行｜基隆無障礙通行地圖" />
+    <meta property="og:description" content="查看基隆人行道、騎樓、路口與斜坡的通行狀況，留下公共紀錄並協助城市改善。" />
     <meta property="og:url" content="__PUBLIC_SITE_URL__/" />
     <meta property="og:image" content="__PUBLIC_SITE_URL__/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="基隆好行無障礙通行地圖：查看附近通行狀況並回報道路障礙" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="基隆無障礙通行地圖｜輪椅通行與障礙回報｜基隆好行" />
-    <meta name="twitter:description" content="查看基隆人行道、騎樓、路口與斜坡的通行狀況，或留下現場回報。社群紀錄不代表政府公告，也不保證路線安全。" />
-    <meta name="twitter:image" content="__PUBLIC_SITE_URL__/og-image.png" />
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "@id": "__PUBLIC_SITE_URL__/#website",
-        "url": "__PUBLIC_SITE_URL__/",
-        "name": "基隆好行",
-        "alternateName": "Keelung Accessible Map",
-        "description": "基隆無障礙通行地圖，提供民眾查看與回報人行道、騎樓、路口等通行障礙。",
-        "inLanguage": "zh-Hant-TW"
-      }
+      {"@context":"https://schema.org","@type":"WebSite","@id":"__PUBLIC_SITE_URL__/#website","url":"__PUBLIC_SITE_URL__/","name":"RoadTag｜基隆好行","alternateName":"Keelung Accessible Map","description":"基隆無障礙通行地圖，提供民眾查看與回報人行道、騎樓與路口等通行狀況。","inLanguage":"zh-Hant-TW"}
     </script>
-    <title>基隆無障礙通行地圖｜輪椅通行與障礙回報｜基隆好行</title>
+    <title>RoadTag｜基隆好行｜基隆無障礙通行地圖</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2d2d;
+        --muted: #526262;
+        --green: #09595b;
+        --green-dark: #103637;
+        --navy: #16364b;
+        --sea: #50b4cd;
+        --cyan: #099bac;
+        --mist-blue: #96cbde;
+        --water: #73c4de;
+        --hill: #619f57;
+        --resolved: #148e5a;
+        --mountain: #155336;
+        --yellow: #e29929;
+        --orange: #d6691e;
+        --coral: #d86958;
+        --mint: #dfe9ed;
+        --paper: #f6f3ea;
+        --white: #fff;
+        --line: #dfe9ed;
+        --amber: #1f2d2d;
+        --amber-bg: #f8edda;
+        --red: #1f2d2d;
+        --red-bg: #f8e4df;
+        --shadow: 0 24px 64px rgba(22, 54, 75, 0.12);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.65;
+      }
+      a {
+        color: inherit;
+      }
+      a:focus-visible {
+        outline: 3px solid var(--navy);
+        outline-offset: 4px;
+        border-radius: 6px;
+      }
+      .wrap {
+        width: min(1160px, calc(100% - 48px));
+        margin-inline: auto;
+      }
+      .skip-link {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 20;
+        transform: translateY(-160%);
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: var(--white);
+        color: var(--green-dark);
+      }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        min-height: 82px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        color: var(--green-dark);
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .brand-wordmark {
+        display: block;
+        width: 218px;
+        height: auto;
+      }
+      .brand small {
+        display: block;
+        margin-top: -3px;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 600;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        color: var(--muted);
+        font-size: 0.94rem;
+        font-weight: 650;
+      }
+      .nav a {
+        text-decoration: none;
+      }
+      .nav a:hover {
+        color: var(--green-dark);
+      }
+      .nav .button:hover,
+      .nav .button:focus-visible {
+        color: #fff;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 48px;
+        padding: 0 18px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: var(--green);
+        color: white;
+        font-weight: 750;
+        text-decoration: none;
+        transition: background-color 160ms ease, transform 160ms ease;
+      }
+      .button:hover {
+        transform: translateY(-1px);
+        background: var(--green-dark);
+      }
+      .button.secondary {
+        border-color: var(--line);
+        background: white;
+        color: var(--green-dark);
+      }
+      .button.secondary:hover {
+        background: var(--mint);
+      }
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 64px 0 0;
+        background:
+          radial-gradient(ellipse at 82% 15%, rgba(150, 203, 222, 0.35), transparent 33%),
+          linear-gradient(135deg, #dfe9ed 0%, #f6f3ea 61%, #f6f3ea 100%);
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(330px, 0.9fr);
+        align-items: center;
+        gap: 54px;
+      }
+      .hero-banner {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin-top: clamp(32px, 4vw, 56px);
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 18px;
+        color: var(--green);
+        font-size: 0.88rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+      .eyebrow::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--yellow);
+        content: "";
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+      h1 {
+        max-width: 670px;
+        margin-bottom: 18px;
+        font-size: clamp(2.5rem, 5.1vw, 4.5rem);
+        line-height: 1.12;
+        letter-spacing: -0.045em;
+      }
+      .hero-copy {
+        max-width: 590px;
+        margin-bottom: 28px;
+        color: #455e54;
+        font-size: clamp(1.04rem, 1.6vw, 1.18rem);
+      }
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .location-card {
+        position: relative;
+        overflow: hidden;
+        padding: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.82);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.84);
+        box-shadow: var(--shadow);
+      }
+      .location-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .location-head h2 {
+        margin-bottom: 2px;
+        font-size: 1.24rem;
+      }
+      .location-head p,
+      .small-note {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.89rem;
+      }
+      .live-pill {
+        flex: 0 0 auto;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--mint);
+        color: var(--green-dark);
+        font-size: 0.77rem;
+        font-weight: 800;
+      }
+      .report-mini-list {
+        display: grid;
+        gap: 10px;
+      }
+      .report-mini {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: #fff;
+      }
+      .report-mini strong {
+        display: block;
+        font-size: 0.96rem;
+      }
+      .report-mini small {
+        color: var(--muted);
+      }
+      .status {
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: var(--amber-bg);
+        color: var(--amber);
+        font-size: 0.74rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .status.blocked {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .status.open {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .status.resolved {
+        background: #e7f3ec;
+        color: var(--green-dark);
+      }
+      .small-note {
+        margin-top: 14px;
+        line-height: 1.5;
+      }
+      .section {
+        padding: 72px 0;
+      }
+      .section-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 30px;
+        margin-bottom: 28px;
+      }
+      .section-heading h2 {
+        max-width: 650px;
+        margin-bottom: 8px;
+        font-size: clamp(1.8rem, 3.2vw, 2.55rem);
+        line-height: 1.22;
+        letter-spacing: -0.03em;
+      }
+      .section-heading p {
+        max-width: 550px;
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+      .story-intro {
+        width: min(1160px, calc(100% - 48px));
+        margin: 0 auto 34px;
+      }
+      .story-intro h2 {
+        max-width: 900px;
+        margin-bottom: 14px;
+        font-size: clamp(2.25rem, 4.7vw, 4.25rem);
+        line-height: 1.15;
+        letter-spacing: -0.04em;
+      }
+      .story-intro p {
+        max-width: 66ch;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+        line-height: 1.8;
+      }
+      .barrier-story {
+        padding: clamp(42px, 6vw, 76px) 0 44px;
+        background: #eaf1e9;
+      }
+      .story-list {
+        width: min(1320px, calc(100% - 64px));
+        margin-inline: auto;
+      }
+      .story-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+        grid-template-areas: "photo copy";
+        align-items: center;
+        gap: clamp(36px, 6vw, 88px);
+        padding: clamp(38px, 5.5vw, 76px) 0;
+        border-top: 1px solid rgba(23, 56, 47, 0.14);
+      }
+      .story-row--image-right {
+        grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr);
+        grid-template-areas: "copy photo";
+      }
+      .story-photo {
+        grid-area: photo;
+        min-width: 0;
+        margin: 0;
+      }
+      .story-photo img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        background: #dbe4df;
+      }
+      .story-photo figcaption {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .story-copy {
+        grid-area: copy;
+        max-width: 48ch;
+      }
+      .story-copy small {
+        color: var(--green);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+      .story-copy h3 {
+        margin: 10px 0 12px;
+        font-size: clamp(1.6rem, 2.7vw, 2.45rem);
+        line-height: 1.22;
+        letter-spacing: -0.025em;
+      }
+      .story-copy p {
+        margin: 0;
+        color: #50675d;
+        font-size: 1.03rem;
+        line-height: 1.8;
+      }
+      .story-note {
+        margin-top: 20px;
+      }
+      .story-note {
+        width: min(1160px, calc(100% - 48px));
+        margin: 20px auto 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .story-cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        width: min(1160px, calc(100% - 48px));
+        margin: 72px auto 0;
+        padding: clamp(26px, 4vw, 48px);
+        border-radius: 18px;
+        background: var(--green-dark);
+        color: #fff;
+      }
+      .story-cta h3 {
+        margin: 0 0 5px;
+        font-size: clamp(1.4rem, 2.7vw, 2rem);
+      }
+      .story-cta p {
+        margin: 0;
+        color: #e2eee6;
+      }
+      .story-cta .button {
+        flex: 0 0 auto;
+        background: #fff;
+        color: var(--green-dark);
+      }
+      .map-frame {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: #e6efe8;
+        box-shadow: var(--shadow);
+      }
+      .map-frame iframe {
+        display: block;
+        width: 100%;
+        height: min(68vh, 660px);
+        min-height: 480px;
+        border: 0;
+        background: #e6efe8;
+      }
+      .map-preview {
+        position: relative;
+        isolation: isolate;
+      }
+      .map-preview iframe {
+        pointer-events: none;
+      }
+      .map-marker-layer {
+        position: absolute;
+        z-index: 2;
+        inset: 0;
+        pointer-events: none;
+      }
+      .home-map-marker {
+        position: absolute;
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        transform: translate(-50%, -50%);
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(23, 56, 47, 0.28);
+        color: var(--ink);
+        font-size: 1.1rem;
+        font-weight: 800;
+        line-height: 1;
+        text-decoration: none;
+        pointer-events: auto;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+      .home-map-marker:hover,
+      .home-map-marker:focus-visible {
+        z-index: 3;
+        transform: translate(-50%, -50%) scale(1.12);
+        box-shadow: 0 6px 18px rgba(23, 56, 47, 0.32);
+      }
+      .home-map-marker:focus-visible {
+        outline: 3px solid var(--navy);
+        outline-offset: 3px;
+      }
+      .home-map-marker.open {
+        background: var(--coral);
+      }
+      .home-map-marker.in_progress {
+        background: var(--yellow);
+      }
+      .home-map-marker.resolved {
+        background: var(--hill);
+      }
+      .map-caption {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .map-caption-main {
+        display: grid;
+        gap: 7px;
+      }
+      .map-live-note {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .map-status-legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+      .map-status-key {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .map-status-dot {
+        display: inline-grid;
+        width: 22px;
+        height: 22px;
+        place-items: center;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 5px rgba(23, 56, 47, 0.2);
+        color: var(--ink);
+        font-size: 0.7rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .map-status-dot.open { background: var(--coral); }
+      .map-status-dot.in_progress { background: var(--yellow); }
+      .map-status-dot.resolved { background: var(--hill); }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .step-card {
+        min-height: 174px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: white;
+      }
+      .step-num {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        margin-bottom: 16px;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--mint);
+        color: var(--green-dark);
+        font-weight: 850;
+      }
+      .step-card h3 {
+        margin-bottom: 7px;
+        font-size: 1.08rem;
+      }
+      .step-card p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.93rem;
+      }
+      .notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin-top: 20px;
+        padding: 17px 19px;
+        border: 1px solid #ead9b1;
+        border-radius: 14px;
+        background: #fff9ea;
+        color: #644c20;
+      }
+      .notice p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
+      .notice strong {
+        display: block;
+        margin-bottom: 3px;
+      }
+      .closing {
+        padding: 42px;
+        border-radius: 24px;
+        background: var(--green-dark);
+        color: white;
+      }
+      .closing-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 26px;
+      }
+      .closing h2 {
+        margin-bottom: 7px;
+        font-size: clamp(1.65rem, 3vw, 2.25rem);
+      }
+      .closing p {
+        margin-bottom: 0;
+        color: #d6e7dd;
+      }
+      .closing .button {
+        flex: 0 0 auto;
+        background: #fff;
+        color: var(--green-dark);
+      }
+      .closing .button:hover {
+        background: #e8f1e9;
+      }
+      footer {
+        padding: 30px 0 40px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .footer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      .footer-row p {
+        margin: 0;
+      }
+      footer a {
+        color: var(--green-dark);
+        font-weight: 700;
+      }
+      .site-footer {
+        width: 100%;
+        padding: 0;
+        background: #e8f1e9;
+      }
+      .footer-scene {
+        display: block;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        margin: 0;
+        border-radius: 0;
+      }
+      .footer-row {
+        flex-wrap: wrap;
+        width: 100%;
+        margin: 0;
+        padding: 22px max(24px, calc((100vw - 1160px) / 2)) 30px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+      }
+      .footer-row p:first-child {
+        margin-right: auto;
+      }
+      .threads-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 44px;
+        text-decoration: none;
+      }
+      .threads-link svg {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+      }
+      .footer-legal {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+      }
+      .creator-contact {
+        position: fixed;
+        right: max(20px, env(safe-area-inset-right));
+        bottom: max(20px, env(safe-area-inset-bottom));
+        z-index: 30;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 52px;
+        padding: 0 18px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        background: var(--green-dark);
+        color: #fff;
+        box-shadow: 0 10px 30px rgba(16, 72, 55, 0.24);
+        font: inherit;
+        font-weight: 750;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+      }
+      .creator-contact:hover,
+      .creator-contact:focus-visible {
+        background: #0a3528;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 14px 34px rgba(16, 72, 55, 0.3);
+      }
+      .creator-contact svg {
+        width: 19px;
+        height: 19px;
+        flex: 0 0 auto;
+      }
+      .feedback-dialog {
+        width: min(560px, calc(100% - 32px));
+        max-width: 560px;
+        max-height: min(90vh, 760px);
+        padding: 0;
+        overflow: auto;
+        border: 1px solid rgba(23, 56, 47, 0.12);
+        border-radius: 22px;
+        background: var(--paper);
+        color: var(--ink);
+        box-shadow: 0 28px 90px rgba(10, 39, 29, 0.28);
+      }
+      .feedback-dialog::backdrop {
+        background: rgba(11, 32, 26, 0.54);
+        backdrop-filter: blur(3px);
+      }
+      .feedback-form {
+        padding: clamp(22px, 5vw, 34px);
+      }
+      .feedback-topline {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+      .feedback-topline h2 {
+        margin: 0 0 7px;
+        font-size: clamp(1.45rem, 5vw, 1.9rem);
+        line-height: 1.25;
+      }
+      .feedback-topline p,
+      .feedback-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.93rem;
+      }
+      .feedback-close {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #fff;
+        color: var(--ink);
+        font-size: 1.35rem;
+        cursor: pointer;
+      }
+      .feedback-fields {
+        display: grid;
+        gap: 16px;
+      }
+      .feedback-fields label {
+        display: grid;
+        gap: 7px;
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+      .feedback-fields input,
+      .feedback-fields select,
+      .feedback-fields textarea {
+        width: 100%;
+        min-height: 48px;
+        padding: 11px 13px;
+        border: 1px solid #cbd8ce;
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 450;
+      }
+      .feedback-fields textarea {
+        min-height: 142px;
+        resize: vertical;
+      }
+      .feedback-fields input:focus-visible,
+      .feedback-fields select:focus-visible,
+      .feedback-fields textarea:focus-visible,
+      .feedback-close:focus-visible {
+        outline: 3px solid #e8a943;
+        outline-offset: 2px;
+      }
+      .feedback-note {
+        margin: 17px 0 20px;
+        font-size: 0.82rem;
+        line-height: 1.65;
+      }
+      .feedback-note a {
+        color: var(--green-dark);
+        font-weight: 750;
+      }
+      .feedback-submit {
+        width: 100%;
+        border: 0;
+      }
+      .feedback-submit:hover,
+      .feedback-submit:focus-visible {
+        color: #fff;
+      }
+      @media (max-width: 850px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+        .story-list {
+          width: min(100% - 48px, 720px);
+        }
+        .story-row,
+        .story-row--image-right {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-areas: "photo" "copy";
+          gap: 22px;
+          padding: 34px 0;
+        }
+        .story-copy h3 {
+          font-size: clamp(1.45rem, 4vw, 2rem);
+        }
+        .story-cta {
+          align-items: flex-start;
+          flex-direction: column;
+          width: min(100% - 48px, 720px);
+          margin-top: 48px;
+        }
+        .location-card {
+          max-width: 640px;
+        }
+        .nav {
+          gap: 14px;
+        }
+        .steps {
+          grid-template-columns: 1fr;
+        }
+        .step-card {
+          min-height: 0;
+        }
+      }
+      @media (max-width: 600px) {
+        .wrap {
+          width: min(100% - 32px, 1160px);
+        }
+        .header {
+          min-height: 72px;
+        }
+        .nav a:not(.button) {
+          display: none;
+        }
+        .nav .button {
+          min-height: 42px;
+          padding-inline: 13px;
+          font-size: 0.88rem;
+        }
+        .brand-wordmark {
+          width: 152px;
+        }
+        .hero {
+          padding: 48px 0 0;
+        }
+        .hero-grid {
+          gap: 28px;
+        }
+        h1 {
+          font-size: clamp(2.3rem, 11vw, 3.45rem);
+        }
+        .hero-actions .button {
+          width: 100%;
+        }
+        .location-card {
+          padding: 18px;
+          border-radius: 18px;
+        }
+        .report-mini {
+          grid-template-columns: 1fr;
+        }
+        .status {
+          justify-self: start;
+        }
+        .section {
+          padding: 54px 0;
+        }
+        .story-intro,
+        .story-note {
+          width: min(100% - 32px, 1160px);
+        }
+        .story-intro h2 {
+          font-size: clamp(1.75rem, 7.5vw, 2.4rem);
+        }
+        .story-intro p {
+          font-size: 1rem;
+        }
+        .barrier-story {
+          padding: 42px 0 34px;
+        }
+        .story-intro {
+          margin-bottom: 24px;
+        }
+        .story-list {
+          width: calc(100% - 32px);
+        }
+        .story-row,
+        .story-row--image-right {
+          gap: 18px;
+          padding: 28px 0;
+        }
+        .story-copy h3 {
+          margin: 7px 0 8px;
+          font-size: 1.55rem;
+        }
+        .story-copy p {
+          font-size: 0.98rem;
+        }
+        .story-cta {
+          width: calc(100% - 32px);
+          margin-top: 36px;
+          padding: 24px 20px;
+        }
+        .story-cta .button {
+          width: 100%;
+        }
+        .section-heading,
+        .closing-row,
+        .footer-row {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .section-heading {
+          gap: 14px;
+        }
+        .map-frame {
+          border-radius: 15px;
+        }
+        .map-frame iframe {
+          height: 64vh;
+          min-height: 430px;
+        }
+        .map-caption-main {
+          gap: 5px;
+        }
+        .map-status-legend {
+          gap: 9px 12px;
+        }
+        .map-caption {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .closing {
+          padding: 26px 22px;
+          border-radius: 18px;
+        }
+        .closing .button {
+          width: 100%;
+        }
+        .footer-row {
+          padding: 20px 16px 28px;
+        }
+        .creator-contact {
+          right: max(14px, env(safe-area-inset-right));
+          bottom: max(14px, env(safe-area-inset-bottom));
+          min-height: 48px;
+          padding: 0 15px;
+          font-size: 0.9rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+  <body>
+    <a class="skip-link" href="#main">跳至主要內容</a>
+    <header class="wrap header">
+      <a class="brand" href="#top" aria-label="基隆好行首頁">
+        <img class="brand-wordmark" src="images/brand-horizontal.webp" alt="基隆好行 Road Recall" width="2172" height="724" fetchpriority="high" />
+      </a>
+      <nav class="nav" aria-label="主要導覽">
+        <a href="#how">使用方式</a>
+        <a href="#map">即時地圖</a>
+        <a class="button" href="/map" data-map-link>開啟通行地圖 <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="wrap hero-grid">
+          <div>
+            <p class="eyebrow">從基隆出發，讓路況更容易被看見</p>
+            <h1 id="hero-title">讓每一段路，<br />都多一點選擇。</h1>
+            <p class="hero-copy">每一筆回報，都是一份公共紀錄。基隆好行整理道路、騎樓與人行道的通行障礙，讓市民掌握現場，也協助市府看見問題、追蹤查察，作為後續改善的參考。</p>
+            <div class="hero-actions">
+              <a class="button" href="#map">查看基隆即時地圖 <span aria-hidden="true">↓</span></a>
+              <a class="button secondary" href="/map" data-map-link>新增一筆通行回報 <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+
+          <aside class="location-card" aria-labelledby="sample-title">
+            <div class="location-head">
+              <div>
+                <h2 id="sample-title">仁愛區首批現場回報</h2>
+                <p>三個路緣高低差觀察點</p>
+              </div>
+              <span class="live-pill">公開地圖</span>
+            </div>
+            <div class="report-mini-list">
+              <div class="report-mini" data-report-id="40d51fbd-2f84-4a5e-88f2-f0d6d0be1092">
+                <div><strong>忠二路 44 號</strong><small>騎樓入口 · 無法通過</small></div>
+                <span class="status open">待改善</span>
+              </div>
+              <div class="report-mini" data-report-id="cd854b5b-f304-4395-a8eb-71bafaad8626">
+                <div><strong>愛三路 1 號</strong><small>騎樓入口 · 通行困難</small></div>
+                <span class="status open">待改善</span>
+              </div>
+              <div class="report-mini" data-report-id="57654ee6-b8b5-48bf-941a-18806f295a07">
+                <div><strong>仁二路 198 號</strong><small>超商騎樓入口 · 通行困難</small></div>
+                <span class="status open">待改善</span>
+              </div>
+            </div>
+            <p class="small-note">由民眾回報的現場資訊，公開供大家查閱，也讓公部門更容易掌握問題，作為後續查察與改善的參考。</p>
+          </aside>
+        </div>
+        <img class="hero-banner" src="images/accessible-coastal-city-banner.webp" alt="海岸城市與通行路線意象，呈現輪椅使用者也能探索城市的願景。" width="1916" height="821" fetchpriority="high" decoding="async" />
+      </section>
+
+      <section class="barrier-story" aria-labelledby="story-title">
+        <div class="story-intro">
+          <h2 id="story-title">這座城市，人人都好走嗎？</h2>
+          <p>從輪椅的高度看出去，一段路要能走，得先有連續、平順而且安全的空間。把道路、騎樓與人行道的障礙留下位置和現場紀錄，讓市民彼此提醒，也協助公部門掌握、追蹤需要查察與改善的地方。</p>
+        </div>
+        <div class="story-list" aria-label="常見通行障礙情境">
+          <article class="story-row">
+            <figure class="story-photo">
+              <img src="images/barriers/city-traffic.webp" alt="輪椅使用者視角看向車流與人行道交錯的街道，前方可通行空間不連續。" width="1672" height="941" loading="eager" decoding="async" />
+              <figcaption>輪椅視角示意｜街道與車流</figcaption>
+            </figure>
+            <div class="story-copy"><small>街道與車流</small><h3>人行空間被車流切斷</h3><p>人車混流、路緣與人行道接不起來時，移動路線可能被迫轉向車道。看起來很近的路，也可能沒有安心通過的方式。</p></div>
+          </article>
+          <article class="story-row story-row--image-right">
+            <figure class="story-photo">
+              <img src="images/barriers/storefront-ramp.webp" alt="輪椅使用者面對店家入口的金屬斜坡板，坡度與銜接處清楚可見。" width="1672" height="941" loading="lazy" decoding="async" />
+              <figcaption>店家入口示意｜坡板與接縫</figcaption>
+            </figure>
+            <div class="story-copy"><small>店家入口</small><h3>坡板太陡，入口仍然難以進出</h3><p>有坡板不代表一定好走。坡度、寬度和與路面的銜接，都會影響能不能獨立通過。</p></div>
+          </article>
+          <article class="story-row">
+            <figure class="story-photo">
+              <img src="images/barriers/motorcycle-on-sidewalk.webp" alt="停放的機車占用騎樓與人行通道，輪椅前方的空間受到壓縮。" width="1672" height="941" loading="lazy" decoding="async" />
+              <figcaption>通道受阻示意｜騎樓與人行空間</figcaption>
+            </figure>
+            <div class="story-copy"><small>人行通道</small><h3>通道被占用，只好繞進車流</h3><p>當機車或臨時物品擋住騎樓，輪椅使用者可能得繞行，甚至靠近車道。回報這些細節，能讓下一個人先做好準備。</p></div>
+          </article>
+          <article class="story-row story-row--image-right">
+            <figure class="story-photo">
+              <img src="images/barriers/step-barrier.webp" alt="人行通道上的明顯高低差形成一道門檻，輪椅無法平順通過。" width="1672" height="941" loading="lazy" decoding="async" />
+              <figcaption>路面高低差示意｜人行通道的門檻</figcaption>
+            </figure>
+            <div class="story-copy"><small>路面高低差</small><h3>一個落差，也可能成為一道門檻</h3><p>鋪面破損、突起或斜坡接縫，都可能讓輪椅卡住、讓行人失去平衡。記下位置與現場狀況，讓不連續的路面有跡可循。</p></div>
+          </article>
+        </div>
+        <p class="story-note">以上圖片為情境示意，不代表基隆特定地點的現況或地圖上的實際案件。</p>
+        <div class="story-cta">
+          <div><h3>讓每個問題，都有位置可追蹤。</h3><p>把障礙和現場狀況留在地圖上，供市民參考，也讓需要改善的地方更容易被看見。</p></div>
+          <a class="button" href="/map" data-map-link>前往地圖查看或回報 <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="section wrap" id="map" aria-labelledby="map-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">OpenStreetMap 底圖 · 基隆市</p>
+            <h2 id="map-title">先看路況，再決定怎麼走。</h2>
+            <p>在首頁直接查看仁愛區首批回報位置與處理狀態；點選地圖標記即可開啟該案件。</p>
+          </div>
+          <a class="button secondary" href="/map" data-map-link>在新頁開啟地圖 <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="map-frame">
+          <div class="map-preview" id="report-map-preview">
+            <iframe
+              id="report-map-tiles"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=121.68%2C25.10%2C121.81%2C25.16&amp;layer=mapnik"
+              title="OpenStreetMap 基隆仁愛區即時回報地圖"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+              tabindex="-1"
+              aria-hidden="true"
+            ></iframe>
+            <div class="map-marker-layer" id="report-map-markers" aria-label="仁愛區實際回報位置"></div>
+          </div>
+          <div class="map-caption">
+            <div class="map-caption-main">
+              <span id="map-live-note" class="map-live-note" role="status" aria-live="polite">正在同步案件狀態…</span>
+              <div class="map-status-legend" aria-label="案件狀態圖例">
+                <span class="map-status-key"><i class="map-status-dot open" aria-hidden="true">!</i>待改善</span>
+                <span class="map-status-key"><i class="map-status-dot in_progress" aria-hidden="true">…</i>處理中</span>
+                <span class="map-status-key"><i class="map-status-dot resolved" aria-hidden="true">✓</i>已改善</span>
+              </div>
+            </div>
+            <a href="/map" data-map-link>開啟完整地圖</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section wrap" id="how" aria-labelledby="how-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">簡單三步，掌握一段路</p>
+            <h2 id="how-title">讓出門前的資訊，再多一點。</h2>
+          </div>
+        </div>
+        <div class="steps">
+          <article class="step-card">
+            <span class="step-num" aria-hidden="true">1</span>
+            <h3>找到回報位置</h3>
+            <p>在基隆地圖上搜尋地點，或查看附近的通行回報。</p>
+          </article>
+          <article class="step-card">
+            <span class="step-num" aria-hidden="true">2</span>
+            <h3>看現場狀況</h3>
+            <p>查看障礙類型、輪椅通行程度與回報照片，先評估合適路線。</p>
+          </article>
+          <article class="step-card">
+            <span class="step-num" aria-hidden="true">3</span>
+            <h3>補上最新觀察</h3>
+            <p>親自經過後，可補充路況變化，讓大家掌握最新狀況，也讓改善過程有跡可循。</p>
+          </article>
+        </div>
+        <div class="notice" role="note">
+          <span aria-hidden="true">ⓘ</span>
+          <p><strong>民眾共同紀錄，請配合現場判斷</strong>本站回報不會自動成為政府陳情、派工或施工案件，也不代表政府認定。這些公共紀錄可供市民參考，並協助主管機關掌握現況、後續查察與評估改善。需要正式受理，請使用政府正式管道；路況可能改變，請依現場安全狀況調整。</p>
+        </div>
+      </section>
+
+      <section class="wrap" aria-labelledby="closing-title">
+        <div class="closing closing-row">
+          <div>
+            <h2 id="closing-title">一起把不好走的路，說清楚。</h2>
+            <p>讓道路、騎樓與人行道的通行問題被看見，逐步走向更好走的城市。</p>
+          </div>
+          <a class="button" href="/map" data-map-link>前往正式版地圖 <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="footer">
+      <img class="footer-scene" src="images/brand-footer.webp" alt="基隆好行 Road Recall 品牌標誌與基隆山海意象" width="2172" height="724" loading="lazy" decoding="async" />
+      <div class="footer-row">
+        <p><strong>基隆好行</strong> · 基隆無障礙通行回報地圖</p>
+        <p>底圖 © OpenStreetMap contributors · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap 著作權</a></p>
+        <nav class="footer-legal" aria-label="網站政策">
+          <a href="/terms">使用條款</a>
+          <a href="/privacy">隱私權政策</a>
+        </nav>
+        <a class="threads-link" href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤基隆好行 @roadrecall2046"><svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M188.84,120.46a68.14,68.14,0,0,0-10-6.23c-3.72-21.68-16.41-37.41-35.52-43.2C121.94,64.55,97.29,72.42,86,89.34a12,12,0,0,0,20,13.32c5.47-8.2,19.11-12.08,30.41-8.66a24.72,24.72,0,0,1,14.88,12.24,86.73,86.73,0,0,0-8.86-.45C108.56,105.79,84,125.22,84,152c0,22.9,17.54,39.52,41.71,39.52a52,52,0,0,0,37.23-16c6-6.23,12.88-16.46,15.72-32.07,6.2,6.42,9.34,14.67,9.34,24.59,0,17.74-19.07,44-60,44-45.76,0-68-27.48-68-84s22.24-84,68-84c31.08,0,51,12.42,60.8,38a12,12,0,0,0,22.4-8.62C197.77,38.44,169,20,128,20,68.67,20,36,58.35,36,128s32.67,108,92,108c31.36,0,51.08-12.05,62.11-22.15C203.81,201.28,212,184.14,212,168,212,148.36,204,131.92,188.84,120.46Zm-43.2,38.39a27.9,27.9,0,0,1-19.93,8.67c-8.17,0-17.71-4.06-17.71-15.52,0-15.26,17.84-22.21,34.41-22.21a60.23,60.23,0,0,1,13.51,1.52C155.36,142.93,151.84,152.41,145.64,158.85Z"/></svg><span>Threads</span></a>
+      </div>
+    </footer>
+    <button class="creator-contact" type="button" aria-haspopup="dialog" aria-controls="feedback-dialog" id="open-feedback">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5.75A2.75 2.75 0 0 1 6.75 3h10.5A2.75 2.75 0 0 1 20 5.75v7.5A2.75 2.75 0 0 1 17.25 16H10l-4.5 4v-4.25A2.75 2.75 0 0 1 4 13.25z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/><path d="m7 7 5 4 5-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg>
+      <span>聯絡創作者</span>
+    </button>
+    <dialog class="feedback-dialog" id="feedback-dialog" aria-labelledby="feedback-title">
+      <form class="feedback-form" id="feedback-form">
+        <div class="feedback-topline">
+          <div>
+            <h2 id="feedback-title">一起讓基隆好行更好用</h2>
+            <p>歡迎回報錯誤、提出修改建議，或分享使用上的想法。</p>
+          </div>
+          <button class="feedback-close" type="button" aria-label="關閉回報視窗" id="close-feedback">×</button>
+        </div>
+        <div class="feedback-fields">
+          <label for="feedback-kind">回報類型
+            <select id="feedback-kind" name="kind" required>
+              <option value="網站錯誤">網站錯誤</option>
+              <option value="修改建議">修改建議</option>
+              <option value="無障礙問題">無障礙問題</option>
+              <option value="其他意見">其他意見</option>
+            </select>
+          </label>
+          <label for="feedback-subject">簡短標題
+            <input id="feedback-subject" name="subject" type="text" maxlength="100" placeholder="例如：手機上地圖按鈕被遮住" required />
+          </label>
+          <label for="feedback-message">想回報的內容
+            <textarea id="feedback-message" name="message" maxlength="4000" placeholder="請描述發生的情況、操作步驟，或希望調整的地方。" required></textarea>
+          </label>
+          <label for="feedback-reply">你的 Email（選填，方便我們回覆）
+            <input id="feedback-reply" name="reply" type="email" autocomplete="email" maxlength="254" placeholder="name@example.com" />
+          </label>
+        </div>
+        <p class="feedback-note">點選下方按鈕會開啟你的電子郵件程式，讓你確認後寄出至 <a href="mailto:lingwei2046@gmail.com">lingwei2046@gmail.com</a>。請勿填入密碼、驗證碼或其他敏感資料。</p>
+        <button class="button feedback-submit" type="submit">開啟郵件並寄出</button>
+      </form>
+    </dialog>
+    <script>
+      (() => {
+        const dialog = document.getElementById("feedback-dialog");
+        const form = document.getElementById("feedback-form");
+        const opener = document.getElementById("open-feedback");
+        const closer = document.getElementById("close-feedback");
+        opener.addEventListener("click", () => dialog.showModal());
+        closer.addEventListener("click", () => dialog.close());
+        dialog.addEventListener("click", (event) => {
+          if (event.target === dialog) dialog.close();
+        });
+        dialog.addEventListener("close", () => opener.focus());
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          if (!form.reportValidity()) return;
+          const values = new FormData(form);
+          const subject = `[基隆好行意見] ${values.get("kind")}｜${values.get("subject")}`;
+          const body = [
+            `回報類型：${values.get("kind")}`,
+            `標題：${values.get("subject")}`,
+            "",
+            "回報內容：",
+            values.get("message"),
+            "",
+            `聯絡 Email：${values.get("reply") || "未提供"}`,
+          ].join("\n");
+          window.location.href = `mailto:lingwei2046@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        });
+      })();
+    </script>
+    <script>
+      (() => {
+        const projectUrl = "https://ifcicahnrpkwjcxmnmug.supabase.co";
+        const publishableKey = "sb_publishable_dGPMlt3HJPiDegtjol4WNQ_HLhgHGNt";
+        const appUrl = new URL("/map", window.location.origin).href;
+        document.querySelectorAll("a[data-map-link]").forEach((link) => { link.href = appUrl; });
+        const map = document.getElementById("report-map-preview");
+        const tiles = document.getElementById("report-map-tiles");
+        const markers = document.getElementById("report-map-markers");
+        const liveNote = document.getElementById("map-live-note");
+        const center = { lat: 25.13, lng: 121.744 };
+        const featuredIds = [
+          "40d51fbd-2f84-4a5e-88f2-f0d6d0be1092",
+          "cd854b5b-f304-4395-a8eb-71bafaad8626",
+          "57654ee6-b8b5-48bf-941a-18806f295a07"
+        ];
+        const statusLabels = { open: "待改善", in_progress: "處理中", resolved: "已改善" };
+        const statusSymbols = { open: "!", in_progress: "…", resolved: "✓" };
+        const initialReports = [
+          { id: featuredIds[0], title: "忠二路 44 號騎樓入口", lat: 25.1306234, lng: 121.7393539, status: "open" },
+          { id: featuredIds[1], title: "愛三路 1 號騎樓入口", lat: 25.127189, lng: 121.741575, status: "open" },
+          { id: featuredIds[2], title: "仁二路 198 號超商騎樓入口", lat: 25.1287884, lng: 121.7448982, status: "open" }
+        ];
+        let reports = initialReports;
+        let lastAspect = 0;
+
+        function mercatorY(latitude) {
+          const radians = latitude * Math.PI / 180;
+          return Math.log(Math.tan(Math.PI / 4 + radians / 2));
+        }
+
+        function drawMap() {
+          const width = map.clientWidth;
+          const height = map.clientHeight;
+          if (!width || !height) return;
+          const aspect = width / height;
+          const latitudeSpan = 0.06;
+          const longitudeSpan = latitudeSpan * aspect / Math.cos(center.lat * Math.PI / 180);
+          const bounds = {
+            south: center.lat - latitudeSpan / 2,
+            north: center.lat + latitudeSpan / 2,
+            west: center.lng - longitudeSpan / 2,
+            east: center.lng + longitudeSpan / 2
+          };
+          if (Math.abs(aspect - lastAspect) > 0.035) {
+            const query = new URLSearchParams({
+              bbox: [bounds.west, bounds.south, bounds.east, bounds.north].map((n) => n.toFixed(6)).join(","),
+              layer: "mapnik"
+            });
+            tiles.src = "https://www.openstreetmap.org/export/embed.html?" + query.toString();
+            lastAspect = aspect;
+          }
+          const northY = mercatorY(bounds.north);
+          const southY = mercatorY(bounds.south);
+          markers.replaceChildren();
+          reports.forEach((report) => {
+            if (!Number.isFinite(report.lat) || !Number.isFinite(report.lng) || !statusLabels[report.status]) return;
+            const x = (report.lng - bounds.west) / (bounds.east - bounds.west);
+            const y = (northY - mercatorY(report.lat)) / (northY - southY);
+            if (x < 0 || x > 1 || y < 0 || y > 1) return;
+            const link = document.createElement("a");
+            link.className = "home-map-marker " + report.status;
+            link.style.left = (x * 100) + "%";
+            link.style.top = (y * 100) + "%";
+            link.href = appUrl + "?report=" + encodeURIComponent(report.id);
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = statusSymbols[report.status];
+            link.setAttribute("aria-label", report.title + "，" + statusLabels[report.status] + "，開啟案件");
+            link.title = report.title + " · " + statusLabels[report.status];
+            markers.append(link);
+            const mini = document.querySelector('.report-mini[data-report-id="' + report.id + '"] .status');
+            if (mini) {
+              mini.className = "status " + report.status;
+              mini.textContent = statusLabels[report.status];
+            }
+          });
+        }
+
+        async function syncStatuses() {
+          try {
+            const query = new URLSearchParams();
+            query.set("select", "id,title,lat,lng,status");
+            query.set("id", "in.(" + featuredIds.join(",") + ")");
+            query.set("city_id", "eq.TW-KEE");
+            const response = await fetch(projectUrl + "/rest/v1/report_feed?" + query.toString(), {
+              headers: {
+                apikey: publishableKey,
+                Authorization: "Bearer " + publishableKey
+              },
+              cache: "no-store",
+              signal: AbortSignal.timeout(8000)
+            });
+            if (!response.ok) throw new Error("案件狀態暫時無法同步");
+            const rows = await response.json();
+            if (!Array.isArray(rows)) throw new Error("回報資料格式不正確");
+            const liveById = new Map(rows.map((row) => [row.id, row]));
+            reports = initialReports
+              .filter((report) => liveById.has(report.id))
+              .map((report) => Object.assign({}, report, liveById.get(report.id)));
+            drawMap();
+            liveNote.textContent = reports.length
+              ? "已同步 " + reports.length + " 個仁愛區回報點 · 點選標記查看案件"
+              : "目前沒有可顯示的回報點，請開啟完整地圖查看。";
+          } catch {
+            drawMap();
+            liveNote.textContent = "即時狀態暫時無法同步；標記顯示最近的資料，最新狀況請開啟完整地圖。";
+          }
+        }
+
+        drawMap();
+        new ResizeObserver(drawMap).observe(map);
+        void syncStatuses();
+      })();
+    </script>
+  </body>
 </html>

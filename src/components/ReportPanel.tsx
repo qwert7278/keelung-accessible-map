@@ -33,7 +33,7 @@ function Photo({ src, label }: { src: string | null; label: string }) {
     <figure>
       {src ? (
         <a href={src} target="_blank" rel="noreferrer">
-          <img src={src} alt={label} />
+          <img src={src} alt={label} loading="lazy" decoding="async" />
         </a>
       ) : (
         <div className="photo-empty">
@@ -345,6 +345,8 @@ export default function ReportPanel({
                       className="update-photo"
                       src={u.imageUrl}
                       alt={u.type === "admin" ? "管理者更新照片" : "民眾補充照片"}
+                      loading="lazy"
+                      decoding="async"
                     />
                   )}
                 </li>
