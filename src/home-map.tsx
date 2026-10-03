@@ -36,10 +36,10 @@ function HomeMap() {
       if (!active) return;
       unsubscribe = repo.subscribe(city.id, rows => {
         if (active) { setReports(rows); setLoading(false); setError(''); }
-      }, () => { if (active) { setLoading(false); setError('案件暫時無法載入，請稍後再試。'); } });
+      }, () => { if (active) { setLoading(false); setError('案件暫時無法載入，請稍後再試。'); } }, {district});
     }).catch(() => { if (active) { setLoading(false); setError('案件暫時無法載入，請稍後再試。'); } });
     return () => { active = false; unsubscribe?.(); };
-  }, [city.id]);
+  }, [city.id, district]);
   useEffect(() => {
     document.querySelectorAll<HTMLAnchorElement>('a[data-map-link]').forEach(link => { link.href = mapLink(city.id, district); });
   }, [city.id, district]);

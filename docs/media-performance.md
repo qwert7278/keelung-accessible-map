@@ -1,6 +1,6 @@
 # Road Recall 媒體效能計畫
 
-核對日期：2026-10-02。僅此專案。規則入口為 [PROJECT_MEMO.md](PROJECT_MEMO.md)；本文記錄實作狀態、擴充順序與驗收條件。
+核對日期：2026-10-03。最新發布見 [推出前修復](launch-fixes-2026-10-03.md)。僅此專案。規則入口為 [PROJECT_MEMO.md](PROJECT_MEMO.md)；本文記錄實作狀態、擴充順序與驗收條件。
 
 ## 目前架構與判斷
 
@@ -8,7 +8,7 @@ Vite／React 網站由 Vercel 部署；`src/services/supabase.ts` 用瀏覽器 X
 
 Supabase Storage 有 CDN，但冷快取仍須回源、快取不保證永久保留；不能因有 CDN 宣稱一定快或沒有流量成本。Vercel Functions 的 request／response payload 上限目前為 4.5 MB，未來影片維持直接上傳，不用 Function 轉送影片本體。
 
-目前 city feed 每 15 秒在可見頁面重新查詢最多 200 筆；案件更新最多 100 筆。這是有限量保護，並非完整分頁。案件數超過上限時，舊案件可能不在返回資料內；擴充前需改為地圖視窗／篩選查詢、游標分頁和相應索引，不能單純增大 limit 或縮短輪詢間隔。
+目前 city feed 每 15 秒依行政區／狀態／通行程度／文字先篩選，每批 200 筆，以 created_at／id 游標追加；列表每頁 5 筆，地圖顯示已載入案件。補充仍最多 100 筆，尚無補充分頁或 viewport 查詢。
 
 ## 本地已做
 
@@ -27,7 +27,7 @@ Supabase Storage 有 CDN，但冷快取仍須回源、快取不保證永久保�
 
 `300 KiB` 是 307,200 bytes，`1 MiB` 是 1,048,576 bytes；18 bytes 無法承載可辨識的路況照片。格式轉换不等於固定大小，更不等於所有場景的頁面速度保證。
 
-## 發布前必做
+## 2026-10-02 歷史發布門檻（由 10-03 修復紀錄取代）
 
 1. 精確審查本次變更、lint／test／build；使用真實橫式 JPG／PNG、直式照片、接近 10 MiB 原檔在桌機與手機確認方向、內容可辨識、壓縮耗時及失敗提示。現在有 mock 的直式／比例測試，不能當所有手機實測。
 2. 既有 migration 的 bucket 仍允許 JPG／PNG／WebP 與 10 MiB。新增向前 migration 將新上傳限為 image/webp／1 MiB，並限制 INSERT 的 .webp 副檔名；保留既有 RLS 所有權與管理者判斷，不修改 SELECT、不刪舊檔。先在隔離資料庫驗正向／負向授權與超限拒絕，再按批准計畫套用。CLI 未安裝，本次未建立或執行 migration，不手造已驗證 migration。

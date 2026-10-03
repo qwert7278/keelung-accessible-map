@@ -1,4 +1,5 @@
 import divisions from './data/taiwan-districts.json';
+import cityBounds from './data/city-bounds.json';
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
 export const PUBLIC_SITE_URL = (
   import.meta.env.VITE_PUBLIC_SITE_URL ||
@@ -6,7 +7,7 @@ export const PUBLIC_SITE_URL = (
 ).replace(/\/+$/, "");
 export const BETA_FEEDBACK_EMAIL = "lingwei2046@gmail.com";
 // City-center starting views are editorial choices, not a footfall ranking.
-// Bounds are broad validation envelopes, not official administrative polygons.
+// City envelopes come from official district polygons; point checks use the polygons.
 const startingViews: Record<string, [string, string, number, number, number, number, number, number]> = {
  C: ['TW-KEE', '仁愛區', 25.1283, 121.7419, 25.05, 25.2, 121.62, 121.82],
  A: ['TW-TPE', '中山區', 25.0527, 121.5204, 24.95, 25.22, 121.45, 121.68],
@@ -34,13 +35,13 @@ const startingViews: Record<string, [string, string, number, number, number, num
 const order = ['C', 'A', 'F', 'H', 'B', 'D', 'E', 'O', 'J', 'K', 'N', 'M', 'P', 'I', 'Q', 'T', 'G', 'U', 'V', 'X', 'W', 'Z'];
 export const CITIES = order.map((code) => {
  const county = divisions.counties.find(c => c.code === code)!;
- const [id, defaultDistrict, lat, lng, south, north, west, east] = startingViews[code];
+ const [id, defaultDistrict, lat, lng] = startingViews[code];
+ const [west, south, east, north] = (cityBounds as Record<string, number[]>)[id];
  const districts = county.districts.map(d => d.name);
  return { id, name: county.name, productName: '路見不平', defaultDistrict,
-  center: { lat, lng }, zoom: 16, bounds: { south, north, west, east },
+  center: { lat, lng }, zoom: 16, bounds: { south:south-0.0002, north:north+0.0002, west:west-0.0002, east:east+0.0002 },
   districts: [defaultDistrict, ...districts.filter(d => d !== defaultDistrict)] };
 });
 export type City = (typeof CITIES)[number];
 export const CITY = CITIES[0];
-// Actual production availability is still Keelung. Do not imply nationwide launch.
-export const canReportInCity = (id: string) => DEMO_MODE || id === CITY.id;
+export const canReportInCity = (id: string) => CITIES.some(city => city.id === id);

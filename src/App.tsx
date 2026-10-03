@@ -74,6 +74,8 @@ export default function App() {
   const [focusZoom, setFocusZoom] = useState(districtCamera(city, district).zoom);
   const [focusRevision, setFocusRevision] = useState(0);
   const [page, setPage] = useState(1);
+  const [feedPages,setFeedPages] = useState(1);
+  const [hasMore,setHasMore] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [signingIn, setSigningIn] = useState(false);
   const [signInSent, setSignInSent] = useState(false);
@@ -109,11 +111,12 @@ export default function App() {
   useEffect(() => {
     if (!repository) return;
     let active = true;
-    const unsubscribe = repository.subscribe(city.id, data => {
-      if (active) { setReports(data); setLoading(false); setLoadError(''); }
-    }, e => { if (active) { setLoadError(readableError(e)); setLoading(false); } });
+    const unsubscribe = repository.subscribe(city.id, (data,more) => {
+      if (active) { setReports(data); setHasMore(!!more); setLoading(false); setLoadError(''); }
+    }, e => { if (active) { setLoadError(readableError(e)); setLoading(false); } }, {district,access,status:filter,search,pages:feedPages});
     return () => { active = false; unsubscribe(); };
-  }, [repository, city.id]);
+  }, [repository, city.id, district, access, filter, search, feedPages]);
+  useEffect(()=>{setFeedPages(1);setPage(1);setReports([]);setHasMore(false);setLoading(true);},[city.id,district,access,filter,search]);
   const manuallyChosen = useRef(false);
   const suggestedCity = useSuggestedCity();
   const [suggestionNote, setSuggestionNote] = useState('');
@@ -248,11 +251,6 @@ export default function App() {
   const pageCount = Math.max(1, Math.ceil(sorted.length / 5));
   const currentPage = Math.min(page, pageCount);
   const pageReports = sorted.slice((currentPage - 1) * 5, currentPage * 5);
-  const counts = {
-    open: scoped.filter((r) => r.status === "open").length,
-    in_progress: scoped.filter((r) => r.status === "in_progress").length,
-    resolved: scoped.filter((r) => r.status === "resolved").length,
-  };
   const report = resolvedReport;
   function choose(id: string) {
     setSelected(id);
@@ -575,7 +573,7 @@ export default function App() {
                 >
                   <i className={`dot dot-${key}`} />
                   {label}
-                  <span>{counts[key as Status]}</span>
+
                 </button>
               ))}
             </div>
@@ -647,15 +645,15 @@ export default function App() {
               )}
             </div>
             <div className="list-pagination" aria-label="案件分頁">
-              <span>第 {visible.length ? (currentPage - 1) * 5 + 1 : 0}–{Math.min(currentPage * 5, visible.length)} 筆／{visible.length} 筆</span>
+              <span>第 {visible.length ? (currentPage - 1) * 5 + 1 : 0}–{Math.min(currentPage * 5, visible.length)} 筆／已載入 {visible.length} 筆{hasMore ? "（還有更多）" : ""}</span>
               <button onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1} aria-label="上一頁案件">上一頁</button>
-              <button onClick={() => setPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="下一頁案件">下一頁</button>
+              <button onClick={() => {if(currentPage===pageCount && hasMore) {setFeedPages(n=>n+1);setLoading(true);} setPage(currentPage+1);}} disabled={loading || (currentPage === pageCount && !hasMore)} aria-label="下一頁案件">下一頁</button>
             </div>
             <div className="sidebar-foot">
               <span className="live-dot" />
               {DEMO_MODE
                 ? "示範資料 · 可自由體驗"
-                : "顯示最近 200 筆 · 民眾共同記錄"}
+                : "依條件查詢 · 地圖顯示已載入案件"}
             </div>
           </aside>
           <div className="map-area">

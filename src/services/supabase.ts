@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import { PUBLIC_SITE_URL, canReportInCity } from "../config";
 import { validateDraft } from "../utils/validation";
+import { districtAt } from "../utils/districtBoundary";
 import { imageUploadFormat } from "../utils/images";
 
 let client: SupabaseClient | undefined;
@@ -174,12 +175,21 @@ export function createSupabaseRepository(): ReportRepository {
     kind: "before" | "updates" | "after",
     blob: Blob,
     progress: (n: number) => void,
+    operation: string = crypto.randomUUID(),
   ) {
-    const { extension, contentType } = imageUploadFormat(blob);
+    const { contentType } = imageUploadFormat(blob);
     await session();
     const { data, error } = await db.auth.getSession();
     if (error || !data.session) throw new Error("登入已過期，請重新登入。");
-    const path = `${reportId}/${kind}/${crypto.randomUUID()}.${extension}`;
+    const preparation = await db.functions.invoke("prepare-photo", { body:{report:reportId,kind,operation} });
+    if (preparation.error) {
+      let message = '照片上傳準備失敗，請稍後再試。';
+      try { message = (await preparation.error.context?.json())?.error || message; } catch { /* No JSON body. */ }
+      throw new Error(message);
+    }
+    const { path, uploaded } = preparation.data as {path:string;uploaded:boolean};
+    if (!path || path !== `${reportId}/${kind}/${operation}.webp`) throw new Error('無效的照片上傳位置。');
+    if (uploaded) { progress(100); return path; }
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open(
@@ -224,20 +234,29 @@ export function createSupabaseRepository(): ReportRepository {
       if (error) throw new Error(error.message);
       return data ? fromRow(data as Row) : null;
     },
-    subscribe(cityId, next, onError) {
+    subscribe(cityId, next, onError, criteria = {}) {
       let active = true;
       let revision = 0;
       async function refresh() {
         const request = ++revision;
-        const { data, error } = await db
-          .from("report_feed")
-          .select("*")
-          .eq("city_id", cityId)
-          .order("created_at", { ascending: false })
-          .limit(200);
-        if (!active || request !== revision) return;
-        if (error) onError(new Error(error.message));
-        else next((data as Row[]).map(fromRow));
+        const rows: Row[] = [];
+        let hasMore=false;
+        for(let page=0;page<Math.max(1,criteria.pages || 1);page++) {
+          let query=db.from("report_feed").select("*").eq("city_id",cityId);
+          if(criteria.district && criteria.district!=='all') query=query.eq('district',criteria.district);
+          if(criteria.access && criteria.access!=='all') query=query.eq('wheelchair_access',criteria.access);
+          if(criteria.status && criteria.status!=='all') query=query.eq('status',criteria.status);
+          if(criteria.search?.trim()) query=query.ilike('search_text','%'+criteria.search.trim().replace(/[\\%_]/g,'\\$&')+'%');
+          const cursor=rows.at(-1);
+          if(cursor) query=query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`);
+          const {data,error}=await query.order('created_at',{ascending:false}).order('id',{ascending:false}).limit(201);
+          if(!active || request!==revision) return;
+          if(error) {onError(new Error(error.message)); return;}
+          hasMore=data.length>200;
+          rows.push(...(data as Row[]).slice(0,200));
+          if(!hasMore) break;
+        }
+        next(rows.map(fromRow),hasMore);
       }
       void refresh();
       const timer = window.setInterval(() => {
@@ -255,13 +274,18 @@ export function createSupabaseRepository(): ReportRepository {
         window.removeEventListener(changed, refresh);
       };
     },
-    async create(draft, photo, progress) {
+    async create(draft, photo, progress, operationId = crypto.randomUUID()) {
       if (!canReportInCity(draft.cityId)) throw new Error("此縣市的正式回報尚未開放。");
       const validation = validateDraft(draft);
       if (validation) throw new Error(validation);
       await session();
-      const id = crypto.randomUUID(),
-        path = await upload(id, "before", photo, progress);
+      const id = operationId;
+      const existing = await db.rpc('owned_report',{report:id});
+      if(existing.error) throw new Error(existing.error.message);
+      if(existing.data) return id;
+      if(await districtAt(draft.cityId,draft.district,draft.location)!==draft.district)
+        throw new Error('所選位置與行政區不一致，請重新確認。');
+      const path = await upload(id, "before", photo, progress, id);
       const { error } = await db
         .from("reports")
         .insert({
@@ -277,7 +301,10 @@ export function createSupabaseRepository(): ReportRepository {
           wheelchair_access: draft.wheelchairAccess,
           before_image_path: path,
         });
-      if (error) throw new Error(error.message);
+      if (error) {
+        const outcome=await db.rpc('owned_report',{report:id});
+        if(outcome.error || !outcome.data) throw new Error(error.message);
+      }
       window.dispatchEvent(new Event(changed));
       return id;
     },
