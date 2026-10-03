@@ -1,6 +1,7 @@
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
+import { cameraKey } from "../utils/mapCamera";
 type Props = {
   city?: City;
   reports: Report[];
@@ -9,6 +10,8 @@ type Props = {
   onPick?: (location: Location) => void;
   position?: Location;
   focus?: Location;
+  focusZoom?: number;
+  focusRevision?: number;
 };
 export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
   setOptions({
@@ -37,7 +40,7 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
     mapTypeControl: false,
   });
   let markers: google.maps.marker.AdvancedMarkerElement[] = [],
-    lastFocus: Location | undefined;
+    lastCamera = '';
   const click = map.addListener("click", (e: google.maps.MapMouseEvent) => {
     if (latest().picking && e.latLng) latest().onPick?.(e.latLng.toJSON());
   });
@@ -78,10 +81,10 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
             title: "選定位置",
           }),
         );
-      if (p.focus && p.focus !== lastFocus) {
+      if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
         map.setCenter(p.focus);
-        if (!lastFocus) map.setZoom(16);
-        lastFocus = p.focus;
+        if (p.focusZoom !== undefined || !lastCamera) map.setZoom(p.focusZoom ?? 16);
+        lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);
       }
     },
     destroy() {

@@ -63,6 +63,7 @@ export type Session = { uid: string; admin: boolean; anonymous: boolean };
 export type UpdateDraft = { message: string; suggestedStatus: Status | null };
 export interface ReportRepository {
   session(): Promise<Session>;
+  get(reportId: string): Promise<Report | null>;
   subscribe(
     cityId: string,
     next: (reports: Report[]) => void,

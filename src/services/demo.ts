@@ -28,6 +28,7 @@ async function save(store: Store) {
   window.dispatchEvent(new Event(event));
 }
 export const demoRepository: ReportRepository = {
+  async get(id) { return (await read()).reports.find(report => report.id === id) || null; },
   async session() {
     return { uid, admin: true, anonymous: false };
   },

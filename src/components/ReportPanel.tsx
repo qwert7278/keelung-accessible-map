@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowLeftIcon,
   ImageIcon,
@@ -60,6 +60,9 @@ export default function ReportPanel({
   initialStatus?: Status | null;
   onClose: () => void;
 }) {
+  const photoProcessingRef = useRef(false);
+  const [photoProcessing, setPhotoProcessing] = useState(false);
+  const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [updates, setUpdates] = useState<ReportUpdate[]>([]),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
@@ -92,7 +95,7 @@ export default function ReportPanel({
     .reverse()
     .find((u) => u.type === "community" && u.imageUrl)?.imageUrl;
   async function shareReport() {
-    const url = reportShareUrl(PUBLIC_SITE_URL, report.id);
+    const url = reportShareUrl(PUBLIC_SITE_URL, report.id, report);
     try {
       if (navigator.share) {
         await navigator.share({ title: report.title, url });
@@ -113,7 +116,7 @@ export default function ReportPanel({
   }
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (busy || !consent) return;
+    if (busy || photoProcessingRef.current || !consent) return;
     if (admin && status === "resolved" && !photo && !report.afterImageUrl) {
       setError("要標記已改善，請先上傳改善後照片。");
       return;
@@ -222,6 +225,7 @@ export default function ReportPanel({
           />
         </label>
         <PhotoUploader
+          onProcessingChange={onPhotoProcessing}
           label={admin ? "改善後照片" : "最新照片（選填）"}
           value={photo}
           onChange={setPhoto}
@@ -245,7 +249,7 @@ export default function ReportPanel({
         </label>
         <button
           className="button primary full"
-          disabled={busy || !consent || !message.trim() || missingAfterPhoto}
+          disabled={busy || photoProcessing || !consent || !message.trim() || missingAfterPhoto}
         >
           {busy
             ? `儲存中 ${progress}%`

@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
 
+import { cameraKey } from "../utils/mapCamera";
 type Props = {
   city?: City;
   reports: Report[];
@@ -12,6 +13,8 @@ type Props = {
   onPick?: (location: Location) => void;
   position?: Location;
   focus?: Location;
+  focusZoom?: number;
+  focusRevision?: number;
 };
 type Controller = { render: (props: Props) => void; destroy: () => void };
 function markerElement(report: Report) {
@@ -78,7 +81,7 @@ export default function MapView(props: Props) {
         setNotice("底圖部分載入失敗，仍可使用案件列表或輸入座標回報。"),
       );
       const layer = L.layerGroup().addTo(map);
-      let lastFocus: Location | undefined;
+      let lastCamera = '';
       map.on("click", (e: L.LeafletMouseEvent) => {
         if (latest.current.picking)
           latest.current.onPick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
@@ -110,11 +113,10 @@ export default function MapView(props: Props) {
               radius: 11,
               weight: 5,
             }).addTo(layer);
-          if (p.focus && p.focus !== lastFocus) {
+          if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
             const center: L.LatLngExpression = [p.focus.lat, p.focus.lng];
-            if (lastFocus) map.panTo(center, { animate: false });
-            else map.setView(center, 16, { animate: false });
-            lastFocus = p.focus;
+            map.setView(center, p.focusZoom ?? (lastCamera ? map.getZoom() : 16), { animate: false });
+            lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);
           }
           node.current?.classList.toggle("picking", !!p.picking);
         },

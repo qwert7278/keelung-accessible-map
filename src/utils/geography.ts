@@ -6,7 +6,7 @@ export function initialGeography(search = window.location.search) {
   let saved: { city?: string; district?: string } = {};
   try { if (readConsent()?.preferences) saved = JSON.parse(localStorage.getItem('roadtag-geography') || sessionStorage.getItem('roadtag-geography') || '{}'); } catch { /* Optional preference. */ }
   const city = CITIES.find(c => c.id === (query.get('city') || (query.has('report') ? CITY.id : saved.city))) || CITY;
-  const requested = query.get('district') || (!query.has('city') ? saved.district : undefined);
+  const requested = query.get('district') || (!query.has('city') && !query.has('report') ? saved.district : undefined);
   const district = requested === 'all' || city.districts.includes(requested || '') ? requested! : city.defaultDistrict;
   return { city, district };
 }
@@ -28,4 +28,11 @@ export function shouldSuggestCity(search = window.location.search) {
     if (readConsent()?.preferences && CITIES.some(city => city.id === saved.city)) return false;
   } catch { /* No stored preference. */ }
   return true;
+}
+
+export function geographyUrl(href: string, cityId: string, district: string, reportId?: string) {
+  const url = new URL(href);
+  url.searchParams.set('city', cityId); url.searchParams.set('district', district);
+  if (reportId) url.searchParams.set('report', reportId); else url.searchParams.delete('report');
+  return url;
 }

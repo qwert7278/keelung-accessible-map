@@ -6,16 +6,18 @@ import { DEMO_MODE } from "../config";
 
 export default function ReportSuccessPanel({
   id,
+  geography,
   onClose,
   onView,
 }: {
   id: string;
+  geography: { cityId: string; district: string };
   onClose: () => void;
   onView: () => void;
 }) {
   const [message, setMessage] = useState("");
   async function share() {
-    const url = reportShareUrl(window.location.origin, id);
+    const url = reportShareUrl(window.location.origin, id, geography);
     try {
       if (navigator.share) {
         await navigator.share({ title: "路見不平通行回報", url });

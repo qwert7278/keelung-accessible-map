@@ -39,9 +39,10 @@ import { reportIdFromSearch } from "./utils/reportLink";
 
 import ReportThumbnail from './components/ReportThumbnail';
 import GeographyPicker from './components/GeographyPicker';
-import { initialGeography, rememberGeography, shouldSuggestCity } from './utils/geography';
+import { initialGeography, rememberGeography, shouldSuggestCity, geographyUrl } from './utils/geography';
 import { readConsent, CONSENT_EVENT } from './utils/consent';
 import { useSuggestedCity } from './utils/useSuggestedCity';
+import { districtCamera } from './utils/mapCamera';
 const HOMEPAGE_URL = "/";
 
 export default function App() {
@@ -67,6 +68,11 @@ export default function App() {
     [focus, setFocus] = useState<Location>(),
     [toast, setToast] = useState(""),
     [createdReportId, setCreatedReportId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [linkedReport, setLinkedReport] = useState<Report | null>(null);
+  const [createdGeography, setCreatedGeography] = useState({ cityId:city.id, district });
+  const [focusZoom, setFocusZoom] = useState(districtCamera(city, district).zoom);
+  const [focusRevision, setFocusRevision] = useState(0);
   const [page, setPage] = useState(1);
   const [adminEmail, setAdminEmail] = useState("");
   const [signingIn, setSigningIn] = useState(false);
@@ -104,8 +110,8 @@ export default function App() {
     if (!repository) return;
     let active = true;
     const unsubscribe = repository.subscribe(city.id, data => {
-      if (active) { setReports(data); setLoading(false); }
-    }, e => { if (active) { setError(readableError(e)); setLoading(false); } });
+      if (active) { setReports(data); setLoading(false); setLoadError(''); }
+    }, e => { if (active) { setLoadError(readableError(e)); setLoading(false); } });
     return () => { active = false; unsubscribe(); };
   }, [repository, city.id]);
   const manuallyChosen = useRef(false);
@@ -131,20 +137,16 @@ export default function App() {
     if (!next || next.id === city.id) return;
     setPage(1); closeReport(); setCreating(false); setCreatedReportId(null); setGuideStep(null);
     setReports([]); setLoading(true); setError(''); setSearch(''); setAccess('all'); setFilter('all');
-    setCity(next); setDistrict(next.defaultDistrict); setFocus(next.center);
+    setCity(next); setDistrict(next.defaultDistrict); setFocus(next.center); setFocusZoom(next.zoom); setFocusRevision(r => r + 1); setLinkedReport(null); setLoadError('');
     rememberGeography(next.id, next.defaultDistrict);
-    const url = new URL(window.location.href);
-    url.searchParams.set('city', next.id); url.searchParams.set('district', next.defaultDistrict);
-    window.history.replaceState({}, '', url);
+    window.history.pushState({}, '', geographyUrl(window.location.href, next.id, next.defaultDistrict));
   }
   function changeDistrict(value: string) {
     setPage(1); setDistrict(value); closeReport();
     rememberGeography(city.id, value);
-    if (value === city.defaultDistrict || value === 'all') setFocus({ ...city.center });
-    else { const first = reports.find(r => r.district === value); if (first) setFocus({ ...first.location }); }
-    const url = new URL(window.location.href);
-    url.searchParams.set('city', city.id); url.searchParams.set('district', value);
-    window.history.replaceState({}, '', url);
+    const camera = districtCamera(city, value);
+    setFocus(camera.focus); setFocusZoom(camera.zoom); setFocusRevision(r => r + 1);
+    window.history.pushState({}, '', geographyUrl(window.location.href, city.id, value));
   }
 
   useEffect(() => {
@@ -232,12 +234,16 @@ export default function App() {
     };
   }, [adminPage]);
 
+  const resolvedReport = reports.find(r => r.id === selected) || (linkedReport?.id === selected ? linkedReport : null);
   const scoped = useMemo(() => reports.filter(r =>
     (district === 'all' || r.district === district) &&
     (access === 'all' || r.wheelchairAccess === access) &&
     (r.title + ' ' + r.address + ' ' + r.description).includes(search.trim())),
     [reports, district, access, search]);
-  const visible = useMemo(() => scoped.filter(r => filter === 'all' || r.status === filter), [scoped, filter]);
+  const visible = useMemo(() => {
+    const rows = scoped.filter(r => filter === 'all' || r.status === filter);
+    return resolvedReport && !rows.some(r => r.id === resolvedReport.id) ? [resolvedReport, ...rows] : rows;
+  }, [scoped, filter, resolvedReport]);
   const sorted = [...visible].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const pageCount = Math.max(1, Math.ceil(sorted.length / 5));
   const currentPage = Math.min(page, pageCount);
@@ -247,10 +253,10 @@ export default function App() {
     in_progress: scoped.filter((r) => r.status === "in_progress").length,
     resolved: scoped.filter((r) => r.status === "resolved").length,
   };
-  const report = reports.find((r) => r.id === selected);
+  const report = resolvedReport;
   function choose(id: string) {
     setSelected(id);
-    setFocus(reports.find((r) => r.id === id)?.location);
+    setFocus(reports.find((r) => r.id === id)?.location); setFocusZoom(16); setFocusRevision(r => r + 1);
     const url = new URL(window.location.href);
     if (reportIdFromSearch(url.search) !== id) {
       url.searchParams.set("report", id);
@@ -264,16 +270,37 @@ export default function App() {
     setSelected(null);
   }
   useEffect(() => {
-    const syncSelectedReport = () =>
-      setSelected(reportIdFromSearch(window.location.search));
-    window.addEventListener("popstate", syncSelectedReport);
-    return () => window.removeEventListener("popstate", syncSelectedReport);
-  }, []);
+    const syncLocation = () => {
+      const next = initialGeography();
+      manuallyChosen.current = true;
+      setSelected(reportIdFromSearch(window.location.search)); setLinkedReport(null);
+      if (next.city.id !== city.id) { setReports([]); setLoading(true); }
+      setCity(next.city); setDistrict(next.district); setPage(1);
+      rememberGeography(next.city.id, next.district);
+      const camera = districtCamera(next.city, next.district);
+      setFocus(camera.focus); setFocusZoom(camera.zoom); setFocusRevision(r => r + 1);
+    };
+    window.addEventListener('popstate', syncLocation);
+    return () => window.removeEventListener('popstate', syncLocation);
+  }, [city.id]);
   useEffect(() => {
-    if (!selected) return;
-    const match = reports.find((r) => r.id === selected);
-    if (match) setFocus(match.location);
-  }, [reports, selected]);
+    if (!selected || !repository || reports.some(r => r.id === selected)) return;
+    let active = true;
+    void repository.get(selected).then(found => { if (active) setLinkedReport(found); })
+      .catch(e => { if (active) setError(readableError(e)); });
+    return () => { active = false; };
+  }, [repository, selected, reports]);
+  const matchCity = resolvedReport?.cityId, matchDistrict = resolvedReport?.district;
+  const matchLat = resolvedReport?.location.lat, matchLng = resolvedReport?.location.lng;
+  useEffect(() => {
+    if (!selected || !matchCity || !matchDistrict || matchLat === undefined || matchLng === undefined) return;
+    const next = CITIES.find(c => c.id === matchCity);
+    if (!next) return;
+    if (next.id !== city.id) { setReports([]); setLoading(true); }
+    setCity(next); setDistrict(matchDistrict); setPage(1);
+    setFocus({ lat:matchLat, lng:matchLng }); setFocusZoom(16); setFocusRevision(r => r + 1);
+    window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, matchDistrict, selected));
+  }, [selected, matchCity, matchDistrict, matchLat, matchLng]);
   function locate() {
     if (!navigator.geolocation) {
       setToast("此瀏覽器不支援定位。你仍可拖曳地圖查看。");
@@ -419,9 +446,9 @@ export default function App() {
               : "資料準備完成後，就能按「回報障礙」開始操作；你也可以隨時結束教學。"}
           </GuidedTourPrompt>
         )}
-        {error && (
+        {(error || loadError) && (
           <div className="error top-alert" role="alert">
-            {error}
+            {error || loadError}
             <button
               className="text-button"
               onClick={() => window.location.reload()}
@@ -474,7 +501,7 @@ export default function App() {
               reports={reports}
               loading={loading}
               repository={repository}
-              selectedReport={report}
+              selectedReport={report || undefined}
               initialStatus={adminDraftStatus}
               onSelect={(id, status) => {
                 choose(id);
@@ -577,7 +604,7 @@ export default function App() {
                     onClick={() => {
                       setSearch("");
                       setFilter("all");
-                      setDistrict("all");
+                      changeDistrict("all");
                       setAccess("all");
                     }}
                   >
@@ -635,10 +662,10 @@ export default function App() {
             <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}</div></div>
             <div className="map-stage">
-            <MapView key={city.id} city={city} reports={visible} onSelect={choose} focus={focus || city.center} />
+            <MapView key={city.id} city={city} reports={visible} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
             <div className="map-caption">
               <span className="live-dot" />
-              {city.name}
+              {city.name} · {district === 'all' ? '所有行政區' : district}
               <span className="caption-divider" />
               騎樓與人行道通行回報
             </div>
@@ -690,10 +717,11 @@ export default function App() {
             setCreating(false);
             if (guideStep !== null) setGuideStep(null);
           }}
-          onCreated={(id) => {
+          onCreated={(id, geography) => {
+            setCreatedGeography(geography);
             setCreating(false);
             setFilter("all");
-            setDistrict("all");
+            changeDistrict("all");
             setAccess("all");
             setSearch("");
             setCreatedReportId(id);
@@ -731,6 +759,7 @@ export default function App() {
       {createdReportId && (
         <ReportSuccessPanel
           id={createdReportId}
+          geography={createdGeography}
           onClose={() => setCreatedReportId(null)}
           onView={() => {
             const id = createdReportId;
