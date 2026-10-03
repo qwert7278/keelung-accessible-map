@@ -219,16 +219,23 @@ export function createSupabaseRepository(): ReportRepository {
   }
   return {
     session,
+    async get(id) {
+      const { data, error } = await db.from("report_feed").select("*").eq("id", id).maybeSingle();
+      if (error) throw new Error(error.message);
+      return data ? fromRow(data as Row) : null;
+    },
     subscribe(cityId, next, onError) {
       let active = true;
+      let revision = 0;
       async function refresh() {
+        const request = ++revision;
         const { data, error } = await db
           .from("report_feed")
           .select("*")
           .eq("city_id", cityId)
           .order("created_at", { ascending: false })
           .limit(200);
-        if (!active) return;
+        if (!active || request !== revision) return;
         if (error) onError(new Error(error.message));
         else next((data as Row[]).map(fromRow));
       }

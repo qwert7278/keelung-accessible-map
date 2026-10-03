@@ -1,24 +1,31 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { CameraIcon, ImageIcon } from "@phosphor-icons/react";
 import { compressImage } from "../utils/images";
 import { readableError } from "../utils/validation";
+import { revisionGate } from "../utils/revisionGate";
 export default function PhotoUploader({
   value,
   onChange,
   label,
   required = false,
   disabled = false,
+  onProcessingChange,
 }: {
   value: Blob | null;
   onChange: (blob: Blob | null) => void;
   label: string;
   required?: boolean;
   disabled?: boolean;
+  onProcessingChange?: (processing: boolean) => void;
 }) {
   const id = useId(),
     [url, setUrl] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const gate = useRef(revisionGate());
+  const processingCallback = useRef(onProcessingChange);
+  processingCallback.current = onProcessingChange;
+  useEffect(() => () => { gate.current.invalidate(); processingCallback.current?.(false); }, []);
   useEffect(() => {
     if (!value) {
       setUrl("");
@@ -54,15 +61,17 @@ export default function PhotoUploader({
           onChange={async (e) => {
             const file = e.target.files?.[0];
             if (!file) return;
-            setBusy(true);
+            const request = gate.current.next();
+            setBusy(true); onProcessingChange?.(true);
             setError("");
             onChange(null);
             try {
-              onChange(await compressImage(file));
+              const blob = await compressImage(file);
+              if (gate.current.current(request)) onChange(blob);
             } catch (e) {
-              setError(readableError(e));
+              if (gate.current.current(request)) setError(readableError(e));
             } finally {
-              setBusy(false);
+              if (gate.current.current(request)) { setBusy(false); onProcessingChange?.(false); }
             }
           }}
         />

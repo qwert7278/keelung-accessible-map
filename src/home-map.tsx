@@ -5,6 +5,7 @@ import { CITIES, DEMO_MODE, canReportInCity } from './config';
 import { ACCESS, STATUSES, type Report } from './types';
 import { loadRepository } from './services/repository';
 import { initialGeography, mapLink, rememberGeography, shouldSuggestCity } from './utils/geography';
+import { districtCamera } from './utils/mapCamera';
 import MapView from './components/MapView';
 import GeographyPicker from './components/GeographyPicker';
 import './home-map.css';
@@ -34,7 +35,7 @@ function HomeMap() {
     void loadRepository().then(repo => {
       if (!active) return;
       unsubscribe = repo.subscribe(city.id, rows => {
-        if (active) { setReports(rows); setLoading(false); }
+        if (active) { setReports(rows); setLoading(false); setError(''); }
       }, () => { if (active) { setLoading(false); setError('案件暫時無法載入，請稍後再試。'); } });
     }).catch(() => { if (active) { setLoading(false); setError('案件暫時無法載入，請稍後再試。'); } });
     return () => { active = false; unsubscribe?.(); };
@@ -43,7 +44,7 @@ function HomeMap() {
     document.querySelectorAll<HTMLAnchorElement>('a[data-map-link]').forEach(link => { link.href = mapLink(city.id, district); });
   }, [city.id, district]);
   const visible = reports.filter(r => district === 'all' || r.district === district);
-  const first = visible[0]?.location;
+  const camera = districtCamera(city, district);
   const card = document.getElementById('home-report-summary')!;
   return <>
     <p className="city-suggestion-note" role="status">{suggestionNote}</p>
@@ -54,7 +55,7 @@ function HomeMap() {
       setReports([]); setLoading(true); setError(''); setCity(next); setDistrict(next.defaultDistrict); rememberGeography(next.id, next.defaultDistrict);
     }} onDistrict={value => { manuallyChosen.current = true; setSuggestionNote(''); setDistrict(value); rememberGeography(city.id, value); }} />
     <div className="home-live-map">
-      <MapView key={city.id} city={city} reports={visible} focus={district === city.defaultDistrict || !first ? city.center : first}
+      <MapView key={city.id} city={city} reports={visible} focus={camera.focus} focusZoom={camera.zoom}
         onSelect={id => window.location.assign(mapLink(city.id, district, id))} />
     </div>
     <div className="home-map-summary" aria-live="polite">

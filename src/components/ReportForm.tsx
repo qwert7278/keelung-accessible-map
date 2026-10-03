@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -79,9 +79,12 @@ export default function ReportForm({
   guidedStep?: number | null;
   onGuidedStepChange?: (step: number | null) => void;
   onClose: () => void;
-  onCreated: (id: string) => void;
+  onCreated: (id: string, geography: { cityId:string; district:string }) => void;
   onExisting: (id: string) => void;
 }) {
+  const photoProcessingRef = useRef(false);
+  const [photoProcessing, setPhotoProcessing] = useState(false);
+  const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [locating, setLocating] = useState(false),
     [locationNote, setLocationNote] = useState("");
   const [manualCoordinates, setManualCoordinates] = useState({
@@ -162,7 +165,7 @@ export default function ReportForm({
       next();
       return;
     }
-    if (!photo || !confirmed || honeypot || busy) return;
+    if (!photo || !confirmed || honeypot || busy || photoProcessingRef.current) return;
     let last = 0;
     try {
       last = Number(localStorage.getItem("last-accessible-report") ?? 0);
@@ -183,7 +186,7 @@ export default function ReportForm({
         /* Successful write must not be reported as a failure. */
       }
       onGuidedStepChange?.(null);
-      onCreated(id);
+      onCreated(id, { cityId:draft.cityId, district:draft.district });
     } catch (e) {
       setError(readableError(e));
     } finally {
@@ -382,6 +385,7 @@ export default function ReportForm({
               </p>
               <div className={guidedStep === 4 ? "guide-target-active guide-target-block" : undefined}>
                 <PhotoUploader
+          onProcessingChange={onPhotoProcessing}
                   label="現場照片"
                   required
                   value={photo}
@@ -565,7 +569,7 @@ export default function ReportForm({
                 ? " guide-target-active"
                 : ""
             }`}
-            disabled={busy || (step === 3 && !confirmed)}
+            disabled={busy || photoProcessing || (step === 3 && !confirmed)}
             type="submit"
           >
             {step === 3 ? (

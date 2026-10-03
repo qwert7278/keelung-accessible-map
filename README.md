@@ -1,14 +1,14 @@
-# 基隆好行 · Keelung Accessible Map
+# 路見不平 · Road Tag
 
-看見障礙，留下紀錄，讓城市一步一步更好走。
+路見不平，一起標註。
 
 可迭代的無障礙通行回報地圖，從基隆開始，資料模型保留多城市擴充。
 
-**Beta 準備中**：Demo 模式的初始案件為虛構測試資料，操作只保存在本瀏覽器；連接 Supabase 的正式模式會公開顯示民眾回報、位置與照片。平台不是政府通報系統，也不保證路線安全。
+正式模式使用既有 Supabase，公開顯示民眾回報、位置與照片，目前正式回報開放基隆；其他縣市可瀏覽地圖。Demo 僅供隔離測試，資料不會送入正式系統。平台不是政府通報系統，也不保證路線安全。
 
 ## Demo 與原始碼
 
-唯一正式網址：[keelung-accessible-map.vercel.app](https://keelung-accessible-map.vercel.app/)。唯一發布流程：本機修改與驗收 → 你確認 OK → 推送 GitHub `main` → Vercel 自動部署 Production → 核對正式網址。ChatGPT Sites 已退出正式發布流程，保留為僅擁有者可存取的歷史封存；不合併、不同步、不再發布。程式與 Supabase migration 由同一 repo 版本管理，線上資料與照片留在 Supabase。細節見[單一發布與維護流程](docs/single-release-workflow.md)。
+唯一正式網址：[roadtag.org](https://roadtag.org/)。唯一發布流程：本機修改與驗收 → 你確認 OK → 推送 GitHub `main` → Vercel 自動部署 Production → 核對正式網址。ChatGPT Sites 已退出正式發布流程，保留為僅擁有者可存取的歷史封存；不合併、不同步、不再發布。程式與 Supabase migration 由同一 repo 版本管理，線上資料與照片留在 Supabase。細節見[單一發布與維護流程](docs/single-release-workflow.md)。
 
 ## 功能
 
