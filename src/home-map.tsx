@@ -1,18 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { CITIES, DEMO_MODE, canReportInCity } from './config';
 import { ACCESS, STATUSES, type Report } from './types';
 import { loadRepository } from './services/repository';
-import { initialGeography, mapLink, rememberGeography } from './utils/geography';
+import { initialGeography, mapLink, rememberGeography, shouldSuggestCity } from './utils/geography';
 import MapView from './components/MapView';
 import GeographyPicker from './components/GeographyPicker';
 import './home-map.css';
+import { useSuggestedCity } from './utils/useSuggestedCity';
 
 function HomeMap() {
   const [initial] = useState(initialGeography);
   const [city, setCity] = useState(initial.city);
   const [district, setDistrict] = useState(initial.district);
+  const manuallyChosen = useRef(false);
+  const suggestedCity = useSuggestedCity();
+  const [suggestionNote, setSuggestionNote] = useState('');
+  useEffect(() => {
+    if (!suggestedCity || manuallyChosen.current || !shouldSuggestCity()) return;
+    const next = CITIES.find(c => c.id === suggestedCity);
+    if (!next) return;
+    if (next.id !== city.id) { setCity(next); setDistrict(next.defaultDistrict); setReports([]); setLoading(true); setError(''); }
+    rememberGeography(next.id, next.defaultDistrict);
+    setSuggestionNote(`依網路連線推估為${next.name}；可隨時切換。`);
+  }, [suggestedCity]);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,17 +40,19 @@ function HomeMap() {
     return () => { active = false; unsubscribe?.(); };
   }, [city.id]);
   useEffect(() => {
-    rememberGeography(city.id, district);
     document.querySelectorAll<HTMLAnchorElement>('a[data-map-link]').forEach(link => { link.href = mapLink(city.id, district); });
   }, [city.id, district]);
   const visible = reports.filter(r => district === 'all' || r.district === district);
   const first = visible[0]?.location;
   const card = document.getElementById('home-report-summary')!;
   return <>
+    <p className="city-suggestion-note" role="status">{suggestionNote}</p>
     <GeographyPicker city={city} district={district} onCity={id => {
+      manuallyChosen.current = true; setSuggestionNote('');
       const next = CITIES.find(c => c.id === id)!;
-      setReports([]); setLoading(true); setError(''); setCity(next); setDistrict(next.defaultDistrict);
-    }} onDistrict={setDistrict} />
+      if (next.id === city.id) { rememberGeography(city.id, district); return; }
+      setReports([]); setLoading(true); setError(''); setCity(next); setDistrict(next.defaultDistrict); rememberGeography(next.id, next.defaultDistrict);
+    }} onDistrict={value => { manuallyChosen.current = true; setSuggestionNote(''); setDistrict(value); rememberGeography(city.id, value); }} />
     <div className="home-live-map">
       <MapView key={city.id} city={city} reports={visible} focus={district === city.defaultDistrict || !first ? city.center : first}
         onSelect={id => window.location.assign(mapLink(city.id, district, id))} />
