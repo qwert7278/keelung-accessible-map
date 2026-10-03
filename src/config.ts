@@ -2,7 +2,7 @@ import divisions from './data/taiwan-districts.json';
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
 export const PUBLIC_SITE_URL = (
   import.meta.env.VITE_PUBLIC_SITE_URL ||
-  "https://keelung-accessible-map.vercel.app"
+  "https://roadtag.org"
 ).replace(/\/+$/, "");
 export const BETA_FEEDBACK_EMAIL = "lingwei2046@gmail.com";
 // City-center starting views are editorial choices, not a footfall ranking.
