@@ -389,7 +389,7 @@ export default function App() {
             <ShieldCheckIcon size={18} />
             <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
           </a>
-          <a href="https://www.threads.com/@roadrecall2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤路見不平"><ThreadsLogoIcon size={20} /><span>Threads</span></a>
+          <a href="https://www.threads.com/@roadtag2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤路見不平"><ThreadsLogoIcon size={20} /><span>Threads</span></a>
           <details className="header-more"><summary>更多</summary><div className="header-more-menu">
             <button onClick={() => setHelp(true)}>常見問題</button>
             {!adminPage && <button onClick={startGuidedTour}>跟著操作教學</button>}
