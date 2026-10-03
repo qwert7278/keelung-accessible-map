@@ -32,12 +32,18 @@ export const demoRepository: ReportRepository = {
   async session() {
     return { uid, admin: true, anonymous: false };
   },
-  subscribe(cityId, next, error) {
+  subscribe(cityId, next, error, criteria = {}) {
     let active = true;
     const refresh = () => {
       read()
         .then((s) => {
-          if (active) next(s.reports.filter((r) => r.cityId === cityId));
+          if (active) {
+            const rows=s.reports.filter(r=>r.cityId===cityId && (!criteria.district || criteria.district==='all' || r.district===criteria.district)
+              && (!criteria.status || criteria.status==='all' || r.status===criteria.status)
+              && (!criteria.access || criteria.access==='all' || r.wheelchairAccess===criteria.access)
+              && (r.title+' '+r.address+' '+r.description).includes(criteria.search?.trim()||''));
+            next(rows,false);
+          }
         })
         .catch(error);
     };
@@ -51,12 +57,13 @@ export const demoRepository: ReportRepository = {
       document.removeEventListener("visibilitychange", onVisible);
     };
   },
-  async create(draft, photo, progress) {
+  async create(draft, photo, progress, operationId = crypto.randomUUID()) {
     const error = validateDraft(draft);
     if (error) throw new Error(error);
     const store = await read(),
       now = new Date().toISOString(),
-      id = crypto.randomUUID();
+      id = operationId;
+    if (store.reports.some(report=>report.id===id)) return id;
     const image = await toDataUrl(photo);
     progress(60);
     store.reports.unshift({

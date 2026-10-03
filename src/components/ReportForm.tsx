@@ -25,6 +25,8 @@ import MapView from "./MapView";
 import Modal from "./Modal";
 import PhotoUploader from "./PhotoUploader";
 import GuidedTourPrompt from "./GuidedTourPrompt";
+import { districtCamera } from '../utils/mapCamera';
+import { districtAt } from '../utils/districtBoundary';
 
 const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   1: {
@@ -83,6 +85,8 @@ export default function ReportForm({
   onExisting: (id: string) => void;
 }) {
   const photoProcessingRef = useRef(false);
+  const attempt = useRef<{ id:string; draft:string; photo:Blob } | null>(null);
+  const [checkingLocation, setCheckingLocation] = useState(false);
   const [photoProcessing, setPhotoProcessing] = useState(false);
   const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [locating, setLocating] = useState(false),
@@ -107,7 +111,7 @@ export default function ReportForm({
     description: "",
     category: "uneven_surface",
     wheelchairAccess: "difficult",
-    location: { ...city.center },
+    location: { ...districtCamera(city, initialDistrict).focus },
   });
   const nearby = reports.find(
     (r) =>
@@ -138,7 +142,7 @@ export default function ReportForm({
     setPicked(valid);
     if (valid && guidedStep === 1) onGuidedStepChange?.(2);
   }
-  function next() {
+  async function next() {
     const error = validateDraft(draft);
     if (!picked) {
       setError("請在地圖選點、使用定位，或輸入座標。");
@@ -147,6 +151,19 @@ export default function ReportForm({
     if (error) {
       setError(error);
       return;
+    }
+    if (step === 1) {
+      setCheckingLocation(true);
+      try {
+        const found = await districtAt(city.id,draft.district,draft.location);
+        if (!found) { setError(`所選位置不在${city.name}的行政區範圍，請重新選點。`); return; }
+        if (found !== draft.district) {
+          update('district',found);
+          setError(`依所選位置已改為${found}，請確認後再按下一步。`);
+          return;
+        }
+      } catch { setError('行政區資料暫時無法載入，請稍後重試。'); return; }
+      finally { setCheckingLocation(false); }
     }
     if (step === 2 && !photo) {
       setError("請選擇一張現場照片。");
@@ -162,7 +179,7 @@ export default function ReportForm({
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (step < 3) {
-      next();
+      if (!checkingLocation) await next();
       return;
     }
     if (!photo || !confirmed || honeypot || busy || photoProcessingRef.current) return;
@@ -179,7 +196,10 @@ export default function ReportForm({
     setBusy(true);
     setError("");
     try {
-      const id = await repository.create(draft, photo, setProgress);
+      const fingerprint = JSON.stringify(draft);
+      if (!attempt.current || attempt.current.draft !== fingerprint || attempt.current.photo !== photo)
+        attempt.current = { id:crypto.randomUUID(),draft:fingerprint,photo };
+      const id = await repository.create(draft, photo, setProgress, attempt.current.id);
       try {
         localStorage.setItem("last-accessible-report", String(Date.now()));
       } catch {
@@ -275,7 +295,7 @@ export default function ReportForm({
         </GuidedTourPrompt>
       )}
       <form onSubmit={submit} className="report-form">
-        <fieldset disabled={busy}>
+        <fieldset disabled={busy || checkingLocation}>
           {step === 1 && (
             <>
               <p className="muted">
@@ -296,6 +316,7 @@ export default function ReportForm({
                   }}
                   position={picked ? draft.location : undefined}
                   focus={draft.location}
+                  focusZoom={districtCamera(city,draft.district).zoom}
                 />
               </div>
               <button
@@ -569,7 +590,7 @@ export default function ReportForm({
                 ? " guide-target-active"
                 : ""
             }`}
-            disabled={busy || photoProcessing || (step === 3 && !confirmed)}
+            disabled={busy || checkingLocation || photoProcessing || (step === 3 && !confirmed)}
             type="submit"
           >
             {step === 3 ? (

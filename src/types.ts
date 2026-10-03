@@ -61,18 +61,21 @@ export type ReportDraft = Pick<
 >;
 export type Session = { uid: string; admin: boolean; anonymous: boolean };
 export type UpdateDraft = { message: string; suggestedStatus: Status | null };
+export type FeedQuery = { district?: string; access?: string; status?: string; search?: string; pages?: number };
 export interface ReportRepository {
   session(): Promise<Session>;
   get(reportId: string): Promise<Report | null>;
   subscribe(
     cityId: string,
-    next: (reports: Report[]) => void,
+    next: (reports: Report[], hasMore?: boolean) => void,
     error: (error: Error) => void,
+    query?: FeedQuery,
   ): () => void;
   create(
     draft: ReportDraft,
     photo: Blob,
     progress: (percent: number) => void,
+    operationId?: string,
   ): Promise<string>;
   updates(reportId: string): Promise<ReportUpdate[]>;
   addUpdate(
