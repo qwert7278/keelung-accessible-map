@@ -1,5 +1,5 @@
-import { readConsent } from '../src/utils/consent.ts';
-import { cityFromHeaders } from '../src/utils/geo-city.ts';
+import { readConsent } from '../src/utils/consent.js';
+import { cityFromHeaders } from '../src/utils/geo-city.js';
 
 export function GET(request: Request) {
   const consent = readConsent(request.headers.get('cookie') || '')?.preferences;
