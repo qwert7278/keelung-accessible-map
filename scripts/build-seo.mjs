@@ -5,7 +5,7 @@ import { loadEnv } from "vite";
 const root = process.cwd();
 const dist = resolve(root, "dist");
 const pages = ["how-to", "about", "privacy", "terms"];
-const productionUrl = "https://keelung-accessible-map.vercel.app";
+const productionUrl = "https://roadtag.org";
 const configuredUrl = process.env.VITE_PUBLIC_SITE_URL
   || loadEnv("production", root, "VITE_PUBLIC_SITE_URL").VITE_PUBLIC_SITE_URL
   || productionUrl;

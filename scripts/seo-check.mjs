@@ -5,7 +5,7 @@ import { loadEnv } from "vite";
 const dist = resolve(process.cwd(), "dist");
 const base = new URL(process.env.VITE_PUBLIC_SITE_URL
   || loadEnv("production", process.cwd(), "VITE_PUBLIC_SITE_URL").VITE_PUBLIC_SITE_URL
-  || "https://keelung-accessible-map.vercel.app").origin;
+  || "https://roadtag.org").origin;
 const expectedPaths = ["/", "/map", "/how-to", "/about", "/privacy", "/terms"];
 const failures = [];
 const read = async (path) => readFile(resolve(dist, path), "utf8");
@@ -49,6 +49,14 @@ const faqSchema = [...index.matchAll(/<script type="application\/ld\+json">([\s\
 check(faqSchema?.mainEntity?.length === 4, 'Homepage needs the matching visible FAQ schema.');
 for (const q of faqSchema?.mainEntity || []) { check(index.includes(q.name) && index.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
 const mapPage = await read("map.html");
+for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms"].map(p => `${p}/index.html`)]) {
+  const html = await read(path);
+  const entities = [...html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
+    .flatMap(match => { const parsed = JSON.parse(match[1]); return parsed['@graph'] || [parsed]; });
+  check(entities.some(entity => ['WebPage', 'AboutPage'].includes(entity['@type'])), `${path} needs its page schema.`);
+  check(entities.some(entity => entity['@type'] === 'BreadcrumbList'), `${path} needs breadcrumb schema.`);
+  check(!html.includes('__PUBLIC_SITE_URL__'), `${path} contains an unresolved URL placeholder.`);
+}
 const mapSchema = JSON.parse(mapPage.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] || "{}");
 check(mapSchema["@graph"]?.some((entity) => entity["@type"] === "WebSite" && entity["@id"] === `${base}/#website` && entity.name === "路見不平"), "Map must reference the same branded WebSite as the homepage.");
 check(mapPage.includes(`<link rel="canonical" href="${base}/map" />`), "Map canonical URL must use /map.");
