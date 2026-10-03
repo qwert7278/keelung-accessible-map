@@ -2,7 +2,7 @@
 
 ## Canonical host
 
-`VITE_PUBLIC_SITE_URL` 是唯一公開站址來源，預設為 `https://keelung-accessible-map.vercel.app`。Build 將其正規化為 HTTPS origin，注入首頁、資訊頁 canonical/分享 URL、robots Sitemap URL 與 sitemap；唯一允許的 Vercel hostname 是上述 Production alias。日後換自訂網域只改這個變數與 Vercel domain/redirect 設定，不讓 Preview hostname 成為 canonical。
+`VITE_PUBLIC_SITE_URL` 是唯一公開站址來源，預設為 `https://roadtag.org`。Build 將其正規化為 HTTPS origin，注入首頁、資訊頁 canonical/分享 URL、robots Sitemap URL 與 sitemap；Vercel 部署 alias 僅作技術來源，不作公開 canonical。日後換自訂網域只改這個變數與 Vercel domain/redirect 設定，不讓 Preview hostname 成為 canonical。
 
 ## 路由及頁面
 

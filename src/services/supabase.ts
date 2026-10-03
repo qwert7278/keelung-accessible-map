@@ -181,13 +181,10 @@ export function createSupabaseRepository(): ReportRepository {
     await session();
     const { data, error } = await db.auth.getSession();
     if (error || !data.session) throw new Error("登入已過期，請重新登入。");
-    const preparation = await db.functions.invoke("prepare-photo", { body:{report:reportId,kind,operation} });
-    if (preparation.error) {
-      let message = '照片上傳準備失敗，請稍後再試。';
-      try { message = (await preparation.error.context?.json())?.error || message; } catch { /* No JSON body. */ }
-      throw new Error(message);
-    }
-    const { path, uploaded } = preparation.data as {path:string;uploaded:boolean};
+    const preparation=await fetch('/api/prepare-photo',{method:'POST',headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({report:reportId,kind,operation}),signal:AbortSignal.timeout(30000)});
+    const prepared=await preparation.json().catch(()=>{throw new Error('照片上傳服務暫時無法使用，請稍後重試。');});
+    if(!preparation.ok) throw new Error(prepared.error || '照片上傳準備失敗，請稍後再試。');
+    const { path, uploaded } = prepared as {path:string;uploaded:boolean};
     if (!path || path !== `${reportId}/${kind}/${operation}.webp`) throw new Error('無效的照片上傳位置。');
     if (uploaded) { progress(100); return path; }
     await new Promise<void>((resolve, reject) => {
@@ -330,44 +327,44 @@ export function createSupabaseRepository(): ReportRepository {
             }) as ReportUpdate,
         );
     },
-    async addUpdate(id, draft, photo, progress) {
+    async addUpdate(id, draft, photo, progress, operationId=crypto.randomUUID()) {
       await session();
+      const existing=await db.rpc('owned_update',{report:id,operation:operationId});
+      if(existing.error) throw new Error(existing.error.message);
+      if(existing.data) return;
       const imagePath = photo
-        ? await upload(id, "updates", photo, progress)
+        ? await upload(id, "updates", photo, progress,operationId)
         : null;
       const { error } = await db
         .from("report_updates")
         .insert({
           report_id: id,
+          operation_id:operationId,
           message: draft.message.trim(),
           image_path: imagePath,
           suggested_status: draft.suggestedStatus,
         });
-      if (error) throw new Error(error.message);
+      if (error) {
+        const outcome=await db.rpc('owned_update',{report:id,operation:operationId});
+        if(outcome.error || !outcome.data) throw new Error(error.message);
+      }
     },
-    async moderate(report, status, note, access, photo, progress) {
+    async moderate(report, status, note, access, photo, progress,operationId=crypto.randomUUID()) {
       const user = await session();
       if (!user.admin) throw new Error("權限不足。");
+      const existing=await db.rpc('owned_update',{report:report.id,operation:operationId});
+      if(existing.error) throw new Error(existing.error.message);
+      if(existing.data) return;
       if (status === "resolved" && !photo && !report.afterImageUrl)
         throw new Error("請提供改善後照片。");
       const path = photo
-        ? await upload(report.id, "after", photo, progress)
-        : undefined;
-      const change = {
-        status,
-        wheelchair_access: access,
-        admin_note: note.trim(),
-        ...(path ? { after_image_path: path } : {}),
-      };
-      const { data, error } = await db
-        .from("reports")
-        .update(change)
-        .eq("id", report.id)
-        .eq("updated_at", report.updatedAt)
-        .select("id");
-      if (error) throw new Error(error.message);
-      if (!data.length)
-        throw new Error("案件已被其他管理者更新，請重新開啟後再試。");
+        ? await upload(report.id, "after", photo, progress,operationId)
+        : null;
+      const {error}=await db.rpc('moderate_report',{report:report.id,expected_updated_at:report.updatedAt,operation:operationId,new_status:status,new_access:access,note:note.trim(),photo_path:path});
+      if(error) {
+        const outcome=await db.rpc('owned_update',{report:report.id,operation:operationId});
+        if(outcome.error || !outcome.data) throw new Error(error.message);
+      }
       window.dispatchEvent(new Event(changed));
     },
   };

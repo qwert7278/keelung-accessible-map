@@ -54,13 +54,15 @@ export default function PhotoUploader({
         <input
           id={id}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
           required={required}
           disabled={disabled || busy}
           aria-describedby={`${id}-help`}
           onChange={async (e) => {
             const file = e.target.files?.[0];
             if (!file) return;
+            // Allow retrying the same file after a transient decoder failure.
+            e.target.value = "";
             const request = gate.current.next();
             setBusy(true); onProcessingChange?.(true);
             setError("");
@@ -77,7 +79,7 @@ export default function PhotoUploader({
         />
       </div>
       <small id={`${id}-help`}>
-        JPG、PNG、WebP，原檔最大 10 MB。自動轉成 WebP、保持直橫比例並移除原始 EXIF；上傳最大 1 MB。
+        可直接上傳手機照片（含 HEIC／HEIF）、JPG、PNG、WebP。系統自動壓縮轉檔並移除原始 EXIF；原檔最多 10 MB、2,000 萬像素，上傳最多 1 MB。
       </small>
       {busy && <p role="status">正在處理照片…</p>}
       {error && (

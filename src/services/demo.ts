@@ -41,7 +41,7 @@ export const demoRepository: ReportRepository = {
             const rows=s.reports.filter(r=>r.cityId===cityId && (!criteria.district || criteria.district==='all' || r.district===criteria.district)
               && (!criteria.status || criteria.status==='all' || r.status===criteria.status)
               && (!criteria.access || criteria.access==='all' || r.wheelchairAccess===criteria.access)
-              && (r.title+' '+r.address+' '+r.description).includes(criteria.search?.trim()||''));
+              && (r.title+' '+r.address+' '+r.description).toLowerCase().includes(criteria.search?.trim().toLowerCase()||''));
             next(rows,false);
           }
         })
@@ -84,14 +84,15 @@ export const demoRepository: ReportRepository = {
   async updates(id) {
     return (await read()).updates[id] ?? [];
   },
-  async addUpdate(id, draft, photo, progress) {
+  async addUpdate(id, draft, photo, progress,operationId=crypto.randomUUID()) {
     const store = await read();
+    if(store.updates[id]?.some(update=>update.id===operationId)) return;
     if (!store.reports.some((r) => r.id === id))
       throw new Error("案件不存在。");
     const imageUrl = photo ? await toDataUrl(photo) : null;
     const update: ReportUpdate = {
       ...draft,
-      id: crypto.randomUUID(),
+      id: operationId,
       type: "community",
       imageUrl,
       createdAt: new Date().toISOString(),
@@ -100,10 +101,12 @@ export const demoRepository: ReportRepository = {
     await save(store);
     progress(100);
   },
-  async moderate(report, status, note, access, photo, progress) {
+  async moderate(report, status, note, access, photo, progress,operationId=crypto.randomUUID()) {
     const store = await read(),
       target = store.reports.find((r) => r.id === report.id);
     if (!target) throw new Error("案件不存在。");
+    if(store.updates[report.id]?.some(update=>update.id===operationId)) return;
+    if(target.updatedAt!==report.updatedAt) throw new Error('案件已被其他管理者更新，請重新開啟後再試。');
     if (status === "resolved" && !photo && !target.afterImageUrl)
       throw new Error("標記已改善前，請提供改善後照片。");
     const imageUrl = photo ? await toDataUrl(photo) : null;
@@ -114,7 +117,7 @@ export const demoRepository: ReportRepository = {
     store.updates[report.id] = [
       ...(store.updates[report.id] ?? []),
       {
-        id: crypto.randomUUID(),
+        id: operationId,
         message: note,
         imageUrl,
         suggestedStatus: status,

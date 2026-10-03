@@ -29,6 +29,7 @@ DNS 託管與 HTTP 代理是不同設定：DNS-only 時 HTTPS 由 Vercel 提供�
 
 ## 文件入口
 
+- [收官修復與本地驗證](final-hardening-2026-10-03.md)：HEIC、重試、防濫用與排程；明確區分本地及正式狀態。
 - [單一發布流程](single-release-workflow.md)：日常維護、GitHub、Supabase、封存狀態。
 - [部署設定](deployment.md)：現有服務配置。
 - [Review 與站點核對](maintenance-review-2026-10-02.md)：時間戳記、版本差異、測試及已知待辦。

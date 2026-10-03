@@ -9,7 +9,7 @@
 | 本地編輯來源 | `C:\Users\qwert\Desktop\Road Recall system` |
 | 版本控制 | https://github.com/qwert7278/keelung-accessible-map ，正式分支 `main` |
 | 網站正式發布 | 既有 Vercel 專案 `keelung-accessible-map` |
-| 正式網站 | https://keelung-accessible-map.vercel.app/ |
+| 正式網站 | https://roadtag.org/ |
 | 資料庫服務 | 既有 Supabase，保留 Database／Auth／Storage |
 | 資料庫變更版本 | 同 repo 的 `supabase/migrations/`；授權檢查在 `supabase/tests/` |
 

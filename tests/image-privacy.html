@@ -1,43 +1,34 @@
 <!doctype html>
 <html lang="zh-Hant">
-  <meta charset="utf-8" /><title>Image privacy test</title>
-  <h1>Image privacy test</h1>
-  <button id="run">執行本機合成圖片測試</button>
-  <pre id="result">等待照片</pre>
-  <script type="module">
-    import { compressImage } from "/src/utils/images.ts";
-    document.querySelector("#run").onclick = async () => {
-      try {
-        const data = await (await fetch("/tests/fixtures/qa-exif.jpg")).blob();
-        const file = new File([data], "qa-exif.jpg", { type: "image/jpeg" });
-        const original = await file.arrayBuffer();
-        if (
-          !new TextDecoder().decode(original).includes("QA_PRIVATE_GPS_MARKER")
-        )
-          throw Error("Fixture lacks EXIF marker");
-        const blob = await compressImage(file);
-        const image = await createImageBitmap(blob);
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        if (image.width !== 1920 || image.height !== 960)
-          throw Error("Wrong resize");
-        if (blob.type !== "image/jpeg" || blob.size >= file.size)
-          throw Error("Compression failed");
-        if (new TextDecoder().decode(bytes).includes("QA_PRIVATE_GPS_MARKER"))
-          throw Error("EXIF leaked");
-        let pos = 2;
-        while (bytes[pos] === 255) {
-          const marker = bytes[pos + 1];
-          if (marker === 218) break;
-          if (marker === 225) throw Error("EXIF APP1 remains");
-          const n = (bytes[pos + 2] << 8) | bytes[pos + 3];
-          pos += 2 + n;
-        }
-        document.querySelector("#result").textContent =
-          `PASS: 2400×1200 → ${image.width}×${image.height}; ${file.size} → ${blob.size} bytes; JPEG; no EXIF APP1 or private GPS marker.`;
-        image.close();
-      } catch (e) {
-        document.querySelector("#result").textContent = "FAIL: " + e.message;
-      }
-    };
-  </script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本地照片驗證</title>
+<h1>本地照片驗證</h1><p>僅處理合成測試照片，不連接正式 Auth 或 Storage。</p>
+<button id="run">執行照片驗證</button><pre id="result" style="white-space:pre-wrap">等待執行</pre>
+<script type="module">
+import {compressImage} from '/src/utils/images.ts';
+const output=document.querySelector('#result');
+const check=(truth,message)=>{if(!truth)throw Error(message);};
+document.querySelector('#run').onclick=async()=>{
+ output.textContent='處理中…';const results=[];
+ try {
+  for(const [name,type,width,height] of [['qa-exif.jpg','image/jpeg',1920,960],['qa-oriented.jpg','image/jpeg',400,800],['qa-transparent.png','image/png',80,40],['qa-photo.heic','image/heic',800,400],['qa-photo.heif','image/heif',800,400]]) {
+   const input=new File([await (await fetch('/tests/fixtures/'+name)).blob()],name,{type});
+   const webp=await compressImage(input),bitmap=await createImageBitmap(webp);
+   check(webp.type==='image/webp'&&webp.size>0&&webp.size<=1048576,'Invalid upload format/size');
+   check(bitmap.width===width&&bitmap.height===height,'Wrong size/orientation '+name);
+   const bytes=new Uint8Array(await webp.arrayBuffer()),text=new TextDecoder().decode(bytes);
+   check(!text.includes('QA_PRIVATE_GPS_MARKER'),'Private metadata leaked');
+   for(let p=12;p+8<=bytes.length;) {const chunk=String.fromCharCode(...bytes.slice(p,p+4));check(!['EXIF','XMP '].includes(chunk),'Metadata chunk retained');const size=new DataView(bytes.buffer).getUint32(p+4,true);p+=8+size+size%2;}
+   const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);
+   if(name==='qa-transparent.png') {const pixel=ctx.getImageData(70,20,1,1).data;check(pixel[0]>240&&pixel[1]>240&&pixel[2]>240,'Transparent PNG background is not white');}
+   if(name==='qa-oriented.jpg') {const pixel=ctx.getImageData(20,20,1,1).data;check(pixel[2]>150&&pixel[0]<100,'EXIF rotation not applied');}
+   if(name==='qa-photo.heic') {const roundtrip=await compressImage(new File([webp],'roundtrip.webp',{type:'image/webp'}));check(roundtrip.type==='image/webp','WebP input failed');results.push('PASS WebP input');}
+   bitmap.close();results.push('PASS '+name+': '+width+'×'+height+', '+webp.size+' bytes, WebP, no EXIF/XMP');output.textContent=results.join('\n');
+  }
+  const oversized=new Uint8Array(24);oversized.set([137,80,78,71]);const view=new DataView(oversized.buffer);view.setUint32(16,8000);view.setUint32(20,6000);
+  let rejected=false;try{await compressImage(new File([oversized],'48mp.png',{type:'image/png'}));}catch(e){rejected=e.message.includes('像素過大');}check(rejected,'48MP predecode guard failed');results.push('PASS 48MP rejected before decode');
+  output.textContent=results.join('\n')+'\nALL PASS';
+ }catch(e){output.textContent=results.join('\n')+'\nFAIL '+e.message;}
+};
+</script>
 </html>

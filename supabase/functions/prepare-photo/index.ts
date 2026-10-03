@@ -6,10 +6,11 @@ const api=Deno.env.get('SUPABASE_URL')!;
 const publicKey=Deno.env.get('SUPABASE_ANON_KEY')!;
 const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 Deno.serve(preparePhotoHandler({
+  gateSecret:Deno.env.get('UPLOAD_GATE_SECRET')||'',
   authenticate:async authorization=>{
     const client=createClient(api,publicKey,{global:{headers:{Authorization:authorization}},auth:{persistSession:false}});
     const {data,error}=await client.auth.getUser();
-    return !error && data.user ? client : null;
+    return !error && data.user ? {id:data.user.id,anonymous:data.user.is_anonymous===true} : null;
   },
   maintenance:()=>createClient(api,serviceKey,{auth:{persistSession:false}}),
 }));

@@ -83,6 +83,7 @@ export interface ReportRepository {
     draft: UpdateDraft,
     photo: Blob | null,
     progress: (percent: number) => void,
+    operationId?: string,
   ): Promise<void>;
   moderate(
     report: Report,
@@ -91,5 +92,6 @@ export interface ReportRepository {
     access: Access,
     photo: Blob | null,
     progress: (percent: number) => void,
+    operationId?: string,
   ): Promise<void>;
 }

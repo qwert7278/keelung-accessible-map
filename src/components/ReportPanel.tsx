@@ -61,6 +61,7 @@ export default function ReportPanel({
   onClose: () => void;
 }) {
   const photoProcessingRef = useRef(false);
+  const attempt = useRef<{ id:string; fingerprint:string; photo:Blob|null } | null>(null);
   const [photoProcessing, setPhotoProcessing] = useState(false);
   const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [updates, setUpdates] = useState<ReportUpdate[]>([]),
@@ -126,6 +127,10 @@ export default function ReportPanel({
     setSuccess("");
     setProgress(0);
     try {
+      // Polling may refresh updatedAt after a lost acknowledgement; retain the same attempt.
+      const fingerprint=JSON.stringify([report.id,admin,status,message,access,suggestion]);
+      if(!attempt.current || attempt.current.fingerprint!==fingerprint || attempt.current.photo!==photo)
+        attempt.current={id:crypto.randomUUID(),fingerprint,photo};
       if (admin)
         await repository.moderate(
           report,
@@ -134,6 +139,7 @@ export default function ReportPanel({
           access,
           photo,
           setProgress,
+          attempt.current.id,
         );
       else
         await repository.addUpdate(
@@ -141,7 +147,9 @@ export default function ReportPanel({
           { message, suggestedStatus: suggestion || null },
           photo,
           setProgress,
+          attempt.current.id,
         );
+      attempt.current=null;
       setPhoto(null);
       setMessage("");
       setConsent(false);

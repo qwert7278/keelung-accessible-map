@@ -21,5 +21,6 @@
     { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
     { "key": "Permissions-Policy", "value": "geolocation=(self), camera=(), microphone=()" }
   ] }
-  ]
+  ],
+  "crons": [{ "path": "/api/photo-cleanup", "schedule": "0 3 * * *" }]
 }

@@ -1,0 +1,7 @@
+# Third-party HEIC decoder
+Road Tag lazily loads unmodified heic-to 1.6.5 (LGPL-3.0), by Hopper Gee.
+License: /licenses/heic-to-LGPL-3.0.txt
+Source, build scripts and version history: https://github.com/hoppergee/heic-to
+The package includes libheif 1.23.5. Source: https://github.com/strukturag/libheif/tree/v1.23.5
+The decoder is an independently loaded JavaScript module. No HEIC decoder is loaded for JPEG/PNG/WebP input.
+No source modifications have been made to these libraries.

@@ -240,9 +240,8 @@ export default function App() {
   const resolvedReport = reports.find(r => r.id === selected) || (linkedReport?.id === selected ? linkedReport : null);
   const scoped = useMemo(() => reports.filter(r =>
     (district === 'all' || r.district === district) &&
-    (access === 'all' || r.wheelchairAccess === access) &&
-    (r.title + ' ' + r.address + ' ' + r.description).includes(search.trim())),
-    [reports, district, access, search]);
+    (access === 'all' || r.wheelchairAccess === access)),
+    [reports, district, access]);
   const visible = useMemo(() => {
     const rows = scoped.filter(r => filter === 'all' || r.status === filter);
     return resolvedReport && !rows.some(r => r.id === resolvedReport.id) ? [resolvedReport, ...rows] : rows;

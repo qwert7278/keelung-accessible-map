@@ -24,6 +24,7 @@
         <p>首次進站可選擇僅使用必要 Cookie，或接受地區偏好。選擇會以第一方 Cookie 保存 180 天，你可以在各頁底部「Cookie 設定」變更。必要 Cookie 用於保存這項選擇；地圖與回報仍可能需要登入、安全與操作所需的儲存。</p>
         <p>接受地區偏好後，網站透過既有 Vercel 主機提供的網路地區資訊推估縣市，不在應用程式保存原始 IP，也不將 IP 或精確座標傳給額外的定位服務。推估會受 VPN、行動網路等影響，行政區僅為預設瀏覽起點，不代表實際位置。你手動選擇的縣市及行政區會保存於本機儲存，拒絕地區偏好時會清除這項保存。</p>
         <p>此功能目前不啟用地區使用統計、不建立訪客識別碼。主機與基礎設施可能仍處理連線、安全等必要紀錄；應用程式不額外記錄訪客 IP。未來若加入統計，會另行更新選擇與說明。</p>
+        <p>為防止更換匿名帳號大量上傳照片，照片預約會在伺服器將連線 IP 轉成每日變更的安全雜湊，短期保存請求次數供限流使用，不保存原始 IP，不用於廣告或地區使用統計。超過兩日的限流紀錄會在請求或每日清理時移除；正常每日清理下約兩至三日清除。此項必要的服務安全處理與可選的地區偏好分開。</p>
         <p>最後更新：2026 年 10 月 1 日</p>
         <h2>適用範圍與聯絡方式</h2>
         <p>本政策適用於「路見不平」網站、通行地圖、回報與補充功能。資料更正、照片移除、隱私申訴或本政策問題，請聯絡 <a href="mailto:lingwei2046@gmail.com">lingwei2046@gmail.com</a>。請提供案件連結及希望處理的內容；不需要在公開留言中留下聯絡資料。</p>
@@ -49,7 +50,7 @@
         <div class="actions"><a class="button" href="/terms">閱讀使用條款</a><a class="button secondary" href="/">回到首頁</a></div>
       </article>
     </main>
-    <footer class="foot"><span>路見不平 / Road Tag</span><nav aria-label="頁尾選單"><a href="/map">通行地圖</a><a href="/terms">使用條款</a><a href="/about">關於計畫</a></nav><span>資料最後檢視：2026-10-01</span></footer>
+    <footer class="foot"><span>路見不平 / Road Tag</span><nav aria-label="頁尾選單"><a href="/map">通行地圖</a><a href="/terms">使用條款</a><a href="/about">關於計畫</a></nav><span>資料最後檢視：2026-10-03</span></footer>
   <script type="module" src="/src/consent-entry.tsx"></script>
 </body>
 </html>

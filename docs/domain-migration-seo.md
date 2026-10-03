@@ -1,8 +1,8 @@
 # 自訂網域 SEO 遷移清單
 
-目前 canonical host 為 `https://keelung-accessible-map.vercel.app`。在正式 DNS 或自訂網域改動之前，先保留目前 Production host 持續服務。
+目前 canonical host 為 `https://roadtag.org`。GitHub main → 既有 Vercel 是唯一發布來源；Vercel alias 僅作部署技術網址。
 
-2026-10-02 計畫：使用者將選擇好記的新網域，由 Cloudflare 管理 DNS；唯一網站來源仍是 GitHub main → Vercel，不另建 Pages／Sites。尚未選定網域，本文件是未執行計畫。
+2026-10-03 現況：正式站已使用 roadtag.org。本清單保留作後續網域設定核對，並非重新建立網站或聲稱所有外部帳號設定已完成。
 
 Cloudflare DNS-only 與 Proxy 分開決定：DNS-only 由 Vercel 提供 HTTPS，不能視為已啟用 Cloudflare HTTP／WAF 保護。Vercel 官方不建議在前方堆疊反向代理，原因包括流量可見性與快取問題；若使用者仍需要 Proxy，遷移時單獨評估相容性、來源憑證與 Full (strict)，驗證後再啟用。來源：[Vercel 與 Cloudflare](https://vercel.com/kb/guide/cloudflare-with-vercel)、[Cloudflare Proxy status](https://developers.cloudflare.com/dns/proxy-status/)、[Full (strict)](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/full-strict/)。
 
@@ -18,4 +18,4 @@ Cloudflare DNS-only 與 Proxy 分開決定：DNS-only 由 Vercel 提供 HTTPS，
 10. 更新 Supabase Auth Site URL／redirect allowlist，驗證新網域 `/admin` magic link；不要修改 Database／RLS／Storage 來配合網域切換。保留必要本地 QA allowlist。
 11. 搜尋主 repo 中舊 hostname，修正仍指舊網域的內部連結；確認硬編碼 policy link、Auth redirect 與 SEO 產物均已處理。DNS 記錄值以實際 Vercel 專案當時回傳為準，勿照抄舊 IP。
 
-本清單不代表已購買網域或修改 DNS。網域、DNS、Search Console 均待使用者決定/帳號權限。
+正式站與 canonical 已使用 roadtag.org；Search Console 與 Auth 後台設定需依實際帳號另行核對，不以文件替代實測。
