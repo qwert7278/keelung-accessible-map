@@ -30,8 +30,13 @@ async function htmlFiles(directory) {
   return files;
 }
 
+const manifest = JSON.parse(await readFile(join(dist, '.vite', 'manifest.json'), 'utf8'));
+const consentEntry = manifest['src/consent-entry.tsx'];
+if (!consentEntry) throw new Error('Cookie entry missing from Vite manifest.');
 for (const page of pages) {
-  const html = await readFile(join(root, "seo-pages", `${page}.html`), "utf8");
+  let html = await readFile(join(root, "seo-pages", `${page}.html`), "utf8");
+  html = html.replace('/src/consent-entry.tsx', '/' + consentEntry.file);
+  html = html.replace('</head>', (consentEntry.css || []).map(file => `<link rel="stylesheet" href="/${file}" />`).join('\n') + '\n</head>');
   const target = join(dist, page, "index.html");
   await mkdir(join(dist, page), { recursive: true });
   await writeFile(target, html, "utf8");

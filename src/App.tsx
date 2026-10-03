@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRightIcon,
   ArrowUpRightIcon,
@@ -39,7 +39,9 @@ import { reportIdFromSearch } from "./utils/reportLink";
 
 import ReportThumbnail from './components/ReportThumbnail';
 import GeographyPicker from './components/GeographyPicker';
-import { initialGeography, rememberGeography } from './utils/geography';
+import { initialGeography, rememberGeography, shouldSuggestCity } from './utils/geography';
+import { readConsent, CONSENT_EVENT } from './utils/consent';
+import { useSuggestedCity } from './utils/useSuggestedCity';
 const HOMEPAGE_URL = "/";
 
 export default function App() {
@@ -72,6 +74,8 @@ export default function App() {
   const [adminDraftStatus, setAdminDraftStatus] = useState<Status | null>(null);
   const adminPage = window.location.pathname.replace(/\/$/, "") === "/admin";
   const guideReady = !!repository && !!session;
+  const [consentReady, setConsentReady] = useState(() => !!readConsent());
+  useEffect(() => { const update = () => setConsentReady(!!readConsent()); window.addEventListener(CONSENT_EVENT, update); return () => window.removeEventListener(CONSENT_EVENT, update); }, []);
   useEffect(() => {
     let active = true;
     loadRepository()
@@ -104,19 +108,38 @@ export default function App() {
     }, e => { if (active) { setError(readableError(e)); setLoading(false); } });
     return () => { active = false; unsubscribe(); };
   }, [repository, city.id]);
-  useEffect(() => { rememberGeography(city.id, district); }, [city.id, district]);
+  const manuallyChosen = useRef(false);
+  const suggestedCity = useSuggestedCity();
+  const [suggestionNote, setSuggestionNote] = useState('');
+  useEffect(() => {
+    if (!suggestedCity || manuallyChosen.current || adminPage || creating || selected || !shouldSuggestCity()) return;
+    const suggested = CITIES.find(c => c.id === suggestedCity);
+    if (!suggested) return;
+    changeCity(suggested.id);
+    setSuggestionNote(`依網路連線推估為${suggested.name}；行政區是瀏覽起點，可隨時切換。`);
+  }, [suggestedCity, adminPage, creating, selected]);
+  function chooseCity(id: string) {
+    manuallyChosen.current = true; setSuggestionNote('');
+    if (id === city.id) rememberGeography(id, district);
+    changeCity(id);
+  }
+  function chooseDistrict(value: string) {
+    manuallyChosen.current = true; setSuggestionNote(''); changeDistrict(value);
+  }
   function changeCity(id: string) {
     const next = CITIES.find(c => c.id === id);
     if (!next || next.id === city.id) return;
     setPage(1); closeReport(); setCreating(false); setCreatedReportId(null); setGuideStep(null);
     setReports([]); setLoading(true); setError(''); setSearch(''); setAccess('all'); setFilter('all');
     setCity(next); setDistrict(next.defaultDistrict); setFocus(next.center);
+    rememberGeography(next.id, next.defaultDistrict);
     const url = new URL(window.location.href);
     url.searchParams.set('city', next.id); url.searchParams.set('district', next.defaultDistrict);
     window.history.replaceState({}, '', url);
   }
   function changeDistrict(value: string) {
     setPage(1); setDistrict(value); closeReport();
+    rememberGeography(city.id, value);
     if (value === city.defaultDistrict || value === 'all') setFocus({ ...city.center });
     else { const first = reports.find(r => r.district === value); if (first) setFocus({ ...first.location }); }
     const url = new URL(window.location.href);
@@ -125,14 +148,14 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (adminPage) return;
+    if (adminPage || !readConsent()) return;
     try {
       if (localStorage.getItem("keelung-accessible-map-onboarding-seen-v1") !== "yes")
         setOnboarding(true);
     } catch {
       // Keep the map available when browser storage is disabled.
     }
-  }, [adminPage]);
+  }, [adminPage, consentReady]);
 
   function dismissOnboarding() {
     try {
@@ -292,7 +315,7 @@ export default function App() {
       setSigningIn(false);
     }
   }
-  const pageIntro = (<section className="page-intro">
+  const pageIntro = (<section className="page-intro">{suggestionNote && <p className="city-suggestion-note" role="status">{suggestionNote}</p>}
           <div>
             <h1>{adminPage ? "案件管理" : "台灣騎樓與人行道通行回報地圖"}</h1>
             <p>
@@ -380,7 +403,7 @@ export default function App() {
       <main id="main-content" tabIndex={-1}>
         {adminPage && pageIntro}
         {adminPage && (<section className="geography-bar" aria-label="選擇地圖範圍">
-          <GeographyPicker city={city} district={district} onCity={changeCity} onDistrict={changeDistrict} />
+          <GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           <p>{canReportInCity(city.id) ? '目前查看：' + city.name + ' · ' + (district === 'all' ? '所有行政區' : district) : '此縣市目前提供地圖預覽，正式回報尚未開放。'}</p>
         </section>)}
         {!adminPage && guideStep === 0 && (
@@ -481,7 +504,7 @@ export default function App() {
               <h2>{adminPage ? "案件管理" : "探索通行狀況"}</h2>
               <span className="count">{reports.length} 件</span>
             </div>
-            <div className="sidebar-geography"><GeographyPicker city={city} district={district} onCity={changeCity} onDistrict={changeDistrict} />
+            <div className="sidebar-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
               {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}
             </div>
             <label className="search-field">
@@ -609,7 +632,7 @@ export default function App() {
             </div>
           </aside>
           <div className="map-area">
-            <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={changeCity} onDistrict={changeDistrict} />
+            <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}</div></div>
             <div className="map-stage">
             <MapView key={city.id} city={city} reports={visible} onSelect={choose} focus={focus || city.center} />
