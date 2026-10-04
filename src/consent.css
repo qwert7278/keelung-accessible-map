@@ -7,7 +7,9 @@
 .cookie-actions button,.cookie-settings { font:inherit; border:1px solid #09595b; color:#09595b; background:#f6f3ea; min-height:44px; padding:9px 16px; border-radius:8px; cursor:pointer; }
 .cookie-actions button:hover,.cookie-settings:hover { background:#dfe9ed; color:#103637; border-color:#103637; }
 .cookie-actions button:focus-visible,.cookie-settings:focus-visible { outline:3px solid #09595b; outline-offset:3px; }
-.cookie-settings { display:block; margin:12px auto; font-size:13px; }
+.cookie-settings { display:inline-flex; align-items:center; margin:0; padding:8px 4px; min-height:44px; border:0; border-radius:4px; background:transparent; color:inherit; font-size:inherit; font-weight:600; text-decoration:underline; text-underline-offset:4px; }
+.cookie-settings:hover { background:transparent; color:inherit; text-decoration-thickness:2px; }
+.cookie-settings:focus-visible { outline-color:currentColor; }
 @media(max-width:600px) { .cookie-banner { inset:auto 10px 10px; padding:16px; max-height:70dvh; overflow:auto; } .cookie-actions { display:grid; grid-template-columns:1fr; gap:8px; } }
 
 .city-suggestion-note:not(:empty) { font-size:13px; line-height:1.6; color:#103637; background:#dfe9ed; border-radius:8px; padding:8px 12px; margin:0 0 10px; }

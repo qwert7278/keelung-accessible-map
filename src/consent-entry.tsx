@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { CONSENT_EVENT, readConsent, saveConsent } from './utils/consent';
 import './consent.css';
 
 function CookieChoices() {
   const [consent, setConsent] = useState(readConsent);
   const [opened, setOpened] = useState(false);
-  const [desktop,setDesktop]=useState(()=>window.matchMedia('(min-width: 900px)').matches);
-  useEffect(()=>{const media=window.matchMedia('(min-width: 900px)');const change=()=>setDesktop(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
+  const [footerTarget, setFooterTarget] = useState<Element | null>(null);
+  useEffect(() => {
+    const findFooter = () => setFooterTarget(document.querySelector('footer.site-footer .footer-legal, footer.foot nav') || document.querySelector('footer.site-footer'));
+    findFooter();
+    const observer = new MutationObserver(findFooter);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     const update = () => setConsent(readConsent());
     window.addEventListener(CONSENT_EVENT, update);
@@ -15,7 +22,7 @@ function CookieChoices() {
   }, []);
   const visible = !consent || opened;
   const path=window.location.pathname.replace(/\/$/,'');
-  const hideSettings=path==='/admin' || path==='/map' && desktop;
+  const hideSettings=path==='/admin';
   function choose(enabled: boolean) { setConsent(saveConsent(enabled)); setOpened(false); }
   return <>
     {visible && <aside className="cookie-banner" aria-labelledby="cookie-title">
@@ -25,7 +32,7 @@ function CookieChoices() {
       </div>
       <div className="cookie-actions"><button type="button" onClick={() => choose(false)}>僅使用必要 Cookie</button><button type="button" onClick={() => choose(true)}>接受地區偏好</button>{consent && <button type="button" onClick={() => setOpened(false)}>保留原設定</button>}</div>
     </aside>}
-    {!visible && !hideSettings && <button type="button" className="cookie-settings" onClick={() => setOpened(true)}>Cookie 設定</button>}
+    {!visible && !hideSettings && footerTarget && createPortal(<button type="button" className="cookie-settings" onClick={() => setOpened(true)}>Cookie 設定</button>, footerTarget)}
   </>;
 }
 const host = document.createElement('div');
