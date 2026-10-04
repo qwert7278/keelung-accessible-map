@@ -1,7 +1,7 @@
-export const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+export const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 export const TARGET_UPLOAD_SIZE = 300 * 1024;
 export const MAX_UPLOAD_SIZE = 1024 * 1024;
-// ponytail: 26 MP / 10k-side ceiling accepts common 24 MP photos; 48 MP stays blocked.
+// 26 MP / 10k-side ceiling accepts common 24 MP photos; 48 MP stays blocked.
 export const MAX_IMAGE_PIXELS = 26_000_000;
 export function checkImageDimensions(width: number, height: number) {
   if (!width || !height || width > 10000 || height > 10000 || width * height > MAX_IMAGE_PIXELS)
@@ -54,9 +54,16 @@ export async function imageDimensions(file: Blob): Promise<[number, number]> {
   throw new Error('照片檔案無法讀取，請選擇其他照片。');
 }
 export async function compressImage(file: File): Promise<Blob> {
-  const heic = ['image/heic','image/heif'].includes(file.type) || /\.hei[cf]$/i.test(file.name);
-  if (!heic && !['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('請選擇手機照片、JPG、PNG 或 WebP 圖片。');
-  if (file.size > MAX_IMAGE_SIZE) throw new Error('圖片不可超過 10 MB。');
+  const mime = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+  // Mobile file pickers are not consistent about MIME types. Accept the common
+  // camera/gallery formats by MIME or extension, then validate the actual bytes.
+  const heic = ['image/heic','image/heif','image/heic-sequence','image/heif-sequence'].includes(mime) || /\.hei[cf]$/i.test(name);
+  const jpeg = ['image/jpeg','image/jpg','image/pjpeg'].includes(mime) || /\.jpe?g$/i.test(name);
+  const png = ['image/png','image/x-png'].includes(mime) || /\.png$/i.test(name);
+  const webp = mime === 'image/webp' || /\.webp$/i.test(name);
+  if (!heic && !jpeg && !png && !webp) throw new Error('這張照片格式目前無法讀取，請改用手機相簿中的一般照片。');
+  if (file.size > MAX_IMAGE_SIZE) throw new Error('照片檔案過大，請改用一般拍照模式或裁切後重試。');
   checkImageDimensions(...await imageDimensions(file));
   let bitmap: ImageBitmap;
   try { bitmap=await createImageBitmap(file,{imageOrientation:'from-image'}); }
@@ -80,17 +87,17 @@ export async function compressImage(file: File): Promise<Blob> {
     for (const quality of [0.8, 0.7, 0.6]) {
       const webp = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', quality));
       if (!webp || !webp.size) throw new Error('圖片壓縮失敗。');
-      if (webp.type !== 'image/webp') throw new Error('此瀏覽器無法轉換 WebP，請更新瀏覽器後重試。');
+      if (webp.type !== 'image/webp') throw new Error('此瀏覽器無法完成照片處理，請更新瀏覽器後重試。');
       if (!smallest || webp.size < smallest.size) smallest = webp;
       if (smallest.size <= TARGET_UPLOAD_SIZE) return smallest;
     }
     if (smallest && smallest.size <= MAX_UPLOAD_SIZE) return smallest;
-    throw new Error('照片壓縮後仍超過 1 MB，請裁切需要記錄的範圍後重試。');
+    throw new Error('照片處理後仍過大，請裁切需要記錄的範圍後重試。');
   } finally { bitmap.close(); }
 }
 export function imageUploadFormat(blob: Blob) {
   if (blob.type !== 'image/webp') throw new Error('照片處理尚未完成，請重新選擇照片。');
-  if (!blob.size || blob.size > MAX_UPLOAD_SIZE) throw new Error('WebP 照片須介於 1 byte 至 1 MB。');
+  if (!blob.size || blob.size > MAX_UPLOAD_SIZE) throw new Error('照片處理結果大小異常，請重新選擇照片。');
   return { extension: 'webp', contentType: 'image/webp' };
 }
 export function toDataUrl(blob: Blob): Promise<string> {

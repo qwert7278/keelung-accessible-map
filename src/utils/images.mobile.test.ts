@@ -32,7 +32,7 @@ describe('mobile image pipeline',()=>{
  it('reads HEIC/HEIF dimensions and lazily decodes when native HEIC fails',async()=>{
   const bitmap={width:800,height:400,close:vi.fn()},canvas={width:0,height:0,getContext:()=>({fillRect:vi.fn(),drawImage:vi.fn()}),toBlob:(cb:(b:Blob)=>void)=>cb(new Blob(['webp'],{type:'image/webp'}))};
   vi.stubGlobal('document',{createElement:()=>canvas});vi.stubGlobal('createImageBitmap',vi.fn().mockRejectedValue(new Error('unsupported')));heic.heicTo.mockResolvedValue(bitmap);
-  for(const [name,type] of [['qa-photo.heic','image/heic'],['qa-photo.heif','']]){
+  for(const [name,type] of [['qa-photo.heic',''],['qa-photo.heif','']]){
    const file=new File([readFileSync('tests/fixtures/'+name)],name,{type});expect(await imageDimensions(file)).toEqual([800,400]);
    const output=await compressImage(file);expect(output.type).toBe('image/webp');expect(output.size).toBeLessThanOrEqual(MAX_UPLOAD_SIZE);
   }

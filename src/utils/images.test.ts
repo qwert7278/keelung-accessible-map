@@ -23,16 +23,22 @@ describe("照片上傳邊界", () => {
       compressImage(
         new File(["<svg/>"], "image.svg", { type: "image/svg+xml" }),
       ),
-    ).rejects.toThrow("JPG");
+    ).rejects.toThrow("格式");
   });
-  it("拒絕超過 10 MB 的檔案", async () => {
+  it("拒絕超過 20 MB 的原始照片", async () => {
     await expect(
       compressImage(
         new File([new Uint8Array(MAX_IMAGE_SIZE + 1)], "large.jpg", {
           type: "image/jpeg",
         }),
       ),
-    ).rejects.toThrow("10 MB");
+    ).rejects.toThrow("檔案過大");
+  });
+  it.each(["photo.JPG", "photo.jpeg", "photo.png", "photo.webp"])("MIME 缺失時仍可依手機檔名辨認 %s", async name => {
+    const output = new Blob(["webp"], { type: "image/webp" });
+    encoderFixture([output]);
+    const result = await compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], name, { type: "" }));
+    expect(result).toBe(output);
   });
   it("重新繪製到 1920px，輸出 WebP 並關閉 bitmap", async () => {
     const output = new Blob(["webp"], { type: "image/webp" });
@@ -84,9 +90,9 @@ describe("照片上傳邊界", () => {
   it("壓縮後仍太大或空檔不能送到 Storage", async () => {
     const huge = new Blob([new Uint8Array(MAX_UPLOAD_SIZE + 1)], { type: "image/webp" });
     const { bitmap } = encoderFixture([huge, huge, huge]);
-    await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.jpg", { type: "image/jpeg" }))).rejects.toThrow("1 MB");
+    await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.jpg", { type: "image/jpeg" }))).rejects.toThrow("仍過大");
     expect(bitmap.close).toHaveBeenCalledOnce();
-    expect(() => imageUploadFormat(huge)).toThrow("1 MB");
-    expect(() => imageUploadFormat(new Blob([], { type: "image/webp" }))).toThrow("1 MB");
+    expect(() => imageUploadFormat(huge)).toThrow("大小異常");
+    expect(() => imageUploadFormat(new Blob([], { type: "image/webp" }))).toThrow("大小異常");
   });
 });
