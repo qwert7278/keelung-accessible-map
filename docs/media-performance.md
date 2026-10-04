@@ -14,7 +14,7 @@ Supabase Storage 有 CDN，但冷快取仍須回源、快取不保證永久保�
 
 | 項目 | 行為 |
 | --- | --- |
-| 使用者照片輸入 | 本地收官修復加入 JPG／PNG／WebP／HEIC／HEIF，原檔最大 10 MiB、20MP，解碼前檢查尺寸；正式啟用狀態見 [收官驗證](final-hardening-2026-10-03.md)。影片仍未開放 |
+| 使用者照片輸入 | JPG／PNG／WebP／HEIC／HEIF，原檔最大 10 MiB；本輪本地將像素上限由 20MP 調為 26MP，解碼前及解碼後仍檢查尺寸，48MP 不開放。正式啟用與實機狀態見 [24MP 收官驗證](seo/final-seo-iphone-e2e-2026-10-03.md)。影片仍未開放 |
 | 自動轉檔 | WebP only；直橫式保持比例、最長邊 1920px、小圖不放大、移除原始 EXIF |
 | 大小控制 | 目標 300 KiB，逐步使用品質 0.8／0.7／0.6；保留最小輸出，硬上限 1 MiB；無法達成時提示裁切重試，不無限降品質 |
 | 格式對齊 | 新 Storage path 為 UUID.webp、Content-Type image/webp；Repository 上傳前再驗 MIME／大小 |

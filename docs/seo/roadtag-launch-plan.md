@@ -9,7 +9,7 @@
 - `roadtag-structured-data.json` 是從實際 HTML 匯出的資料包，可用 `node scripts/export-roadtag-schema.mjs` 更新。
 - Sitemap：https://roadtag.org/sitemap.xml；robots.txt 指向此 Sitemap。管理頁維持 noindex，Preview 維持 noindex。
 - 首頁與完整地圖共用真實資料來源。正式建置強制停用 Demo；移除八筆舊本機示範資料，保留使用者本機自行建立的紀錄。未刪除 Supabase 真實資料、照片或帳號。
-- 22 縣市、368 行政區可瀏覽；正式回報目前從基隆開始。其他縣市是瀏覽功能，避免將尚未開放的回報誤導成可使用。
+- 22 縣市、368 行政區可瀏覽及回報；基隆市仁愛區為初始預設，各縣市回報依所選行政區驗證。全台啟用見 docs/launch-fixes-2026-10-03.md。
 
 ## Search Console 提交
 

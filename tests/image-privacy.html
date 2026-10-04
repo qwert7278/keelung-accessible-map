@@ -25,7 +25,11 @@ document.querySelector('#run').onclick=async()=>{
    if(name==='qa-photo.heic') {const roundtrip=await compressImage(new File([webp],'roundtrip.webp',{type:'image/webp'}));check(roundtrip.type==='image/webp','WebP input failed');results.push('PASS WebP input');}
    bitmap.close();results.push('PASS '+name+': '+width+'×'+height+', '+webp.size+' bytes, WebP, no EXIF/XMP');output.textContent=results.join('\n');
   }
-  const oversized=new Uint8Array(24);oversized.set([137,80,78,71]);const view=new DataView(oversized.buffer);view.setUint32(16,8000);view.setUint32(20,6000);
+  const photo24=document.createElement('canvas');photo24.width=5712;photo24.height=4284;const ctx24=photo24.getContext('2d');ctx24.fillStyle='#008c95';ctx24.fillRect(0,0,5712,4284);
+  const input24=await new Promise(resolve=>photo24.toBlob(resolve,'image/png'));photo24.width=1;photo24.height=1;
+  const webp24=await compressImage(new File([input24],'synthetic-24mp.png',{type:'image/png'})),bitmap24=await createImageBitmap(webp24);
+  check(bitmap24.width===1920&&bitmap24.height===1440&&webp24.type==='image/webp'&&webp24.size<=1048576,'24MP normalization failed');bitmap24.close();results.push('PASS synthetic 5712×4284 PNG → 1920×1440 WebP');
+  const oversized=new Uint8Array(24);oversized.set([137,80,78,71]);const view=new DataView(oversized.buffer);view.setUint32(16,8064);view.setUint32(20,6048);
   let rejected=false;try{await compressImage(new File([oversized],'48mp.png',{type:'image/png'}));}catch(e){rejected=e.message.includes('像素過大');}check(rejected,'48MP predecode guard failed');results.push('PASS 48MP rejected before decode');
   output.textContent=results.join('\n')+'\nALL PASS';
  }catch(e){output.textContent=results.join('\n')+'\nFAIL '+e.message;}

@@ -28,7 +28,7 @@
           "name": "可以選擇哪些縣市？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。正式回報目前由基隆起步，其他縣市逐步開放。"
+            "text": "地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。"
           }
         },
         {
@@ -100,23 +100,16 @@
             "@id": "https://roadtag.org/#website"
           },
           "description": "查看附近障礙，或回報你現在看到的通行問題。",
-          "inLanguage": "zh-Hant-TW"
+          "inLanguage": "zh-Hant-TW",
+          "breadcrumb": {
+            "@id": "https://roadtag.org/map#breadcrumb"
+          }
         }
       ]
     },
     {
       "@context": "https://schema.org",
       "@graph": [
-        {
-          "@type": "WebPage",
-          "@id": "https://roadtag.org/map#page",
-          "url": "https://roadtag.org/map",
-          "name": "台灣騎樓與人行道通行回報地圖",
-          "inLanguage": "zh-TW",
-          "isPartOf": {
-            "@id": "https://roadtag.org/#website"
-          }
-        },
         {
           "@type": "BreadcrumbList",
           "@id": "https://roadtag.org/map#breadcrumb",

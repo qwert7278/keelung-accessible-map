@@ -1,8 +1,8 @@
 export const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 export const TARGET_UPLOAD_SIZE = 300 * 1024;
 export const MAX_UPLOAD_SIZE = 1024 * 1024;
-// ponytail: 20 MP / 10k-side ceiling bounds full decode memory; raise only after phone profiling.
-export const MAX_IMAGE_PIXELS = 20_000_000;
+// ponytail: 26 MP / 10k-side ceiling accepts common 24 MP photos; 48 MP stays blocked.
+export const MAX_IMAGE_PIXELS = 26_000_000;
 export function checkImageDimensions(width: number, height: number) {
   if (!width || !height || width > 10000 || height > 10000 || width * height > MAX_IMAGE_PIXELS)
     throw new Error('照片像素過大，請使用一般拍照解析度或裁切後重試。');

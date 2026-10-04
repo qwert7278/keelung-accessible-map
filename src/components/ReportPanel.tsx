@@ -18,7 +18,7 @@ import {
 } from "../types";
 import { DEMO_MODE, PUBLIC_SITE_URL } from "../config";
 import { readableError } from "../utils/validation";
-import Modal from "./Modal";
+import ReportDetailShell from "./ReportDetailShell";
 import PhotoUploader from "./PhotoUploader";
 import StatusBadge from "./StatusBadge";
 import { reportShareUrl } from "../utils/reportLink";
@@ -63,6 +63,8 @@ export default function ReportPanel({
   const photoProcessingRef = useRef(false);
   const attempt = useRef<{ id:string; fingerprint:string; photo:Blob|null } | null>(null);
   const [photoProcessing, setPhotoProcessing] = useState(false);
+  const [showAllUpdates, setShowAllUpdates] = useState(false);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
   const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [updates, setUpdates] = useState<ReportUpdate[]>([]),
     [error, setError] = useState(""),
@@ -278,8 +280,22 @@ export default function ReportPanel({
       )}
     </form>
   );
+  const reportActions = <div className="report-actions">
+          <button className="button secondary" type="button" onClick={shareReport}>
+            <ShareNetworkIcon size={18} />
+            分享案件
+          </button>
+          {!embedded && !admin && <button className="button secondary" type="button" disabled={busy} aria-expanded={showUpdateForm} aria-controls="public-report-update" onClick={() => setShowUpdateForm(value => !value)}>補充最新狀況</button>}
+          {shareMessage && <span role="status">{shareMessage}</span>}
+          {shareUrl && (
+            <label className="share-link">
+              案件連結
+              <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+            </label>
+          )}
+        </div>;
   const content = (
-      <div className={`panel-content${embedded ? " admin-case-content" : ""}`}>
+      <div className={`panel-content${embedded ? " admin-case-content" : " public-report-content"}`}>
         <div className="detail-top">
           <StatusBadge status={report.status} />
           {DEMO_MODE && <span className="demo-tag">測試資料</span>}
@@ -289,19 +305,8 @@ export default function ReportPanel({
           {report.address ||
             `${report.district} · ${report.location.lat.toFixed(5)}, ${report.location.lng.toFixed(5)}`}
         </p>
-        <div className="report-actions">
-          <button className="button secondary" type="button" onClick={shareReport}>
-            <ShareNetworkIcon size={18} />
-            分享案件
-          </button>
-          {shareMessage && <span role="status">{shareMessage}</span>}
-          {shareUrl && (
-            <label className="share-link">
-              案件連結
-              <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
-            </label>
-          )}
-        </div>
+        {!embedded && <div className="report-main-photo"><Photo src={report.beforeImageUrl} label="原始回報照片" /></div>}
+        {embedded && reportActions}
         <div className={`access-callout access-${report.wheelchairAccess}`}>
           <WheelchairIcon size={24} />
           <div>
@@ -312,10 +317,12 @@ export default function ReportPanel({
         {embedded && admin && updateForm}
         <p className="detail-category">問題類型：{CATEGORIES[report.category]}</p>
         <p>{report.description || "此案件尚無補充說明。"}</p>
+        {!embedded && reportActions}
+        {!embedded && !showUpdateForm && error && <p className="error" role="alert">{error}</p>}
         <section className="evidence-section" aria-label="現場照片與改善證據">
           <h3>現場照片</h3>
           <div className="evidence-grid">
-            <Photo src={report.beforeImageUrl} label="原始回報照片" />
+            {embedded && <Photo src={report.beforeImageUrl} label="原始回報照片" />}
             <Photo
               src={latestCommunityPhoto || null}
               label="最新民眾補充照片"
@@ -337,7 +344,7 @@ export default function ReportPanel({
             <p className="muted">尚無補充紀錄。</p>
           ) : (
             <ol>
-              {updates.map((u) => (
+              {(embedded || showAllUpdates ? updates : updates.slice(-3)).map((u) => (
                 <li key={u.id}>
                   <div>
                     <strong>
@@ -365,13 +372,14 @@ export default function ReportPanel({
               ))}
             </ol>
           )}
+          {!embedded && updates.length > 3 && <button className="text-button" type="button" aria-expanded={showAllUpdates} onClick={() => setShowAllUpdates(value => !value)}>{showAllUpdates ? "只顯示最新紀錄" : `查看全部 ${updates.length} 筆紀錄`}</button>}
         </section>
         <p className="metadata">
           建立：{date(report.createdAt)}
           <br />
           案件狀態更新：{date(report.updatedAt)}
         </p>
-        {!embedded && updateForm}
+        {!embedded && (admin || showUpdateForm) && <div id="public-report-update">{updateForm}</div>}
       </div>
   );
   if (embedded) {
@@ -397,8 +405,8 @@ export default function ReportPanel({
     );
   }
   return (
-    <Modal title={report.title} onClose={onClose} busy={busy} wide sheet>
+    <ReportDetailShell title={report.title} onClose={onClose} busy={busy}>
       {content}
-    </Modal>
+    </ReportDetailShell>
   );
 }

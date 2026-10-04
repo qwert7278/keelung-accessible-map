@@ -1,4 +1,6 @@
-# Road Tag 發布驗證：2026-10-03
+# Road Tag 歷史發布驗證：2026-10-03（SEO／教學版本）
+
+> 下文為當日較早版本的驗證快照，非最新 main／收錄狀態。後續正式修復見 ../final-hardening-2026-10-03.md；本輪收官狀態見 final-seo-iphone-e2e-2026-10-03.md。
 
 既有正式版本 `d89d7b3c464878f80e7445f5bdf2aea531ba908c` 已回讀 Vercel Production READY。此次 PR 接續此版本，補上正式網域預設值、圖解教學、CIS 文件與 SEO JSON 交付；不改 DNS、Supabase schema、資料庫資料或帳號。
 

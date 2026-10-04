@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { loadEnv, type Plugin } from 'vite'
 import { resolve } from 'node:path'
 import { GET as locationResponse } from './api/location.ts'
+import { GET as locationSearch } from './api/location/search.ts'
+import { GET as locationReverse } from './api/location/reverse.ts'
 
 function appRouteAliases(): Plugin {
   const seoRoutes: Record<string, string> = {
@@ -17,6 +19,15 @@ function appRouteAliases(): Plugin {
       server.middlewares.use((request, _response, next) => {
         if (!request.url) return next()
         const [pathname, query] = request.url.split('?')
+        if (pathname === '/api/location/search' || pathname === '/api/location/reverse') {
+          const handler = pathname.endsWith('/search') ? locationSearch : locationReverse;
+          void handler(new Request(`http://localhost${request.url}`, {method:request.method})).then(async response => {
+            _response.statusCode = response.status;
+            response.headers.forEach((value,key) => _response.setHeader(key,value));
+            _response.end(await response.text());
+          }).catch(() => { _response.statusCode=503; _response.end('{"error":"LOCATION_TEMPORARILY_UNAVAILABLE"}'); });
+          return;
+        }
         if (pathname === '/api/location') {
           const headers = new Headers();
           if (request.headers.cookie) headers.set('cookie', request.headers.cookie);

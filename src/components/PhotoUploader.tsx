@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { CameraIcon, ImageIcon } from "@phosphor-icons/react";
-import { compressImage } from "../utils/images";
+import { compressImage, MAX_IMAGE_PIXELS } from "../utils/images";
 import { readableError } from "../utils/validation";
 import { revisionGate } from "../utils/revisionGate";
 export default function PhotoUploader({
@@ -79,7 +79,7 @@ export default function PhotoUploader({
         />
       </div>
       <small id={`${id}-help`}>
-        可直接上傳手機照片（含 HEIC／HEIF）、JPG、PNG、WebP。系統自動壓縮轉檔並移除原始 EXIF；原檔最多 10 MB、2,000 萬像素，上傳最多 1 MB。
+        可直接上傳手機照片（含 HEIC／HEIF）、JPG、PNG、WebP。系統自動壓縮轉檔並移除原始 EXIF；原檔最多 10 MB、{(MAX_IMAGE_PIXELS / 10000).toLocaleString('zh-TW')} 萬像素，上傳最多 1 MB。
       </small>
       {busy && <p role="status">正在處理照片…</p>}
       {error && (

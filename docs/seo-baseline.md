@@ -1,4 +1,6 @@
-# 基隆好行 SEO 基線
+# 歷史基隆好行 SEO 基線（2026-09-30）
+
+> 此文件保留當時觀察，不代表現行 Road Tag 狀態。現行六頁、roadtag.org 與 /map 政策見 seo-architecture.md；本輪驗證見 seo/final-seo-iphone-e2e-2026-10-03.md。
 
 檢查日期：2026-09-30。Production：<https://keelung-accessible-map.vercel.app/>。此文件記錄部署前的實測與資料限制。
 

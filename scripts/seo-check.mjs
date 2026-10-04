@@ -55,6 +55,13 @@ for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", 
     .flatMap(match => { const parsed = JSON.parse(match[1]); return parsed['@graph'] || [parsed]; });
   check(entities.some(entity => ['WebPage', 'AboutPage'].includes(entity['@type'])), `${path} needs its page schema.`);
   check(entities.some(entity => entity['@type'] === 'BreadcrumbList'), `${path} needs breadcrumb schema.`);
+  if (path === 'map.html') {
+    const mapEntities = entities.filter(entity => entity['@type'] === 'WebPage');
+    check(mapEntities.length === 1, 'Map needs exactly one WebPage entity.');
+    check(mapEntities[0]?.breadcrumb?.['@id'] === `${base}/map#breadcrumb`, 'Map WebPage must link its breadcrumb entity.');
+    const description = html => html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i)?.[1];
+    check(description(mapPage) && description(index) && description(mapPage) !== description(index), 'Map description must differ from the homepage.');
+  }
   check(!html.includes('__PUBLIC_SITE_URL__'), `${path} contains an unresolved URL placeholder.`);
 }
 const mapSchema = JSON.parse(mapPage.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] || "{}");

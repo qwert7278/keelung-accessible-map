@@ -15,6 +15,7 @@ import {
   type Report,
   type ReportDraft,
   type ReportRepository,
+  type Location,
 } from "../types";
 import {
   distanceMeters,
@@ -27,6 +28,8 @@ import PhotoUploader from "./PhotoUploader";
 import GuidedTourPrompt from "./GuidedTourPrompt";
 import { districtCamera } from '../utils/mapCamera';
 import { districtAt } from '../utils/districtBoundary';
+import { LOCATION_SEARCH_UNAVAILABLE, searchLocations, reverseLocation } from '../services/locationApi';
+import type { LocationResult } from '../services/locationContract';
 
 const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   1: {
@@ -85,6 +88,22 @@ export default function ReportForm({
   onExisting: (id: string) => void;
 }) {
   const photoProcessingRef = useRef(false);
+  const searchRequest = useRef<AbortController|null>(null);
+  const selectionRequest = useRef<AbortController|null>(null);
+  const addressRevision = useRef(0);
+  const gpsRevision = useRef(0);
+  const locationRevision = useRef(0);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [candidates, setCandidates] = useState<LocationResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchNote, setSearchNote] = useState('');
+  const [reverseNote, setReverseNote] = useState('');
+  const [cameraRevision, setCameraRevision] = useState(0);
+  useEffect(() => () => {
+    searchRequest.current?.abort();
+    selectionRequest.current?.abort();
+    gpsRevision.current++;
+  }, []);
   const attempt = useRef<{ id:string; draft:string; photo:Blob } | null>(null);
   const [checkingLocation, setCheckingLocation] = useState(false);
   const [photoProcessing, setPhotoProcessing] = useState(false);
@@ -120,10 +139,79 @@ export default function ReportForm({
       distanceMeters(r.location, draft.location) < 30,
   );
   function update<K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) {
+    if (key === 'address') addressRevision.current++;
     setDraft((d) => ({ ...d, [key]: value }));
     setError("");
   }
+  function invalidateSelection() {
+    locationRevision.current++;
+    selectionRequest.current?.abort();
+    gpsRevision.current++;
+    setLocating(false);
+    setReverseNote('');
+  }
+  async function search() {
+    searchRequest.current?.abort();
+    const request = new AbortController();
+    searchRequest.current = request;
+    setCandidates([]);
+    setSearchNote('');
+    const query=locationQuery.trim();
+    if (query.length < 2 || query.length > 120) {
+      setSearching(false);
+      setSearchNote('請輸入 2 至 120 字的地址、地標或店家名稱。');
+      return;
+    }
+    setSearching(true);
+    try {
+      const results = await searchLocations(query, city.id, request.signal);
+      if (request.signal.aborted) return;
+      setCandidates(results);
+      setSearchNote(results.length ? '請選擇正確位置，再確認地圖標記。' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
+    } catch {
+      if (!request.signal.aborted) setSearchNote(LOCATION_SEARCH_UNAVAILABLE);
+    } finally {
+      if (!request.signal.aborted) setSearching(false);
+    }
+  }
+  async function selectLocation(location:Location, candidate?:LocationResult) {
+    invalidateSelection();
+    const request = new AbortController();
+    selectionRequest.current = request;
+    const b=city.bounds;
+    if ((candidate && candidate.city.replace(/台/g,'臺') !== city.name.replace(/台/g,'臺')) || !Number.isFinite(location.lat) || !Number.isFinite(location.lng) || location.lat < b.south || location.lat > b.north || location.lng < b.west || location.lng > b.east) {
+      setError(`此位置不在${city.name}，請先切換縣市，或重新點選地圖。`);
+      return;
+    }
+    const addressVersion=++addressRevision.current;
+    setCandidates([]);
+    setSearchNote('');
+    setDraft(d => ({...d,location,address:candidate?.address ?? ''}));
+    setManualCoordinates({lat:false,lng:false});
+    setPicked(true);
+    setError('');
+    setCameraRevision(value => value+1);
+    setReverseNote(candidate ? '正在確認行政區…' : '正在查詢鄰近地址…');
+    if (guidedStep === 1) onGuidedStepChange?.(2);
+    // Polygon validation owns the district. Reverse never changes the exact pin.
+    void districtAt(city.id, candidate?.district || draft.district, location).then(found => {
+      if (request.signal.aborted) return;
+      if (found) setDraft(d => ({...d,district:found}));
+      else setError(`選點不在${city.name}行政區內，請重新選擇。`);
+    }).catch(() => { if (!request.signal.aborted) setReverseNote('行政區將於下一步重新確認。'); });
+    if (candidate) { setReverseNote('已選取搜尋結果，請確認現場位置。'); return; }
+    try {
+      const address=await reverseLocation(location,request.signal);
+      if (request.signal.aborted) return;
+      const sameCity=address && address.city.replace(/台/g,'臺') === city.name.replace(/台/g,'臺');
+      if (sameCity && addressRevision.current === addressVersion) setDraft(d => ({...d,address:address.address}));
+      setReverseNote(sameCity ? '鄰近地址僅供參考，標記保留你選擇的現場位置。' : '查無鄰近地址，可手動補充；位置已保留。');
+    } catch {
+      if (!request.signal.aborted) setReverseNote('無法取得鄰近地址；位置已保留，你仍可繼續或手動補充地址。');
+    }
+  }
   function updateManualCoordinate(axis: "lat" | "lng", value: string) {
+    invalidateSelection();
     const location = { ...draft.location, [axis]: Number(value) };
     const touched = { ...manualCoordinates, [axis]: true };
     const bounds = city.bounds;
@@ -138,11 +226,13 @@ export default function ReportForm({
       location.lng <= bounds.east;
 
     setManualCoordinates(touched);
+    update('address', '');
     update("location", location);
     setPicked(valid);
     if (valid && guidedStep === 1) onGuidedStepChange?.(2);
   }
   async function next() {
+    const selectedRevision = locationRevision.current;
     const error = validateDraft(draft);
     if (!picked) {
       setError("請在地圖選點、使用定位，或輸入座標。");
@@ -156,6 +246,7 @@ export default function ReportForm({
       setCheckingLocation(true);
       try {
         const found = await districtAt(city.id,draft.district,draft.location);
+        if (locationRevision.current !== selectedRevision) return;
         if (!found) { setError(`所選位置不在${city.name}的行政區範圍，請重新選點。`); return; }
         if (found !== draft.district) {
           update('district',found);
@@ -218,11 +309,14 @@ export default function ReportForm({
       setError("此瀏覽器不支援定位，請手動選點。");
       return;
     }
+    invalidateSelection();
+    const gpsVersion = gpsRevision.current;
     setLocating(true);
     setError("");
     setLocationNote("");
     navigator.geolocation.getCurrentPosition(
       (p) => {
+        if (gpsRevision.current !== gpsVersion) return;
         setLocating(false);
         const location = { lat: p.coords.latitude, lng: p.coords.longitude },
           b = city.bounds;
@@ -235,14 +329,14 @@ export default function ReportForm({
           setError(`目前位置不在${city.name}範圍，請切換縣市後回報，或在地圖選擇障礙位置。`);
           return;
         }
-        update("location", location);
-        setPicked(true);
+        void selectLocation(location);
         setLocationNote(
           `定位誤差約 ${Math.round(p.coords.accuracy)} 公尺。請確認標記位於障礙現場，必要時點選地圖調整。`,
         );
         if (guidedStep === 1) onGuidedStepChange?.(2);
       },
       () => {
+        if (gpsRevision.current !== gpsVersion) return;
         setLocating(false);
         setError("無法取得定位，仍可點選地圖或輸入座標。");
       },
@@ -298,9 +392,27 @@ export default function ReportForm({
         <fieldset disabled={busy || checkingLocation}>
           {step === 1 && (
             <>
-              <p className="muted">
-                回報縣市：{city.name}。點選地圖標記騎樓或人行道障礙，也可以直接輸入座標。
-              </p>
+              <h3>障礙在哪裡？</h3>
+              <p className="muted">回報縣市：{city.name}。搜尋地址或地標，也可以直接點地圖。</p>
+              <div className="location-search-row">
+                <label>搜尋地址、地標或店家
+                  <input value={locationQuery} maxLength={120} placeholder="例如：海洋大學、嘉安大藥局、中正路123號"
+                    onChange={event => { searchRequest.current?.abort(); setSearching(false); setCandidates([]); setSearchNote(''); setLocationQuery(event.target.value); }}
+                    onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) { event.preventDefault(); void search(); } }}/>
+                </label>
+                <button className="button secondary" type="button" onClick={() => void search()}>{searching ? '搜尋中…' : '搜尋'}</button>
+              </div>
+              {searchNote && <p className="muted" role="status">{searchNote}</p>}
+              {candidates.length > 0 && <ul className="location-results" aria-label="搜尋候選位置">
+                {candidates.map((candidate,index) => <li key={`${candidate.label}-${index}`}>
+                  <button className="button secondary" type="button" onClick={() => void selectLocation(candidate.location,candidate)}>
+                    <strong>{candidate.label}</strong><small>{candidate.city} {candidate.district} · {candidate.address || '請在地圖確認現場位置'}</small>
+                  </button>
+                </li>)}
+              </ul>}
+              <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={locate}>
+                <CrosshairIcon size={20}/>{locating ? '正在取得位置…' : '使用目前位置'}
+              </button>
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
@@ -309,31 +421,25 @@ export default function ReportForm({
                   reports={[]}
                   onSelect={() => {}}
                   picking
-                  onPick={(location) => {
-                    update("location", location);
-                    setPicked(true);
-                    if (guidedStep === 1) onGuidedStepChange?.(2);
-                  }}
+                  onPick={(location) => { setLocationNote(''); void selectLocation(location); }}
                   position={picked ? draft.location : undefined}
                   focus={draft.location}
-                  focusZoom={districtCamera(city,draft.district).zoom}
+                  focusZoom={picked ? 17 : districtCamera(city,draft.district).zoom}
+                  focusRevision={cameraRevision}
                 />
               </div>
-              <button
-                type="button"
-                className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`}
-                disabled={locating}
-                onClick={locate}
-              >
-                <CrosshairIcon size={20} />
-                {locating ? "正在取得位置…" : "使用目前位置"}
-              </button>
+              {picked && <section className="selected-location" aria-label="已選位置">
+                <strong>已選位置</strong>
+                <p>{draft.address || '尚無地址，可手動補充'} · {city.name} {draft.district}</p>
+                <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); setManualCoordinates({lat:false,lng:false}); }}>重新選擇</button>
+              </section>}
+              {reverseNote && <p className="muted" role="status">{reverseNote}</p>}
               {locationNote && (
                 <p className="muted" role="status">
                   {locationNote}
                 </p>
               )}
-              <div className="form-grid">
+              <details className="location-advanced"><summary>進階：手動輸入座標</summary><div className="form-grid">
                 <label>
                   緯度
                   <input
@@ -358,7 +464,7 @@ export default function ReportForm({
                     }
                   />
                 </label>
-              </div>
+              </div></details>
               <label>
                 位置名稱／標題（必填）
                 <input

@@ -1708,6 +1708,49 @@ progress {
   font-size: 13px;
   line-height: 1.65;
 }
+.report-detail-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 1400;
+  width: clamp(360px, 32vw, 520px);
+  max-height: 100dvh;
+  overflow-y: auto;
+  background: var(--paper, white);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 28px #10363724;
+  animation: report-drawer-in 180ms ease-out;
+}
+.report-detail-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  background: var(--paper, white);
+  border-bottom: 1px solid var(--border);
+}
+.report-detail-header h2 { flex: 1; margin: 0; font-size: 21px; overflow-wrap: anywhere; }
+.report-detail-header .icon-button { flex-shrink: 0; }
+.public-report-content .report-main-photo figure { margin: 0; }
+.public-report-content .report-main-photo img,
+.public-report-content .report-main-photo .photo-empty { width: 100%; height: 190px; object-fit: cover; border-radius: 8px; }
+.public-report-content .report-main-photo figcaption { color: var(--muted); font-size: 12px; }
+.public-report-content .evidence-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.public-report-content .evidence-grid img,
+.public-report-content .evidence-grid .photo-empty { height: 100px; }
+.public-report-content .report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 14px; }
+.location-search-row { display: flex; gap: 8px; align-items: flex-end; }
+.location-search-row label { flex: 1; min-width: 0; }
+.location-results { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; }
+.location-results button { width: 100%; display: grid; gap: 3px; text-align: left; white-space: normal; }
+.location-results small { color: var(--muted); }
+.selected-location { padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-block: 12px; overflow-wrap: anywhere; }
+.location-advanced { margin-block: 12px; }
+.location-advanced summary { cursor: pointer; min-height: 40px; }
+@keyframes report-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .report-detail-drawer { animation: none; } }
 .modal-sheet {
   margin: auto 0 0 auto;
   width: min(760px, calc(100% - 24px));
