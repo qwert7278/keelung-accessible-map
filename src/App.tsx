@@ -274,6 +274,7 @@ export default function App() {
   }
   useEffect(() => {
     const syncLocation = () => {
+      gpsRevision.current++;
       const next = initialGeography();
       manuallyChosen.current = true;
       setSelected(reportIdFromSearch(window.location.search)); setLinkedReport(null);

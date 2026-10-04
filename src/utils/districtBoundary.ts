@@ -1,13 +1,13 @@
 import type { Location } from '../types';
+import { retryableLoader } from './retryableLoader';
 type Region = {cityId:string;district:string;bounds:number[];point:number[];polygons:number[][][][]};
 const loaders=import.meta.glob<Region[]>('../data/district-boundaries/*.json',{import:'default'});
-const pending=new Map<string,Promise<Region[]>>();
+const loadRegions=retryableLoader((path:string)=>loaders[path]());
 export function districtRegions(cityId?:string):Promise<Region[]> {
   if (!cityId) return Promise.all(Object.keys(loaders).map(path=>districtRegions(path.split('/').at(-1)!.replace('.json','')))).then(rows=>rows.flat());
   const path=`../data/district-boundaries/${cityId}.json`;
   if (!loaders[path]) return Promise.resolve([]);
-  if (!pending.has(cityId)) pending.set(cityId,loaders[path]());
-  return pending.get(cityId)!;
+  return loadRegions(path);
 }
 // ~22m tolerance accommodates published boundary simplification and near-edge GPS error.
 export function containsRegion(region: Region, point: Location) {
