@@ -28,7 +28,7 @@
 
 ## Metadata 與結構化資料
 
-首頁 raw HTML 提供一組 title、description、canonical、OG、Twitter card 與 WebSite JSON-LD。四個靜態資訊頁各有唯一 title、description、canonical、OG、Twitter card 及可直接讀取的語意 HTML。Organization 未加入，因為尚無已確認公開營運單位；沒有 review/rating、政府合作或安全導航聲明。
+首頁 raw HTML 提供一組 title、description、canonical、OG、Twitter card 與 WebSite JSON-LD。四個靜態資訊頁各有唯一 title、description、canonical、OG、Twitter card 及可直接讀取的語意 HTML。首頁 @graph 包含社團法人無礙玩家生活關懷協會 Organization，WebSite publisher 以 @id 指向協會，並提供對應的可見建置維護 FAQ；沒有 review/rating、政府合作或安全導航聲明。
 
 社群圖為原生繪製 1200×630 示意圖，不使用假政府標誌，也不宣稱為正式測量地圖。PNG 可用 `python scripts/generate-og-image.py` 重繪；此設計工具需要本機 Pillow，正式 Vite build 不依賴 Python。
 

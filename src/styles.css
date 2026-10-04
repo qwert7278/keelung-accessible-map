@@ -2428,3 +2428,12 @@ h1 { letter-spacing: 0; line-height: 1.4; }
   .report-detail-drawer .location-line { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 }
 .admin-app-shell .admin-gate { max-width:560px; margin:40px auto; }
+
+/* Keep report steps below the measured modal header on phones and tablets. */
+@media (max-width: 899px) {
+  .report-step-status { position: sticky; top: var(--modal-header-height, 77px); z-index: 490; background: #fff; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .report-step-status .steps { padding-top: 12px; }
+}
+@media (max-width: 700px) {
+  .report-step-status { top: var(--modal-header-height, 69px); }
+}

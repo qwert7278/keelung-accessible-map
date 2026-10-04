@@ -692,7 +692,7 @@ export default function App() {
           </button>
         )}
       </main>
-      <footer className="site-footer clean-footer"><span>© 2026 路見不平 · Road Tag</span><a href="/" className="footer-home-link"><HouseIcon size={16} />回到首頁</a></footer>
+      <footer className="site-footer clean-footer"><span>© 2026 路見不平 · Road Tag · 無礙玩家建置維護</span><a href="/" className="footer-home-link"><HouseIcon size={16} />回到首頁</a></footer>
       {toast && (
         <div className="toast" role="status">
           {toast}
@@ -768,6 +768,8 @@ export default function App() {
       {about && (
         <Modal title="關於路見不平" onClose={() => setAbout(false)}>
           <div className="panel-content">
+            <h3>建置與維護</h3>
+            <p>路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。</p>
             <h3>看見障礙，留下改善。</h3>
             <p>
               讓輪椅使用者、長者、推嬰兒車的人，以及每一位行人，都能參與記錄公共通行環境。

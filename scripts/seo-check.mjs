@@ -39,15 +39,22 @@ check(meta(index, "og:type", "website"), "Homepage og:type must be website.");
 check(/"@type"\s*:\s*"WebSite"/.test(index), "WebSite JSON-LD is missing.");
 check((index.match(/<h1\b/g) || []).length === 1, "Homepage must have exactly one H1.");
 check(meta(index, "og:site_name", "路見不平 Road Tag"), "Homepage social brand must match the CIS.");
-const websiteSchema = JSON.parse(index.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] || "{}");
+const homepageSchema = JSON.parse(index.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] || "{}");
+const homepageEntities = homepageSchema['@graph'] || [homepageSchema];
+const websiteSchema = homepageEntities.find(entity => entity['@type'] === 'WebSite') || {};
+const organization = homepageEntities.find(entity => entity['@type'] === 'Organization');
+check(organization?.name === '社團法人無礙玩家生活關懷協會' && organization?.['@id'] === `${base}/#organization`, 'Homepage needs the association Organization entity.');
+check(websiteSchema.publisher?.['@id'] === organization?.['@id'], 'WebSite publisher must reference the association.');
 check(websiteSchema.name === "路見不平" && websiteSchema.alternateName === "Road Tag", "WebSite JSON-LD must use the current Chinese and English brand names.");
 check(index.includes("home-map-root") && !index.includes("featuredIds"), "Homepage must use the shared report map instead of hard-coded featured records.");
 check(index.includes("路見不平，一起標註"), "Homepage must include the approved slogan as readable text.");
 check(!/localhost|\.vercel\.app\//i.test(index.replaceAll(base, "")), "Homepage must not contain a preview or localhost URL.");
 
 const faqSchema = [...index.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1])).find(e => e['@type'] === 'FAQPage');
-check(faqSchema?.mainEntity?.length === 4, 'Homepage needs the matching visible FAQ schema.');
-for (const q of faqSchema?.mainEntity || []) { check(index.includes(q.name) && index.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
+check(faqSchema?.mainEntity?.length === 5, 'Homepage needs the matching visible FAQ schema.');
+const visibleFaq = index.match(/<section[^>]*class="section wrap home-faq"[\s\S]*?<\/section>/)?.[0] || '';
+check(faqSchema?.mainEntity?.some(q => q.name === '誰負責建置與維護 Road Tag？'), 'Association FAQ is required.');
+for (const q of faqSchema?.mainEntity || []) { check(visibleFaq.includes(q.name) && visibleFaq.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
 const mapPage = await read("map.html");
 for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms"].map(p => `${p}/index.html`)]) {
   const html = await read(path);

@@ -24,7 +24,17 @@ export default function Modal({
         ? document.activeElement
         : null;
     dialog.showModal();
+    const header = dialog.querySelector<HTMLElement>('.modal-header');
+    const measureHeader = () => {
+      if (header) dialog.style.setProperty('--modal-header-height', `${header.getBoundingClientRect().height}px`);
+    };
+    measureHeader();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureHeader);
+    if (header) observer?.observe(header);
+    window.addEventListener('resize', measureHeader);
     return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measureHeader);
       dialog.close();
       window.requestAnimationFrame(() => {
         if (document.querySelector("dialog[open]")) return;

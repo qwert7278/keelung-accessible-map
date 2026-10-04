@@ -52,12 +52,11 @@ export default function PhotoUploader({
     const request = gate.current.next();
     setBusy(true); onProcessingChange?.(true);
     setError("");
-    onChange(null);
     try {
       const blob = await compressImage(file);
       if (gate.current.current(request)) onChange(blob);
     } catch (error) {
-      if (gate.current.current(request)) setError(readableError(error));
+      if (gate.current.current(request)) setError(readableError(error) + (value ? ' 原照片已保留，可重新選擇。' : ''));
     } finally {
       if (gate.current.current(request)) { setBusy(false); onProcessingChange?.(false); }
     }

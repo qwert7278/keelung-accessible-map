@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import PhotoUploader from '../src/components/PhotoUploader';
 import Modal from '../src/components/Modal';
+import { MAX_IMAGE_SIZE } from '../src/utils/images';
 import '../src/styles.css';
 
 function ReviewQA() {
@@ -13,7 +14,9 @@ function ReviewQA() {
   const [fixtureError, setFixtureError] = useState('');
   const [open, setOpen] = useState(true);
   const sample = useRef<File | null>(null);
-  async function selectPhoto(valid: boolean) {
+  const previousPhoto = useRef<Blob | null>(null);
+  const [replacement, setReplacement] = useState(false);
+  async function selectPhoto(valid: boolean, failure: 'broken' | 'large' | 'decoder' = 'broken') {
     try {
       setFixtureError('');
       if (!sample.current) {
@@ -26,7 +29,20 @@ function ReviewQA() {
         sample.current = new File([blob], 'synthetic-road.jpg', {type:'image/jpeg'});
       }
       const transfer = new DataTransfer();
-      transfer.items.add(valid ? sample.current : new File(['invalid bytes'], 'synthetic-road.jpg', {type:'image/jpeg'}));
+      if (!valid) { previousPhoto.current = photo; setReplacement(true); } else setReplacement(false);
+      let selected = sample.current;
+      if (!valid) {
+        let bytes: BlobPart = 'invalid bytes';
+        if (failure === 'large') bytes = new Uint8Array(MAX_IMAGE_SIZE + 1);
+        if (failure === 'decoder') {
+          const jpeg = new Uint8Array(await sample.current.arrayBuffer());
+          const sos = jpeg.findIndex((value,index)=>value===255 && jpeg[index+1]===218);
+          if (sos < 0) throw new Error('QA JPEG scan missing');
+          bytes = jpeg.slice(0, sos + 4); // Valid dimensions, missing scan data: decoder rejection.
+        }
+        selected = new File([bytes], 'synthetic-road.jpg', {type:'image/jpeg'});
+      }
+      transfer.items.add(selected);
       const input = form.current!.querySelector<HTMLInputElement>('input[type="file"]')!;
       input.files = transfer.files;
       input.dispatchEvent(new Event('change', {bubbles:true}));
@@ -39,6 +55,8 @@ function ReviewQA() {
     <div className="form-actions">
       <button type="button" disabled={busy} onClick={()=>void selectPhoto(true)}>選擇／重選同一張合成照片</button>
       <button type="button" disabled={busy} onClick={()=>void selectPhoto(false)}>選擇損壞照片</button>
+      <button type="button" disabled={busy} onClick={()=>void selectPhoto(false,'large')}>選擇過大照片</button>
+      <button type="button" disabled={busy} onClick={()=>void selectPhoto(false,'decoder')}>選擇無法解碼照片</button>
       <button type="button" onClick={()=>form.current!.querySelector('input[type="file"]')!.dispatchEvent(new Event('cancel',{bubbles:true}))}>模擬取消選圖</button>
     </div>
     <form ref={form} onSubmit={event=>{event.preventDefault();if(photo&&!busy)setSubmitted(value=>value+1);}}>
@@ -47,6 +65,7 @@ function ReviewQA() {
       <button className="button primary" disabled={busy} type="submit">驗證下一步</button>
     </form>
     <output aria-label="照片驗證結果">{`照片：${photo?.type || '無'}；處理中：${busy}；下一步次數：${submitted}`}</output>
+    {replacement && !busy && <output aria-label="重選失敗回歸">{photo === previousPhoto.current && !!photo ? 'PASS：保留相同原照片' : 'FAIL：原照片遺失'}</output>}
     {fixtureError && <p role="alert">{fixtureError}</p>}
     </Modal>}
   </main>;

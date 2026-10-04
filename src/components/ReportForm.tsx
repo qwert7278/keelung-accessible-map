@@ -378,28 +378,30 @@ export default function ReportForm({
 
   return (
     <Modal title="回報通行障礙" onClose={onClose} busy={busy} wide>
-      <ol className="steps" aria-label="回報步驟">
-        {["障礙在哪裡？", "現場是什麼狀況？", "確認後送出"].map((label, i) => (
-          <li
-            key={label}
-            aria-current={step === i + 1 ? "step" : undefined}
-            className={step >= i + 1 ? "active" : ""}
-          >
-            <span>{i + 1}</span>
-            {label}
-          </li>
-        ))}
-      </ol>
-      <div
-        className="report-step-progress"
-        role="progressbar"
-        aria-label="回報進度"
-        aria-valuemin={1}
-        aria-valuemax={3}
-        aria-valuenow={step}
-        aria-valuetext={`第 ${step} 步，共 3 步`}
-      >
-        <span style={{ width: `${(step / 3) * 100}%` }} />
+      <div className="report-step-status">
+        <ol className="steps" aria-label="回報步驟">
+          {["障礙在哪裡？", "現場是什麼狀況？", "確認後送出"].map((label, i) => (
+            <li
+              key={label}
+              aria-current={step === i + 1 ? "step" : undefined}
+              className={step >= i + 1 ? "active" : ""}
+            >
+              <span>{i + 1}</span>
+              {label}
+            </li>
+          ))}
+        </ol>
+        <div
+          className="report-step-progress"
+          role="progressbar"
+          aria-label="回報進度"
+          aria-valuemin={1}
+          aria-valuemax={3}
+          aria-valuenow={step}
+          aria-valuetext={`第 ${step} 步，共 3 步`}
+        >
+          <span style={{ width: `${(step / 3) * 100}%` }} />
+        </div>
       </div>
       {currentGuide && (
         <GuidedTourPrompt
