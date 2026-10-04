@@ -736,6 +736,9 @@ export default function ReportForm({
               </>
             )}
           </button>
+          <button type="button" className="text-button report-cancel" disabled={busy} onClick={onClose}>
+            取消本次回報
+          </button>
         </footer>
       </form>
     </Modal>
