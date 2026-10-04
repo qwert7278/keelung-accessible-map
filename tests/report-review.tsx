@@ -7,9 +7,12 @@ import { MAX_IMAGE_SIZE, imageDimensions } from '../src/utils/images';
 import '../src/styles.css';
 
 // Reproduce Safari's native Canvas output while still using the real WASM codec.
-if (new URLSearchParams(location.search).get('native') === 'png') {
+const nativeFailure = new URLSearchParams(location.search).get('native');
+if (['png', 'null', 'empty'].includes(nativeFailure || '')) {
   const nativeToBlob = HTMLCanvasElement.prototype.toBlob;
   HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {
+    if (type === 'image/webp' && nativeFailure === 'null') { queueMicrotask(() => callback(null)); return; }
+    if (type === 'image/webp' && nativeFailure === 'empty') { queueMicrotask(() => callback(new Blob([], {type:'image/webp'}))); return; }
     return nativeToBlob.call(this, callback, type === 'image/webp' ? 'image/png' : type, quality);
   };
 }
@@ -25,7 +28,7 @@ function ReviewQA() {
     void Promise.all([photo.arrayBuffer(), imageDimensions(photo)]).then(([buffer, dimensions]) => {
       const bytes = new Uint8Array(buffer);
       const signature = String.fromCharCode(...bytes.slice(0,4), ...bytes.slice(8,12));
-      if (active) setEncodingProof(`${signature === 'RIFFWEBP' ? 'PASS' : 'FAIL'}：${signature}；${dimensions.join('×')}；${photo.size} bytes`);
+      if (active) setEncodingProof(`${(photo.type==='image/webp' && signature==='RIFFWEBP') || (photo.type==='image/jpeg' && bytes[0]===255 && bytes[1]===216 && bytes[2]===255) ? 'PASS' : 'FAIL'}：${signature}；${photo.type}；${dimensions.join('×')}；${photo.size} bytes`);
     });
     return () => { active = false; };
   }, [photo]);
@@ -68,7 +71,7 @@ function ReviewQA() {
     } catch (error) {setFixtureError(String(error));}
   }
   return <main style={{maxWidth:650,margin:'24px auto',padding:16}}>
-    <h1>照片回歸驗證</h1><p>僅使用合成照片；實際執行照片元件與 WebP 壓縮，不上傳或寫入案件。</p>
+    <h1>照片回歸驗證</h1><p>僅使用合成照片；實際執行照片元件與照片壓縮，不上傳或寫入案件。</p>
     {!open && <button onClick={()=>setOpen(true)}>開啟回報視窗</button>}
     {open && <Modal title="回報照片隔離驗證" onClose={()=>setOpen(false)}>
     <div className="form-actions">
@@ -84,7 +87,7 @@ function ReviewQA() {
       <button className="button primary" disabled={busy} type="submit">驗證下一步</button>
     </form>
     <output aria-label="照片驗證結果">{`照片：${photo?.type || '無'}；處理中：${busy}；下一步次數：${submitted}`}</output>
-    <output aria-label="WebP 實際內容驗證">{encodingProof}</output>
+    <output aria-label="照片實際內容驗證">{encodingProof}</output>
     {replacement && !busy && <output aria-label="重選失敗回歸">{photo === previousPhoto.current && !!photo ? 'PASS：保留相同原照片' : 'FAIL：原照片遺失'}</output>}
     {fixtureError && <p role="alert">{fixtureError}</p>}
     </Modal>}

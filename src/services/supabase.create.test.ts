@@ -34,6 +34,26 @@ describe('uncertain report submission recovery',()=>{
   if(kind==='community') {expect(mocks.insert).toHaveBeenCalledTimes(1);expect(mocks.insert.mock.calls[0][0].operation_id).toBe(operation);}
   else expect(mocks.rpc.mock.calls.filter(([name])=>name==='moderate_report')).toHaveLength(1);
  });
+ it.each(['webp','jpeg'])('uploads %s bytes with matching server path, MIME and no upsert',async format=>{
+  const id=crypto.randomUUID(),operation=crypto.randomUUID(),extension=format==='jpeg'?'jpg':'webp',mime=format==='jpeg'?'image/jpeg':'image/webp';
+  mocks.rpc.mockResolvedValue({data:null,error:null});
+  const fetch=vi.fn().mockResolvedValue(Response.json({path:`${id}/updates/${operation}.${extension}`,uploaded:false}));vi.stubGlobal('fetch',fetch);
+  const xhr={open:vi.fn(),setRequestHeader:vi.fn(),upload:{},status:201,onload:()=>{},send:vi.fn()};xhr.send.mockImplementation(()=>xhr.onload());
+  vi.stubGlobal('XMLHttpRequest',function(){return xhr;});
+  const repo=(await import('./supabase')).createSupabaseRepository(),blob=new Blob(['processed'],{type:mime});
+  mocks.insert.mockResolvedValue({error:null});await repo.addUpdate(id,{message:'現場補充',suggestedStatus:null},blob,vi.fn(),operation);
+  expect(JSON.parse(fetch.mock.calls[0][1].body).format).toBe(format);
+  expect(xhr.open).toHaveBeenCalledWith('POST',expect.stringContaining(`/${operation}.${extension}`));
+  expect(xhr.setRequestHeader).toHaveBeenCalledWith('Content-Type',mime);expect(xhr.setRequestHeader).toHaveBeenCalledWith('x-upsert','false');expect(xhr.send).toHaveBeenCalledWith(blob);
+ });
+ it('rejects JPEG reservation with WebP path before uploading or inserting',async()=>{
+  const id=crypto.randomUUID(),operation=crypto.randomUUID();mocks.rpc.mockResolvedValue({data:null,error:null});
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({path:`${id}/updates/${operation}.webp`,uploaded:true})));
+  const xhr=vi.fn();vi.stubGlobal('XMLHttpRequest',xhr);
+  const repo=(await import('./supabase')).createSupabaseRepository();
+  await expect(repo.addUpdate(id,{message:'現場補充',suggestedStatus:null},new Blob(['processed'],{type:'image/jpeg'}),vi.fn(),operation)).rejects.toThrow('無效');
+  expect(xhr).not.toHaveBeenCalled();expect(mocks.insert).not.toHaveBeenCalled();
+ });
  it('preserves optimistic-lock failure when no committed operation exists',async()=>{
   mocks.getSession.mockResolvedValue({data:{session:{user:{id:'verified-user',is_anonymous:false},access_token:'verified-token'}},error:null});
   mocks.rpc.mockImplementation(async(name)=>({data:name==='is_admin'?true:null,error:name==='moderate_report'?{message:'案件已被其他管理者更新'}:null}));
@@ -41,19 +61,21 @@ describe('uncertain report submission recovery',()=>{
   await expect(repo.moderate({id:crypto.randomUUID(),updatedAt:'stale',afterImageUrl:null} as Report,'in_progress','處理中','difficult',null,vi.fn(),crypto.randomUUID())).rejects.toThrow('其他管理者');
   expect(mocks.rpc.mock.calls.find(([name])=>name==='moderate_report')?.[1].expected_updated_at).toBe('stale');
  });
- it('returns the same case after lost insert acknowledgment and skips reupload on retry',async()=>{
+ it.each(['webp','jpeg'])('returns the same %s case after lost acknowledgement without reupload',async format=>{
+  const extension=format==='jpeg'?'jpg':'webp';
   const id='10000000-0000-4000-8000-000000000001';let committed=false;
   mocks.rpc.mockImplementation(async(name)=>({data:name==='owned_report' ? committed ? id : null : false,error:null}));
-  mocks.invoke.mockResolvedValue({data:{path:`${id}/before/${id}.webp`,uploaded:true},error:null});
-  const fetch=vi.fn().mockResolvedValue(Response.json({path:`${id}/before/${id}.webp`,uploaded:true}));
+  mocks.invoke.mockResolvedValue({data:{path:`${id}/before/${id}.${extension}`,uploaded:true},error:null});
+  const fetch=vi.fn().mockResolvedValue(Response.json({path:`${id}/before/${id}.${extension}`,uploaded:true}));
   vi.stubGlobal('fetch',fetch);
   mocks.insert.mockImplementation(async()=>{committed=true;return {error:{message:'network response lost'}};});
   const region=(await districtRegions()).find(r=>r.cityId==='TW-TPE'&&r.district==='中山區')!;
   const draft={cityId:region.cityId,district:region.district,title:'可重試的回報',address:'',description:'',category:'ramp' as const,wheelchairAccess:'blocked' as const,location:{lat:region.point[0],lng:region.point[1]}};
-  const {createSupabaseRepository}=await import('./supabase');const repo=createSupabaseRepository();const photo=new Blob(['encoded'],{type:'image/webp'});
+  const {createSupabaseRepository}=await import('./supabase');const repo=createSupabaseRepository();const photo=new Blob(['encoded'],{type:format==='jpeg'?'image/jpeg':'image/webp'});
   expect(await repo.create(draft,photo,vi.fn(),id)).toBe(id);
   expect(await repo.create(draft,photo,vi.fn(),id)).toBe(id);
   expect(mocks.insert).toHaveBeenCalledTimes(1);expect(fetch).toHaveBeenCalledTimes(1);
   expect(mocks.insert.mock.calls[0][0].id).toBe(id);
+  expect(JSON.parse(fetch.mock.calls[0][1].body).format).toBe(format);
  });
 });

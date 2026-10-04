@@ -72,7 +72,6 @@ export async function compressImage(file: File): Promise<Blob> {
     try { bitmap=await (await import('heic-to/csp')).heicTo({blob:file,type:'bitmap'}); }
     catch { throw new Error('手機照片無法讀取，請重新拍照或選擇其他照片。'); }
   }
-  let fallback: ReturnType<typeof import("./webp-encoder")["createWebpEncoder"]> | undefined;
   try {
     checkImageDimensions(bitmap.width,bitmap.height);
     const ratio = Math.min(1, 1920 / Math.max(bitmap.width, bitmap.height));
@@ -85,26 +84,31 @@ export async function compressImage(file: File): Promise<Blob> {
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     let smallest: Blob | null = null;
-    for (const quality of [0.8, 0.7, 0.6]) {
-      let webp = fallback ? await fallback.encode(quality) : await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', quality));
-      if (webp && webp.type !== 'image/webp') {
-        // Safari may return PNG when Canvas does not support WebP encoding.
-        fallback = (await import('./webp-encoder')).createWebpEncoder(canvas);
-        webp = await fallback.encode(quality);
+    // Encode only the resized, oriented redraw; never upload the original file.
+    for (const type of ['image/webp', 'image/jpeg']) {
+      let encoded: Blob | null = null;
+      for (const quality of (type === 'image/webp' ? [0.8, 0.7, 0.6] : [0.82, 0.72, 0.62, 0.5])) {
+        try { encoded = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, type, quality)); }
+        catch { encoded = null; }
+        // Safari can return PNG, an empty Blob or null for an unsupported encoder.
+        if (!encoded?.size || encoded.type !== type) break;
+        if (!smallest || encoded.size < smallest.size) smallest = encoded;
+        if (encoded.size <= TARGET_UPLOAD_SIZE) return encoded;
       }
-      if (!webp || !webp.size) throw new Error('圖片壓縮失敗。');
-      if (webp.type !== 'image/webp') throw new Error('此瀏覽器無法完成照片處理，請更新瀏覽器後重試。');
-      if (!smallest || webp.size < smallest.size) smallest = webp;
-      if (smallest.size <= TARGET_UPLOAD_SIZE) return smallest;
+      // Prefer usable WebP even when it exceeds the soft target.
+      if (smallest && smallest.size <= MAX_UPLOAD_SIZE) return smallest;
     }
-    if (smallest && smallest.size <= MAX_UPLOAD_SIZE) return smallest;
-    throw new Error('照片處理後仍過大，請裁切需要記錄的範圍後重試。');
-  } finally { fallback?.dispose(); bitmap.close(); }
+    if (smallest) throw new Error('照片處理後仍過大，請裁切需要記錄的範圍後重試。');
+    throw new Error('這張照片目前無法處理，請重新拍照或選擇其他照片。');
+  } finally { bitmap.close(); }
 }
+
 export function imageUploadFormat(blob: Blob) {
-  if (blob.type !== 'image/webp') throw new Error('照片處理尚未完成，請重新選擇照片。');
+  if (!['image/webp', 'image/jpeg'].includes(blob.type)) throw new Error('照片處理尚未完成，請重新選擇照片。');
   if (!blob.size || blob.size > MAX_UPLOAD_SIZE) throw new Error('照片處理結果大小異常，請重新選擇照片。');
-  return { extension: 'webp', contentType: 'image/webp' };
+  return blob.type === 'image/webp'
+    ? { extension: 'webp', contentType: 'image/webp', format: 'webp' } as const
+    : { extension: 'jpg', contentType: 'image/jpeg', format: 'jpeg' } as const;
 }
 export function toDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve,reject)=>{

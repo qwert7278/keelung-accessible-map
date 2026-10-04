@@ -177,15 +177,15 @@ export function createSupabaseRepository(): ReportRepository {
     progress: (n: number) => void,
     operation: string = crypto.randomUUID(),
   ) {
-    const { contentType } = imageUploadFormat(blob);
+    const { contentType, extension, format } = imageUploadFormat(blob);
     await session();
     const { data, error } = await db.auth.getSession();
     if (error || !data.session) throw new Error("登入已過期，請重新登入。");
-    const preparation=await fetch('/api/prepare-photo',{method:'POST',headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({report:reportId,kind,operation}),signal:AbortSignal.timeout(30000)});
+    const preparation=await fetch('/api/prepare-photo',{method:'POST',headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({report:reportId,kind,operation,format}),signal:AbortSignal.timeout(30000)});
     const prepared=await preparation.json().catch(()=>{throw new Error('照片上傳服務暫時無法使用，請稍後重試。');});
     if(!preparation.ok) throw new Error(prepared.error || '照片上傳準備失敗，請稍後再試。');
     const { path, uploaded } = prepared as {path:string;uploaded:boolean};
-    if (!path || path !== `${reportId}/${kind}/${operation}.webp`) throw new Error('無效的照片上傳位置。');
+    if (!path || path !== `${reportId}/${kind}/${operation}.${extension}`) throw new Error('無效的照片上傳位置。');
     if (uploaded) { progress(100); return path; }
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();

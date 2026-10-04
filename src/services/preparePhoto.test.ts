@@ -23,7 +23,18 @@ describe('trusted photo preparation',()=>{
  });
  it('ignores client actor/IP/path and passes only verified user and signed risk',async()=>{
   const rpc=vi.fn().mockResolvedValueOnce({data:{path:'reserved.webp',uploaded:true},error:null}).mockResolvedValue({data:[],error:null});const handler=preparePhotoHandler({gateSecret:secret,authenticate:async()=>({id,anonymous:true}),maintenance:()=>({rpc}) as unknown as SupabaseClient});
-  const response=await handler(await request(JSON.stringify({report:id,kind:'before',operation:id,actor:'forged',ip:'forged',paths:['referenced.webp']})));expect(response.status).toBe(200);expect(rpc).toHaveBeenCalledWith('reserve_photo_verified',{actor:id,anonymous:true,report:id,kind_name:'before',operation:id,risk_hash:risk});
+  const response=await handler(await request(JSON.stringify({report:id,kind:'before',operation:id,actor:'forged',ip:'forged',paths:['referenced.webp']})));expect(response.status).toBe(200);expect(rpc).toHaveBeenCalledWith('reserve_photo_verified_format',{actor:id,anonymous:true,report:id,kind_name:'before',operation:id,risk_hash:risk,format_name:'webp'});
+ });
+ it.each(['webp','jpeg'])('accepts only allow-listed format %s',async format=>{
+  const rpc=vi.fn().mockResolvedValueOnce({data:{path:'reserved',uploaded:false},error:null}).mockResolvedValue({data:[],error:null});
+  const handler=preparePhotoHandler({gateSecret:secret,authenticate:async()=>({id,anonymous:true}),maintenance:()=>({rpc}) as unknown as SupabaseClient});
+  expect((await handler(await request(JSON.stringify({report:id,kind:'before',operation:id,format})))).status).toBe(200);
+  expect(rpc).toHaveBeenCalledWith('reserve_photo_verified_format',expect.objectContaining({format_name:format}));
+ });
+ it.each(['png','jpg','image/jpeg','../jpg',null])('rejects invalid format %s before reserving',async format=>{
+  const maintenance=vi.fn(),handler=preparePhotoHandler({gateSecret:secret,authenticate:async()=>({id,anonymous:true}),maintenance});
+  expect((await handler(await request(JSON.stringify({report:id,kind:'before',operation:id,format})))).status).toBe(400);
+  expect(maintenance).not.toHaveBeenCalled();
  });
  it('rejects replay with altered body or expired timestamp',async()=>{
   const handler=preparePhotoHandler({gateSecret:secret,authenticate:vi.fn(),maintenance:vi.fn()}),valid=await request();expect((await handler(new Request(valid.url,{method:'POST',headers:valid.headers,body:'{}'}))).status).toBe(403);

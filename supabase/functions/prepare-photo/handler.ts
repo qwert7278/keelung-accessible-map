@@ -19,8 +19,10 @@ export function preparePhotoHandler(deps:{gateSecret:string;authenticate:(author
    if(!user) return reply({error:'Authentication required'},401);
    const input=JSON.parse(body);
    if(!uuid.test(input.report)||!uuid.test(input.operation)||!['before','updates','after'].includes(input.kind)) return reply({error:'Invalid request'},400);
+   const format=input.format === undefined ? 'webp' : input.format;
+   if(!['webp','jpeg'].includes(format)) return reply({error:'Invalid photo format'},400);
    const admin=deps.maintenance();
-   const {data,error}=await admin.rpc('reserve_photo_verified',{actor:user.id,anonymous:user.anonymous,report:input.report,kind_name:input.kind,operation:input.operation,risk_hash:request.headers.get('x-roadtag-risk-hash')});
+   const {data,error}=await admin.rpc('reserve_photo_verified_format',{actor:user.id,anonymous:user.anonymous,report:input.report,kind_name:input.kind,operation:input.operation,risk_hash:request.headers.get('x-roadtag-risk-hash'),format_name:format});
    if(error) return reply({error:error.message},429);
    // Scheduled worker owns retries; opportunistic cleanup must not fail a valid upload.
    try {await cleanupPhotos(admin);} catch { /* Scheduled retry retains metadata. */ }

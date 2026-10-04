@@ -2,9 +2,7 @@ import {readFileSync} from 'node:fs';
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { compressImage, imageUploadFormat, MAX_IMAGE_SIZE, MAX_UPLOAD_SIZE, TARGET_UPLOAD_SIZE } from "./images";
 
-const fallbackEncoder = vi.hoisted(() => ({ encode: vi.fn(), dispose: vi.fn() }));
-vi.mock('./webp-encoder', () => ({ createWebpEncoder: () => fallbackEncoder }));
-afterEach(() => { vi.unstubAllGlobals(); fallbackEncoder.encode.mockReset(); fallbackEncoder.dispose.mockReset(); });
+afterEach(() => vi.unstubAllGlobals());
 
 function encoderFixture(outputs: Array<Blob | null>, dimensions = { width: 3840, height: 2160 }) {
   const bitmap = { ...dimensions, close: vi.fn() };
@@ -51,42 +49,33 @@ describe("照片上傳邊界", () => {
     expect(context.drawImage).toHaveBeenCalledWith(bitmap, 0, 0, 1920, 1080);
     expect(canvas.toBlob).toHaveBeenCalledWith(expect.any(Function), "image/webp", 0.8);
     expect(bitmap.close).toHaveBeenCalledOnce();
-    expect(imageUploadFormat(result)).toEqual({ extension: "webp", contentType: "image/webp" });
+    expect(imageUploadFormat(result)).toEqual({ extension: "webp", contentType: "image/webp", format: "webp" });
   });
-  it("Safari 原生回傳 PNG 時，改用真正 WebP 編碼器", async () => {
-    const output = new Blob(['webp'], { type: 'image/webp' });
-    fallbackEncoder.encode.mockResolvedValue(output);
-    const { canvas, bitmap } = encoderFixture([new Blob(['png'], { type: 'image/png' })]);
-    const result = await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')], 'photo.jpg', {type:'image/jpeg'}));
-    expect(result).toBe(output);
-    expect(canvas.toBlob).toHaveBeenCalledOnce();
-    expect(fallbackEncoder.encode).toHaveBeenCalledWith(0.8);
-    expect(fallbackEncoder.dispose).toHaveBeenCalledOnce();
+  it.each([null, new Blob([], {type:'image/webp'}), new Blob(['png'], {type:'image/png'})])('Safari 無法輸出 WebP 時使用同一 redraw 的 JPEG', async native => {
+    const output=new Blob(['jpeg'],{type:'image/jpeg'});
+    const {canvas,bitmap,context}=encoderFixture([native,output]);
+    expect(await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')],'photo.jpg',{type:'image/jpeg'}))).toBe(output);
+    expect(canvas.toBlob.mock.calls.map(call=>call.slice(1))).toEqual([['image/webp',0.8],['image/jpeg',0.82]]);
+    expect(context.drawImage).toHaveBeenCalledOnce();
     expect(bitmap.close).toHaveBeenCalledOnce();
+    expect(imageUploadFormat(output)).toEqual({extension:'jpg',contentType:'image/jpeg',format:'jpeg'});
   });
-  it("Safari fallback 依大小降低品質，不重試不支援的 Canvas encoder", async () => {
-    const large = new Blob([new Uint8Array(TARGET_UPLOAD_SIZE + 1)], {type:'image/webp'});
-    const small = new Blob(['webp'], {type:'image/webp'});
-    fallbackEncoder.encode.mockResolvedValueOnce(large).mockResolvedValueOnce(small);
-    const {canvas} = encoderFixture([new Blob(['png'], {type:'image/png'})]);
-    expect(await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')], 'photo.jpg', {type:'image/jpeg'}))).toBe(small);
-    expect(canvas.toBlob).toHaveBeenCalledOnce();
-    expect(fallbackEncoder.encode.mock.calls).toEqual([[0.8], [0.7]]);
+  it('JPEG fallback 逐步降低品質，達到目標停止',async()=>{
+    const large=new Blob([new Uint8Array(TARGET_UPLOAD_SIZE+1)],{type:'image/jpeg'}),small=new Blob(['jpeg'],{type:'image/jpeg'});
+    const {canvas}=encoderFixture([null,large,small]);
+    expect(await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')],'photo.jpg',{type:'image/jpeg'}))).toBe(small);
+    expect(canvas.toBlob.mock.calls.map(call=>call.slice(1))).toEqual([['image/webp',0.8],['image/jpeg',0.82],['image/jpeg',0.72]]);
   });
-  it("fallback 失敗仍拒絕上傳 PNG/JPEG 並釋放資源", async () => {
-    fallbackEncoder.encode.mockRejectedValue(new Error('照片處理失敗'));
-    const { canvas, bitmap } = encoderFixture([new Blob(["png"], { type: "image/png" })]);
-    await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.png", { type: "image/png" }))).rejects.toThrow("照片處理失敗");
-    expect(canvas.toBlob).toHaveBeenCalledOnce();
-    expect(fallbackEncoder.dispose).toHaveBeenCalledOnce();
+  it('兩種 encoder 都失敗時友善拒絕並釋放 bitmap',async()=>{
+    const {bitmap}=encoderFixture([null,null]);
+    await expect(compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')],'photo.jpg',{type:'image/jpeg'}))).rejects.toThrow('重新拍照');
     expect(bitmap.close).toHaveBeenCalledOnce();
-    expect(() => imageUploadFormat(new Blob(["jpeg"], { type: "image/jpeg" }))).toThrow("處理");
+    expect(()=>imageUploadFormat(new Blob(['png'],{type:'image/png'}))).toThrow('處理');
   });
-  it("壓縮失敗仍釋放 bitmap，拒絕未壓縮的上傳格式", async () => {
-    const { bitmap } = encoderFixture([null, null]);
-    await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.jpg", { type: "image/jpeg" }))).rejects.toThrow("壓縮失敗");
-    expect(bitmap.close).toHaveBeenCalledOnce();
-    expect(() => imageUploadFormat(new Blob(["png"], { type: "image/png" }))).toThrow("處理");
+  it('原生 encoder 拋錯仍自動使用 JPEG',async()=>{
+    const output=new Blob(['jpeg'],{type:'image/jpeg'}),{canvas}=encoderFixture([output]);
+    canvas.toBlob.mockImplementationOnce(()=>{throw new Error('unsupported');});
+    expect(await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')],'photo.jpg',{type:'image/jpeg'}))).toBe(output);
   });
   it("PNG 直式照片保持比例、不放大較小圖片", async () => {
     const output = new Blob(["webp"], { type: "image/webp" });
@@ -113,10 +102,12 @@ describe("照片上傳邊界", () => {
   });
   it("壓縮後仍太大或空檔不能送到 Storage", async () => {
     const huge = new Blob([new Uint8Array(MAX_UPLOAD_SIZE + 1)], { type: "image/webp" });
-    const { bitmap } = encoderFixture([huge, huge, huge]);
+    const { bitmap } = encoderFixture([huge, huge, huge, ...Array(4).fill(new Blob([new Uint8Array(MAX_UPLOAD_SIZE+1)],{type:"image/jpeg"}))]);
     await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.jpg", { type: "image/jpeg" }))).rejects.toThrow("仍過大");
     expect(bitmap.close).toHaveBeenCalledOnce();
     expect(() => imageUploadFormat(huge)).toThrow("大小異常");
+    expect(()=>imageUploadFormat(new Blob([new Uint8Array(MAX_UPLOAD_SIZE+1)],{type:"image/jpeg"}))).toThrow("大小異常");
+    expect(()=>imageUploadFormat(new Blob([],{type:"image/jpeg"}))).toThrow("大小異常");
     expect(() => imageUploadFormat(new Blob([], { type: "image/webp" }))).toThrow("大小異常");
   });
 });
