@@ -1,0 +1,17 @@
+.pov-story { margin: 3.5rem 0; padding: clamp(1rem, 3vw, 2.5rem); border: 1px solid #b5c7bf; border-radius: 24px; background: #f3f5ef; }
+.pov-copy { max-width: 48rem; margin-bottom: 1.6rem; }
+.pov-eyebrow { color: #356756; font-weight: 700; font-size: .9rem; letter-spacing: .04em; margin: 0 0 .7rem; }
+.pov-copy h3 { color: #083e48; font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 .8rem; }
+.pov-copy > p:last-child { color: #37514c; line-height: 1.85; margin: 0; }
+.pov-figure { margin: 0; }
+.pov-frame { aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #d8e4df; }
+.pov-frame video { width: 100%; height: 100%; display: block; object-fit: contain; }
+.pov-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1rem; }
+.pov-toolbar figcaption { color: #37514c; font-size: .85rem; line-height: 1.6; }
+.pov-toggle { flex: 0 0 auto; min-width: 7rem; min-height: 48px; padding: .65rem 1rem; border: 1px solid #0a575a; border-radius: 999px; background: #0a575a; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.pov-toggle:hover { background: #fff; color: #08484a; }
+.pov-toggle:focus-visible { outline: 3px solid #b8502a; outline-offset: 4px; }
+.pov-status { color: #8c3927; margin: .6rem 0 0; font-size: .9rem; }
+.pov-status:empty { display: none; }
+@media (max-width: 600px) { .pov-story { margin: 2rem 0; border-radius: 18px; } .pov-toolbar { align-items: flex-start; flex-direction: column; } .pov-toggle { align-self: flex-end; } }
+@media (prefers-reduced-motion: reduce) { .pov-story *, .pov-story { animation: none !important; transition: none !important; } }

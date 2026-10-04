@@ -1,0 +1,19 @@
+<!doctype html><html lang="zh-Hant"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>POV 隔離驗證</title><style>body{margin:0;background:#f5f2e9;font-family:sans-serif}main{max-width:1000px;margin:auto;padding:24px}.spacer{height:110vh}</style><main><div class="spacer">向下捲動測試影片</div>        <section class="pov-story" aria-labelledby="pov-title" data-pov-story>
+          <div class="pov-copy">
+            <p class="pov-eyebrow">換個高度，看同一座城市</p>
+            <h3 id="pov-title">第一人稱視角示意</h3>
+            <p>有些障礙，只有真的走在路上才會發現。從輪椅的高度往前看，一個高低差、一段破損，或突然被擋住的通道，都可能讓原本簡單的一段路中斷。</p>
+          </div>
+          <figure class="pov-figure">
+            <div class="pov-frame">
+              <video id="wheelchair-pov" width="1280" height="720" muted playsinline loop preload="none" poster="/images/barriers/wheelchair-pov-video-poster.webp" data-src="/videos/wheelchair-pov-demo.mp4" aria-label="電動輪椅第一人稱通行情境示意" aria-describedby="pov-caption"></video>
+            </div>
+            <div class="pov-toolbar">
+              <figcaption id="pov-caption">電動輪椅使用者 POV 情境示意｜實際通行仍請依現場狀況判斷</figcaption>
+              <button class="pov-toggle" type="button" aria-controls="wheelchair-pov">播放影片</button>
+            </div>
+            <p class="pov-status" role="status" aria-live="polite"></p>
+            <noscript><p><a href="/videos/wheelchair-pov-demo.mp4">開啟情境示意影片</a></p></noscript>
+          </figure>
+        </section>
+<div class="spacer">離開影片測試暫停</div></main><script type="module">import "../src/home-story.css";import {initStoryVideo} from "../src/home-story";if(new URLSearchParams(location.search).has("reduced")){const original=window.matchMedia;window.matchMedia=q=>q.includes("prefers-reduced-motion")?Object.assign(new EventTarget(),{matches:true}):original(q);}initStoryVideo(document.querySelector("[data-pov-story]"));</script></html>

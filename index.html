@@ -1080,7 +1080,25 @@
             <div class="story-copy"><small>路面高低差</small><h3>一個落差，也可能成為一道門檻</h3><p>鋪面破損、突起或斜坡接縫，都可能讓輪椅卡住、讓行人失去平衡。記下位置與現場狀況，讓不連續的路面有跡可循。</p></div>
           </article>
         </div>
-        <p class="story-note">以上圖片為情境示意，不代表特定地點的現況或地圖上的實際案件。</p>
+        <p class="story-note">本區圖片與影片皆為情境示意，不代表特定地點的現況或地圖上的實際案件。</p>
+        <section class="pov-story" aria-labelledby="pov-title" data-pov-story>
+          <div class="pov-copy">
+            <p class="pov-eyebrow">換個高度，看同一座城市</p>
+            <h3 id="pov-title">第一人稱視角示意</h3>
+            <p>有些障礙，只有真的走在路上才會發現。從輪椅的高度往前看，一個高低差、一段破損，或突然被擋住的通道，都可能讓原本簡單的一段路中斷。</p>
+          </div>
+          <figure class="pov-figure">
+            <div class="pov-frame">
+              <video id="wheelchair-pov" width="1280" height="720" muted playsinline loop preload="none" poster="/images/barriers/wheelchair-pov-video-poster.webp" data-src="/videos/wheelchair-pov-demo.mp4" aria-label="電動輪椅第一人稱通行情境示意" aria-describedby="pov-caption"></video>
+            </div>
+            <div class="pov-toolbar">
+              <figcaption id="pov-caption">電動輪椅使用者 POV 情境示意｜實際通行仍請依現場狀況判斷</figcaption>
+              <button class="pov-toggle" type="button" aria-controls="wheelchair-pov">播放影片</button>
+            </div>
+            <p class="pov-status" role="status" aria-live="polite"></p>
+            <noscript><p><a href="/videos/wheelchair-pov-demo.mp4">開啟情境示意影片</a></p></noscript>
+          </figure>
+        </section>
         <div class="story-cta">
           <div><h3>讓每個問題，都有位置可追蹤。</h3><p>把障礙和現場狀況留在地圖上，供市民參考，也讓需要改善的地方更容易被看見。</p></div>
           <a class="button" href="/map" data-map-link>前往地圖查看或回報 <span aria-hidden="true">↗</span></a>
@@ -1224,6 +1242,7 @@
       })();
     </script>
     <script type="module" src="/src/home-map.tsx"></script>
+    <script type="module" src="/src/home-story-entry.ts"></script>
   <script type="module" src="/src/consent-entry.tsx"></script>
 </body>
 </html>
