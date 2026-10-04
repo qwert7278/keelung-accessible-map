@@ -389,7 +389,7 @@ export default function App() {
           </a>
           <a href="/how-to">如何使用</a>
           <a href="https://www.threads.com/@roadtag2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤路見不平"><ThreadsLogoIcon size={20} /><span>Threads</span></a>
-          <a href="https://www.facebook.com/lovetravell" target="_blank" rel="noopener noreferrer" aria-label="前往 Facebook 粉絲專頁"><FacebookLogoIcon size={20} /><span>Facebook</span></a>
+          <a href="https://www.facebook.com/lovetravelloveaffect" target="_blank" rel="noopener noreferrer" aria-label="前往 Facebook 粉絲專頁"><FacebookLogoIcon size={20} /><span>Facebook</span></a>
           <details className="header-more"><summary>更多</summary><div className="header-more-menu">
             <button onClick={() => setHelp(true)}>常見問題</button>
             {!adminPage && <button onClick={startGuidedTour}>跟著操作教學</button>}
