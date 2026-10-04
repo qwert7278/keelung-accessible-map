@@ -1,3 +1,4 @@
+import { geographyAt } from './utils/locationSelection';
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRightIcon,
@@ -118,6 +119,8 @@ export default function App() {
   }, [repository, city.id, district, access, filter, search, feedPages]);
   useEffect(()=>{setFeedPages(1);setPage(1);setReports([]);setHasMore(false);setLoading(true);},[city.id,district,access,filter,search]);
   const manuallyChosen = useRef(false);
+  const gpsRevision=useRef(0);
+  useEffect(()=>()=>{gpsRevision.current++;},[]);
   const suggestedCity = useSuggestedCity();
   const [suggestionNote, setSuggestionNote] = useState('');
   useEffect(() => {
@@ -128,11 +131,13 @@ export default function App() {
     setSuggestionNote(`依網路連線推估為${suggested.name}；行政區是瀏覽起點，可隨時切換。`);
   }, [suggestedCity, adminPage, creating, selected]);
   function chooseCity(id: string) {
+    gpsRevision.current++;
     manuallyChosen.current = true; setSuggestionNote('');
     if (id === city.id) rememberGeography(id, district);
     changeCity(id);
   }
   function chooseDistrict(value: string) {
+    gpsRevision.current++;
     manuallyChosen.current = true; setSuggestionNote(''); changeDistrict(value);
   }
   function changeCity(id: string) {
@@ -252,6 +257,7 @@ export default function App() {
   const pageReports = sorted.slice((currentPage - 1) * 5, currentPage * 5);
   const report = resolvedReport;
   function choose(id: string) {
+    gpsRevision.current++;
     setSelected(id);
     setFocus(reports.find((r) => r.id === id)?.location); setFocusZoom(16); setFocusRevision(r => r + 1);
     const url = new URL(window.location.href);
@@ -298,30 +304,26 @@ export default function App() {
     setFocus({ lat:matchLat, lng:matchLng }); setFocusZoom(16); setFocusRevision(r => r + 1);
     window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, matchDistrict, selected));
   }, [selected, matchCity, matchDistrict, matchLat, matchLng]);
+  function focusLocation(geography:{city:typeof city;district:string}, location:Location) {
+    manuallyChosen.current=true;
+    if (geography.city.id!==city.id) {setReports([]);setLoading(true);}
+    setSelected(null);setLinkedReport(null);setCity(geography.city);setDistrict(geography.district);setPage(1);
+    setFocus(location);setFocusZoom(17);setFocusRevision(r=>r+1);
+    rememberGeography(geography.city.id,geography.district);
+    window.history.replaceState({},'',geographyUrl(window.location.href,geography.city.id,geography.district));
+  }
   function locate() {
-    if (!navigator.geolocation) {
-      setToast("此瀏覽器不支援定位。你仍可拖曳地圖查看。");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const b = city.bounds,
-          location = { lat: p.coords.latitude, lng: p.coords.longitude };
-        if (
-          location.lat < b.south ||
-          location.lat > b.north ||
-          location.lng < b.west ||
-          location.lng > b.east
-        ) {
-          setToast(`目前位置不在${city.name}範圍，請先切換縣市或手動查看地圖。`);
-          return;
-        }
-        setFocus(location);
-        setToast("已定位到目前位置。");
-      },
-      () => setToast("未取得定位權限，仍可拖曳地圖或手動選點。"),
-      { timeout: 10000 },
-    );
+    if (!navigator.geolocation) {setToast('此瀏覽器不支援定位。你仍可拖曳地圖查看。');return;}
+    const revision=++gpsRevision.current;
+    navigator.geolocation.getCurrentPosition(p=>{void(async()=>{
+      const location={lat:p.coords.latitude,lng:p.coords.longitude};
+      try {
+        const geography=await geographyAt(location,city);
+        if (revision!==gpsRevision.current) return;
+        if (!geography) {setToast('目前位置不在 Road Tag 可回報範圍，請改用搜尋或地圖選點。');return;}
+        focusLocation(geography,location);setToast('已定位到目前位置。');
+      } catch {if(revision===gpsRevision.current)setToast('行政區資料暫時無法載入，仍可手動查看地圖。');}
+    })();},()=>{if(revision===gpsRevision.current)setToast('未取得定位權限，仍可拖曳地圖或手動選點。');},{timeout:10000});
   }
   async function signIn() {
     if (signingIn) return;
@@ -366,16 +368,16 @@ export default function App() {
           </div>
         </section>);
   return (
-    <>
-      <a href="#report-list" className="skip-link">
+    <div className={adminPage ? "admin-app-shell" : "map-app-shell"}>
+      {(!adminPage || session?.admin) && <a href="#report-list" className="skip-link">
         跳至案件列表
-      </a>
+      </a>}
       <header className="site-header">
         <a href={HOMEPAGE_URL} className="brand" aria-label="路見不平首頁">
           <img className="brand-wordmark" src="/images/roadtag-logo-horizontal.webp" alt="路見不平 Road Tag" width="1086" height="362" />
 
         </a>
-        <nav aria-label="主要選單">
+        {(!adminPage || session?.admin) && <nav aria-label="主要選單">
           <a className={!adminPage ? "nav-active" : ""} href="/map">
             通行地圖
           </a>
@@ -384,10 +386,6 @@ export default function App() {
             <ArrowUpRightIcon size={14} />
           </a>
           <a href="/how-to">如何使用</a>
-          <a className={adminPage ? "nav-active" : ""} href="/admin">
-            <ShieldCheckIcon size={18} />
-            <span>管理{DEMO_MODE ? "體驗" : "案件"}</span>
-          </a>
           <a href="https://www.threads.com/@roadtag2046" target="_blank" rel="noopener noreferrer" aria-label="在 Threads 追蹤路見不平"><ThreadsLogoIcon size={20} /><span>Threads</span></a>
           <details className="header-more"><summary>更多</summary><div className="header-more-menu">
             <button onClick={() => setHelp(true)}>常見問題</button>
@@ -396,7 +394,7 @@ export default function App() {
             {DEMO_MODE ? <button onClick={() => setAbout(true)}>Demo 資料與重設</button> : <a href={'mailto:' + BETA_FEEDBACK_EMAIL + '?subject=' + encodeURIComponent('路見不平 使用回饋')}>提供使用回饋</a>}
             <a href="/">回到首頁</a>
           </div></details>
-        </nav>
+        </nav>}
         {!adminPage && (
           <button
             className={`button primary header-report${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
@@ -408,7 +406,7 @@ export default function App() {
           </button>
         )}
       </header>
-      <div className="demo-banner">
+      {(!adminPage || session?.admin) && <div className="demo-banner">
         <InfoIcon size={18} aria-hidden="true" />
         <p>
           {DEMO_MODE ? (
@@ -423,10 +421,10 @@ export default function App() {
             </>
           )}
         </p>
-      </div>
+      </div>}
       <main id="main-content" tabIndex={-1}>
-        {adminPage && pageIntro}
-        {adminPage && (<section className="geography-bar" aria-label="選擇地圖範圍">
+        {adminPage && session?.admin && pageIntro}
+        {adminPage && session?.admin && (<section className="geography-bar" aria-label="選擇地圖範圍">
           <GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           <p>{canReportInCity(city.id) ? '目前查看：' + city.name + ' · ' + (district === 'all' ? '所有行政區' : district) : '此縣市目前提供地圖預覽，正式回報尚未開放。'}</p>
         </section>)}
@@ -520,7 +518,7 @@ export default function App() {
           ) : (
             <p className="admin-loading" role="status">正在載入管理案件…</p>
           )
-        ) : (
+        ) : !adminPage ? (
         <>
         <section className="workspace" aria-label="通行回報探索">
           <aside className="sidebar">
@@ -681,7 +679,7 @@ export default function App() {
             </div>
           </div>
         </section></>
-        )}
+        ) : null}
         {!adminPage && (
           <button
             className={`button primary mobile-report-cta${guideStep === 0 && guideReady ? " guide-target-active" : ""}`}
@@ -706,6 +704,7 @@ export default function App() {
         <ReportForm
           repository={repository}
           city={city}
+          onLocated={(geography,location)=>{gpsRevision.current++;focusLocation(geography,location);}}
           initialDistrict={district}
           reports={reports}
           guidedStep={guideStep}
@@ -824,6 +823,6 @@ export default function App() {
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 }

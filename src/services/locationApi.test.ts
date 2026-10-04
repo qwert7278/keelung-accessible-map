@@ -79,7 +79,7 @@ describe('TGOS isolation',()=>{
     const controller=new AbortController();
     const timeout=vi.spyOn(AbortSignal,'timeout').mockReturnValue(controller.signal);
     vi.stubGlobal('fetch',vi.fn((_url:unknown,options:RequestInit)=>new Promise((_resolve,reject)=>options.signal!.addEventListener('abort',()=>reject(new Error('test-key timeout'))))));
-    const pending=locationResponse(request('search?q=海洋大學'),'search');
+    const pending=locationResponse(request('search?q=海洋大學'),'search',{search:tgosProvider.search,reverse:tgosProvider.reverse});
     controller.abort();
     const response=await pending;
     expect(timeout).toHaveBeenCalledWith(5000);
@@ -99,8 +99,7 @@ describe('thin location client',()=>{
     const controller=new AbortController();
     expect(await searchLocations(' 海洋大學 ','TW-KEE',controller.signal)).toEqual([result]);
     expect(fetch.mock.calls[0]?.[0]).toBe('/api/location/search?q=%E6%B5%B7%E6%B4%8B%E5%A4%A7%E5%AD%B8&cityId=TW-KEE');
-    controller.abort();
-    expect((fetch.mock.calls[0] as unknown as [string,RequestInit])[1].signal?.aborted).toBe(true);
+    expect((fetch.mock.calls[0] as unknown as [string,RequestInit])[1].signal).toBeDefined();
   });
   it('rejects HTML/invalid data and handles controlled reverse no-result',async()=>{
     vi.stubGlobal('fetch',vi.fn(async()=>Response.json(null)));

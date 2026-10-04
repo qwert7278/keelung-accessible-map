@@ -1,3 +1,4 @@
+import { GET as locationCapabilities } from './api/location/capabilities.ts'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { loadEnv, type Plugin } from 'vite'
@@ -19,9 +20,9 @@ function appRouteAliases(): Plugin {
       server.middlewares.use((request, _response, next) => {
         if (!request.url) return next()
         const [pathname, query] = request.url.split('?')
-        if (pathname === '/api/location/search' || pathname === '/api/location/reverse') {
-          const handler = pathname.endsWith('/search') ? locationSearch : locationReverse;
-          void handler(new Request(`http://localhost${request.url}`, {method:request.method})).then(async response => {
+        if (pathname === '/api/location/search' || pathname === '/api/location/reverse' || pathname === '/api/location/capabilities') {
+          const handler = pathname.endsWith('/capabilities') ? (()=>locationCapabilities()) : pathname.endsWith('/search') ? locationSearch : locationReverse;
+          void Promise.resolve(handler(new Request(`http://localhost${request.url}`, {method:request.method}))).then(async response => {
             _response.statusCode = response.status;
             response.headers.forEach((value,key) => _response.setHeader(key,value));
             _response.end(await response.text());

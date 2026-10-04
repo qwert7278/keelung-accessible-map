@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 // Exercise emitted JavaScript, not Vite's source resolver, to catch ESM deployment failures.
 const directory = mkdtempSync(join(tmpdir(), 'roadtag-location-'));
 try {
-  execFileSync(process.execPath, [resolve('node_modules/typescript/bin/tsc'), 'api/location.ts', 'api/location/search.ts', 'api/location/reverse.ts', '--ignoreConfig', '--target', 'ES2022', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--types', 'node', '--skipLibCheck', '--outDir', directory], { stdio:'inherit' });
+  execFileSync(process.execPath, [resolve('node_modules/typescript/bin/tsc'), 'api/location.ts', 'api/location/search.ts', 'api/location/reverse.ts', 'api/location/capabilities.ts', '--ignoreConfig', '--target', 'ES2022', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--types', 'node', '--skipLibCheck', '--outDir', directory], { stdio:'inherit' });
   writeFileSync(join(directory, 'package.json'), JSON.stringify({ type:'module' }));
   const { GET } = await import(pathToFileURL(join(directory, 'api/location.js')).href);
   assert.equal(GET(new Request('https://roadtag.org/api/location')).status, 403);
@@ -17,6 +17,8 @@ try {
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { cityId:'TW-TPE', source:'ip-city' });
   assert.match(response.headers.get('cache-control'), /no-store/);
+  const { GET:capabilities }=await import(pathToFileURL(join(directory,'api/location/capabilities.js')).href);
+  assert.deepEqual(await capabilities().json(),{searchReady:false,reverseReady:false});
   const { GET:search } = await import(pathToFileURL(join(directory, 'api/location/search.js')).href);
   const { GET:reverse } = await import(pathToFileURL(join(directory, 'api/location/reverse.js')).href);
   assert.equal((await search(new Request('https://roadtag.org/api/location/search?q=x'))).status,400);

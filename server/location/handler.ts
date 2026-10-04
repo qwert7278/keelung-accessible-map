@@ -1,3 +1,4 @@
+import { limitLocation, locationCapabilities } from './safety.js';
 import { validLocation } from '../../src/services/locationContract.js';
 import { locationCityName, tgosProvider, type LocationProvider } from './provider.js';
 
@@ -11,6 +12,10 @@ export async function locationResponse(request:Request, operation:'search'|'reve
   const point={lat:lat?.trim() ? Number(lat) : NaN, lng:lng?.trim() ? Number(lng) : NaN};
   if (operation === 'search' && (query.length < 2 || query.length > 120 || cityId !== undefined && !locationCityName(cityId))) return invalid();
   if (operation === 'reverse' && !validLocation(point)) return invalid();
+  const retry=limitLocation(request);
+  if (retry) return Response.json({error:'LOCATION_RATE_LIMITED'},{status:429,headers:{...headers,'Retry-After':String(retry)}});
+  const capabilities=locationCapabilities();
+  if (provider===tgosProvider && !(operation==='search' ? capabilities.searchReady : capabilities.reverseReady)) return Response.json({error:'LOCATION_TEMPORARILY_UNAVAILABLE'},{status:503,headers});
   try {
     const data = await (operation === 'search' ? provider.search(query,cityId).then(results => ({results:results.slice(0,5)})) : provider.reverse(point));
     return Response.json(data,{headers});

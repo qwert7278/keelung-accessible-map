@@ -27,8 +27,9 @@ import Modal from "./Modal";
 import PhotoUploader from "./PhotoUploader";
 import GuidedTourPrompt from "./GuidedTourPrompt";
 import { districtCamera } from '../utils/mapCamera';
+import { geographyAt } from '../utils/locationSelection';
 import { districtAt } from '../utils/districtBoundary';
-import { LOCATION_SEARCH_UNAVAILABLE, searchLocations, reverseLocation } from '../services/locationApi';
+import { LOCATION_SEARCH_UNAVAILABLE, searchLocations, reverseLocation, locationCapabilities } from '../services/locationApi';
 import type { LocationResult } from '../services/locationContract';
 
 const GUIDE_COPY: Record<number, { title: string; body: string }> = {
@@ -68,8 +69,9 @@ const GUIDE_COPY: Record<number, { title: string; body: string }> = {
 
 export default function ReportForm({
   repository,
-  city,
+  city: initialCity,
   initialDistrict,
+  onLocated,
   reports,
   guidedStep = null,
   onGuidedStepChange,
@@ -80,6 +82,7 @@ export default function ReportForm({
   repository: ReportRepository;
   city: City;
   initialDistrict: string;
+  onLocated?:(geography:{city:City;district:string},location:Location)=>void;
   reports: Report[];
   guidedStep?: number | null;
   onGuidedStepChange?: (step: number | null) => void;
@@ -87,6 +90,10 @@ export default function ReportForm({
   onCreated: (id: string, geography: { cityId:string; district:string }) => void;
   onExisting: (id: string) => void;
 }) {
+  const [city,setCity]=useState(initialCity);
+  const [capabilities,setCapabilities]=useState({searchReady:false,reverseReady:false});
+  useEffect(()=>{const controller=new AbortController();void locationCapabilities(controller.signal).then(value=>{if(!controller.signal.aborted)setCapabilities(value);}).catch(()=>{});return ()=>controller.abort();},[]);
+  const [camera,setCamera]=useState(()=>({...districtCamera(initialCity,initialDistrict)}));
   const photoProcessingRef = useRef(false);
   const searchRequest = useRef<AbortController|null>(null);
   const selectionRequest = useRef<AbortController|null>(null);
@@ -174,11 +181,12 @@ export default function ReportForm({
       if (!request.signal.aborted) setSearching(false);
     }
   }
-  async function selectLocation(location:Location, candidate?:LocationResult) {
+  async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'|'manual'='map', geography?:{city:City;district:string}) {
     invalidateSelection();
     const request = new AbortController();
     selectionRequest.current = request;
-    const b=city.bounds;
+    const selectedCity=geography?.city || city;
+    const b=selectedCity.bounds;
     if ((candidate && candidate.city.replace(/台/g,'臺') !== city.name.replace(/台/g,'臺')) || !Number.isFinite(location.lat) || !Number.isFinite(location.lng) || location.lat < b.south || location.lat > b.north || location.lng < b.west || location.lng > b.east) {
       setError(`此位置不在${city.name}，請先切換縣市，或重新點選地圖。`);
       return;
@@ -186,24 +194,26 @@ export default function ReportForm({
     const addressVersion=++addressRevision.current;
     setCandidates([]);
     setSearchNote('');
-    setDraft(d => ({...d,location,address:candidate?.address ?? ''}));
+    setCity(selectedCity);
+    setDraft(d => ({...d,cityId:selectedCity.id,district:geography?.district || d.district,location,address:candidate?.address ?? ''}));
     setManualCoordinates({lat:false,lng:false});
     setPicked(true);
     setError('');
-    setCameraRevision(value => value+1);
+    if (source!=='map') {setCamera({focus:location,zoom:17});setCameraRevision(value => value+1);}
     setReverseNote(candidate ? '正在確認行政區…' : '正在查詢鄰近地址…');
     if (guidedStep === 1) onGuidedStepChange?.(2);
     // Polygon validation owns the district. Reverse never changes the exact pin.
-    void districtAt(city.id, candidate?.district || draft.district, location).then(found => {
+    void districtAt(selectedCity.id, geography?.district || candidate?.district || draft.district, location).then(found => {
       if (request.signal.aborted) return;
       if (found) setDraft(d => ({...d,district:found}));
       else setError(`選點不在${city.name}行政區內，請重新選擇。`);
     }).catch(() => { if (!request.signal.aborted) setReverseNote('行政區將於下一步重新確認。'); });
     if (candidate) { setReverseNote('已選取搜尋結果，請確認現場位置。'); return; }
+    if (!capabilities.reverseReady) {setReverseNote('地址暫時無法自動取得，可手動補充；位置已保留。');return;}
     try {
       const address=await reverseLocation(location,request.signal);
       if (request.signal.aborted) return;
-      const sameCity=address && address.city.replace(/台/g,'臺') === city.name.replace(/台/g,'臺');
+      const sameCity=address && address.city.replace(/台/g,'臺') === selectedCity.name.replace(/台/g,'臺');
       if (sameCity && addressRevision.current === addressVersion) setDraft(d => ({...d,address:address.address}));
       setReverseNote(sameCity ? '鄰近地址僅供參考，標記保留你選擇的現場位置。' : '查無鄰近地址，可手動補充；位置已保留。');
     } catch {
@@ -212,6 +222,7 @@ export default function ReportForm({
   }
   function updateManualCoordinate(axis: "lat" | "lng", value: string) {
     invalidateSelection();
+    const version=locationRevision.current;
     const location = { ...draft.location, [axis]: Number(value) };
     const touched = { ...manualCoordinates, [axis]: true };
     const bounds = city.bounds;
@@ -229,6 +240,12 @@ export default function ReportForm({
     update('address', '');
     update("location", location);
     setPicked(valid);
+    if (valid) {
+      setCamera({focus:location,zoom:17});setCameraRevision(value=>value+1);
+      void districtAt(city.id,draft.district,location).then(found=>{
+        if(found && locationRevision.current===version)setDraft(d=>({...d,district:found}));
+      }).catch(()=>{if(locationRevision.current===version)setReverseNote('行政區將於下一步重新確認。');});
+    }
     if (valid && guidedStep === 1) onGuidedStepChange?.(2);
   }
   async function next() {
@@ -316,24 +333,19 @@ export default function ReportForm({
     setLocationNote("");
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        if (gpsRevision.current !== gpsVersion) return;
-        setLocating(false);
-        const location = { lat: p.coords.latitude, lng: p.coords.longitude },
-          b = city.bounds;
-        if (
-          location.lat < b.south ||
-          location.lat > b.north ||
-          location.lng < b.west ||
-          location.lng > b.east
-        ) {
-          setError(`目前位置不在${city.name}範圍，請切換縣市後回報，或在地圖選擇障礙位置。`);
-          return;
-        }
-        void selectLocation(location);
-        setLocationNote(
-          `定位誤差約 ${Math.round(p.coords.accuracy)} 公尺。請確認標記位於障礙現場，必要時點選地圖調整。`,
-        );
-        if (guidedStep === 1) onGuidedStepChange?.(2);
+        void (async()=>{
+          if (gpsRevision.current !== gpsVersion) return;
+          const location={lat:p.coords.latitude,lng:p.coords.longitude};
+          try {
+            const geography=await geographyAt(location,city);
+            if (gpsRevision.current !== gpsVersion) return;
+            setLocating(false);
+            if (!geography) {setError('目前位置不在 Road Tag 可回報範圍，請改用搜尋或地圖選點。');return;}
+            void selectLocation(location,undefined,'gps',geography);
+            onLocated?.(geography,location);
+            setLocationNote(`定位誤差約 ${Math.round(p.coords.accuracy)} 公尺。請確認標記位於障礙現場，必要時點選地圖調整。`);
+          } catch {if(gpsRevision.current===gpsVersion){setLocating(false);setError('行政區資料暫時無法載入，請改用地圖選點。');}}
+        })();
       },
       () => {
         if (gpsRevision.current !== gpsVersion) return;
@@ -378,6 +390,17 @@ export default function ReportForm({
           </li>
         ))}
       </ol>
+      <div
+        className="report-step-progress"
+        role="progressbar"
+        aria-label="回報進度"
+        aria-valuemin={1}
+        aria-valuemax={3}
+        aria-valuenow={step}
+        aria-valuetext={`第 ${step} 步，共 3 步`}
+      >
+        <span style={{ width: `${(step / 3) * 100}%` }} />
+      </div>
       {currentGuide && (
         <GuidedTourPrompt
           step={guidedStep! + 1}
@@ -393,10 +416,10 @@ export default function ReportForm({
           {step === 1 && (
             <>
               <h3>障礙在哪裡？</h3>
-              <p className="muted">回報縣市：{city.name}。搜尋地址或地標，也可以直接點地圖。</p>
-              <div className="location-search-row">
-                <label>搜尋地址、地標或店家
-                  <input value={locationQuery} maxLength={120} placeholder="例如：海洋大學、嘉安大藥局、中正路123號"
+              <p className="muted">回報縣市：{city.name}。{capabilities.searchReady ? '搜尋地址或地標，也可以直接點地圖。' : '使用目前位置，或直接點地圖標記障礙。'}</p>
+              {capabilities.searchReady && <><p className="muted">不知道完整地址，也可以輸入地標或店家名稱。</p><div className="location-search-row">
+                <label>搜尋地址
+                  <input value={locationQuery} maxLength={120} placeholder="例如：海洋大學、車站、路名"
                     onChange={event => { searchRequest.current?.abort(); setSearching(false); setCandidates([]); setSearchNote(''); setLocationQuery(event.target.value); }}
                     onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) { event.preventDefault(); void search(); } }}/>
                 </label>
@@ -405,11 +428,12 @@ export default function ReportForm({
               {searchNote && <p className="muted" role="status">{searchNote}</p>}
               {candidates.length > 0 && <ul className="location-results" aria-label="搜尋候選位置">
                 {candidates.map((candidate,index) => <li key={`${candidate.label}-${index}`}>
-                  <button className="button secondary" type="button" onClick={() => void selectLocation(candidate.location,candidate)}>
+                  <button className="button secondary" type="button" onClick={() => void selectLocation(candidate.location,candidate,'search')}>
                     <strong>{candidate.label}</strong><small>{candidate.city} {candidate.district} · {candidate.address || '請在地圖確認現場位置'}</small>
                   </button>
                 </li>)}
               </ul>}
+              </>}
               <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={locate}>
                 <CrosshairIcon size={20}/>{locating ? '正在取得位置…' : '使用目前位置'}
               </button>
@@ -423,14 +447,15 @@ export default function ReportForm({
                   picking
                   onPick={(location) => { setLocationNote(''); void selectLocation(location); }}
                   position={picked ? draft.location : undefined}
-                  focus={draft.location}
-                  focusZoom={picked ? 17 : districtCamera(city,draft.district).zoom}
+                  focus={camera.focus}
+                  focusZoom={camera.zoom}
                   focusRevision={cameraRevision}
                 />
               </div>
               {picked && <section className="selected-location" aria-label="已選位置">
                 <strong>已選位置</strong>
                 <p>{draft.address || '尚無地址，可手動補充'} · {city.name} {draft.district}</p>
+                <small className="selected-coordinates">緯度 {draft.location.lat.toFixed(5)} · 經度 {draft.location.lng.toFixed(5)}</small>
                 <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); setManualCoordinates({lat:false,lng:false}); }}>重新選擇</button>
               </section>}
               {reverseNote && <p className="muted" role="status">{reverseNote}</p>}

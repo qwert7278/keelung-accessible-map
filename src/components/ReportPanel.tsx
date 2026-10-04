@@ -1,3 +1,4 @@
+import Modal from './Modal';
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowLeftIcon,
@@ -63,7 +64,8 @@ export default function ReportPanel({
   const photoProcessingRef = useRef(false);
   const attempt = useRef<{ id:string; fingerprint:string; photo:Blob|null } | null>(null);
   const [photoProcessing, setPhotoProcessing] = useState(false);
-  const [showAllUpdates, setShowAllUpdates] = useState(false);
+  const [secondary,setSecondary]=useState<'photos'|'timeline'|'description'|null>(null);
+  const [timelinePage,setTimelinePage]=useState(0);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [updates, setUpdates] = useState<ReportUpdate[]>([]),
@@ -294,32 +296,7 @@ export default function ReportPanel({
             </label>
           )}
         </div>;
-  const content = (
-      <div className={`panel-content${embedded ? " admin-case-content" : " public-report-content"}`}>
-        <div className="detail-top">
-          <StatusBadge status={report.status} />
-          {DEMO_MODE && <span className="demo-tag">測試資料</span>}
-        </div>
-        <p className="location-line">
-          <MapPinIcon size={18} />
-          {report.address ||
-            `${report.district} · ${report.location.lat.toFixed(5)}, ${report.location.lng.toFixed(5)}`}
-        </p>
-        {!embedded && <div className="report-main-photo"><Photo src={report.beforeImageUrl} label="原始回報照片" /></div>}
-        {embedded && reportActions}
-        <div className={`access-callout access-${report.wheelchairAccess}`}>
-          <WheelchairIcon size={24} />
-          <div>
-            <small>輪椅通行程度</small>
-            <strong>{ACCESS[report.wheelchairAccess]}</strong>
-          </div>
-        </div>
-        {embedded && admin && updateForm}
-        <p className="detail-category">問題類型：{CATEGORIES[report.category]}</p>
-        <p>{report.description || "此案件尚無補充說明。"}</p>
-        {!embedded && reportActions}
-        {!embedded && !showUpdateForm && error && <p className="error" role="alert">{error}</p>}
-        <section className="evidence-section" aria-label="現場照片與改善證據">
+  const evidence=(<section className="evidence-section" aria-label="現場照片與改善證據">
           <h3>現場照片</h3>
           <div className="evidence-grid">
             {embedded && <Photo src={report.beforeImageUrl} label="原始回報照片" />}
@@ -335,8 +312,8 @@ export default function ReportPanel({
           <p className="muted evidence-note">
             民眾補充是現場觀察，不代表管理者已確認改善。正式狀態由管理者更新。
           </p>
-        </section>
-        <section className="timeline">
+        </section>);
+  const timeline=(<section className="timeline">
           <h3>
             現場紀錄 <span className="count">{updates.length}</span>
           </h3>
@@ -344,7 +321,7 @@ export default function ReportPanel({
             <p className="muted">尚無補充紀錄。</p>
           ) : (
             <ol>
-              {(embedded || showAllUpdates ? updates : updates.slice(-3)).map((u) => (
+              {(embedded ? updates : updates.slice(Math.max(0,updates.length-(timelinePage+1)*3),updates.length-timelinePage*3)).map((u) => (
                 <li key={u.id}>
                   <div>
                     <strong>
@@ -372,14 +349,42 @@ export default function ReportPanel({
               ))}
             </ol>
           )}
-          {!embedded && updates.length > 3 && <button className="text-button" type="button" aria-expanded={showAllUpdates} onClick={() => setShowAllUpdates(value => !value)}>{showAllUpdates ? "只顯示最新紀錄" : `查看全部 ${updates.length} 筆紀錄`}</button>}
-        </section>
-        <p className="metadata">
+          {!embedded && updates.length > 3 && <div className="list-pagination"><button type="button" disabled={timelinePage===0} onClick={()=>setTimelinePage(p=>p-1)}>較新紀錄</button><span>第 {timelinePage+1} 頁</span><button type="button" disabled={(timelinePage+1)*3>=updates.length} onClick={()=>setTimelinePage(p=>p+1)}>較舊紀錄</button></div>}
+        </section>);
+  const metadata=(<p className="metadata">
           建立：{date(report.createdAt)}
           <br />
           案件狀態更新：{date(report.updatedAt)}
+        </p>);
+  const content = (
+      <div className={`panel-content${embedded ? " admin-case-content" : " public-report-content"}`}>
+        <div className="detail-top">
+          <StatusBadge status={report.status} />
+          {DEMO_MODE && <span className="demo-tag">測試資料</span>}
+        </div>
+        <p className="location-line">
+          <MapPinIcon size={18} />
+          {!embedded && <span>{report.district} · </span>}
+          {report.address ||
+            `${report.district} · ${report.location.lat.toFixed(5)}, ${report.location.lng.toFixed(5)}`}
         </p>
-        {!embedded && (admin || showUpdateForm) && <div id="public-report-update">{updateForm}</div>}
+        {!embedded && <div className="report-main-photo"><Photo src={report.beforeImageUrl} label="原始回報照片" /></div>}
+        {embedded && reportActions}
+        <div className={`access-callout access-${report.wheelchairAccess}`}>
+          <WheelchairIcon size={24} />
+          <div>
+            <small>輪椅通行程度</small>
+            <strong>{ACCESS[report.wheelchairAccess]}</strong>
+          </div>
+        </div>
+        {embedded && admin && updateForm}
+        <p className="detail-category">問題類型：{CATEGORIES[report.category]}</p>
+        <p className={embedded ? undefined : "report-description-summary"}>{report.description || "此案件尚無補充說明。"}</p>
+        {!embedded && <div className="detail-secondary-actions"><button className="text-button" onClick={()=>setSecondary('description')}>完整說明</button><button className="text-button" onClick={()=>setSecondary('photos')}>查看更多照片</button><button className="text-button" onClick={()=>{setTimelinePage(0);setSecondary('timeline');}}>查看現場紀錄（{updates.length}）</button></div>}
+        {!embedded && reportActions}
+        {!embedded && !showUpdateForm && error && <p className="error" role="alert">{error}</p>}
+        {embedded && <>{evidence}{timeline}{metadata}</>}
+
       </div>
   );
   if (embedded) {
@@ -405,8 +410,12 @@ export default function ReportPanel({
     );
   }
   return (
+    <>
     <ReportDetailShell title={report.title} onClose={onClose} busy={busy}>
       {content}
     </ReportDetailShell>
+    {showUpdateForm && <Modal title="補充最新狀況" busy={busy} onClose={()=>setShowUpdateForm(false)}><div id="public-report-update" className="panel-content">{updateForm}</div></Modal>}
+    {secondary && <Modal title={secondary==='photos' ? '現場照片' : secondary==='timeline' ? '現場紀錄' : '完整案件說明'} onClose={()=>setSecondary(null)}><div className="panel-content">{secondary==='photos' ? evidence : secondary==='timeline' ? <>{timeline}{metadata}</> : <><h3>{report.title}</h3><p>{report.district} · {report.address || '尚無地址'}</p><small>緯度 {report.location.lat.toFixed(5)} · 經度 {report.location.lng.toFixed(5)}</small><p>{report.description || '此案件尚無補充說明。'}</p>{metadata}</>}</div></Modal>}
+    </>
   );
 }
