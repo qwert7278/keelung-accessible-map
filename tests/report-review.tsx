@@ -1,15 +1,34 @@
 // Local browser regression only: real encoder/component, synthetic images, no repository.
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import PhotoUploader from '../src/components/PhotoUploader';
 import Modal from '../src/components/Modal';
-import { MAX_IMAGE_SIZE } from '../src/utils/images';
+import { MAX_IMAGE_SIZE, imageDimensions } from '../src/utils/images';
 import '../src/styles.css';
+
+// Reproduce Safari's native Canvas output while still using the real WASM codec.
+if (new URLSearchParams(location.search).get('native') === 'png') {
+  const nativeToBlob = HTMLCanvasElement.prototype.toBlob;
+  HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {
+    return nativeToBlob.call(this, callback, type === 'image/webp' ? 'image/png' : type, quality);
+  };
+}
 
 function ReviewQA() {
   const form = useRef<HTMLFormElement>(null);
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [busy, setBusy] = useState(false);
+  const [encodingProof, setEncodingProof] = useState('');
+  useEffect(() => {
+    let active = true;
+    if (!photo) { setEncodingProof(''); return; }
+    void Promise.all([photo.arrayBuffer(), imageDimensions(photo)]).then(([buffer, dimensions]) => {
+      const bytes = new Uint8Array(buffer);
+      const signature = String.fromCharCode(...bytes.slice(0,4), ...bytes.slice(8,12));
+      if (active) setEncodingProof(`${signature === 'RIFFWEBP' ? 'PASS' : 'FAIL'}：${signature}；${dimensions.join('×')}；${photo.size} bytes`);
+    });
+    return () => { active = false; };
+  }, [photo]);
   const [submitted, setSubmitted] = useState(0);
   const [fixtureError, setFixtureError] = useState('');
   const [open, setOpen] = useState(true);
@@ -65,6 +84,7 @@ function ReviewQA() {
       <button className="button primary" disabled={busy} type="submit">驗證下一步</button>
     </form>
     <output aria-label="照片驗證結果">{`照片：${photo?.type || '無'}；處理中：${busy}；下一步次數：${submitted}`}</output>
+    <output aria-label="WebP 實際內容驗證">{encodingProof}</output>
     {replacement && !busy && <output aria-label="重選失敗回歸">{photo === previousPhoto.current && !!photo ? 'PASS：保留相同原照片' : 'FAIL：原照片遺失'}</output>}
     {fixtureError && <p role="alert">{fixtureError}</p>}
     </Modal>}

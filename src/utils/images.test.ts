@@ -2,7 +2,9 @@ import {readFileSync} from 'node:fs';
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { compressImage, imageUploadFormat, MAX_IMAGE_SIZE, MAX_UPLOAD_SIZE, TARGET_UPLOAD_SIZE } from "./images";
 
-afterEach(() => vi.unstubAllGlobals());
+const fallbackEncoder = vi.hoisted(() => ({ encode: vi.fn(), dispose: vi.fn() }));
+vi.mock('./webp-encoder', () => ({ createWebpEncoder: () => fallbackEncoder }));
+afterEach(() => { vi.unstubAllGlobals(); fallbackEncoder.encode.mockReset(); fallbackEncoder.dispose.mockReset(); });
 
 function encoderFixture(outputs: Array<Blob | null>, dimensions = { width: 3840, height: 2160 }) {
   const bitmap = { ...dimensions, close: vi.fn() };
@@ -51,10 +53,32 @@ describe("照片上傳邊界", () => {
     expect(bitmap.close).toHaveBeenCalledOnce();
     expect(imageUploadFormat(result)).toEqual({ extension: "webp", contentType: "image/webp" });
   });
-  it("不支援 WebP 時停止，不把 PNG 或 JPEG 存成 WebP", async () => {
-    const { canvas, bitmap } = encoderFixture([new Blob(["png"], { type: "image/png" })]);
-    await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.png", { type: "image/png" }))).rejects.toThrow("更新瀏覽器");
+  it("Safari 原生回傳 PNG 時，改用真正 WebP 編碼器", async () => {
+    const output = new Blob(['webp'], { type: 'image/webp' });
+    fallbackEncoder.encode.mockResolvedValue(output);
+    const { canvas, bitmap } = encoderFixture([new Blob(['png'], { type: 'image/png' })]);
+    const result = await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')], 'photo.jpg', {type:'image/jpeg'}));
+    expect(result).toBe(output);
     expect(canvas.toBlob).toHaveBeenCalledOnce();
+    expect(fallbackEncoder.encode).toHaveBeenCalledWith(0.8);
+    expect(fallbackEncoder.dispose).toHaveBeenCalledOnce();
+    expect(bitmap.close).toHaveBeenCalledOnce();
+  });
+  it("Safari fallback 依大小降低品質，不重試不支援的 Canvas encoder", async () => {
+    const large = new Blob([new Uint8Array(TARGET_UPLOAD_SIZE + 1)], {type:'image/webp'});
+    const small = new Blob(['webp'], {type:'image/webp'});
+    fallbackEncoder.encode.mockResolvedValueOnce(large).mockResolvedValueOnce(small);
+    const {canvas} = encoderFixture([new Blob(['png'], {type:'image/png'})]);
+    expect(await compressImage(new File([readFileSync('tests/fixtures/qa-photo.jpg')], 'photo.jpg', {type:'image/jpeg'}))).toBe(small);
+    expect(canvas.toBlob).toHaveBeenCalledOnce();
+    expect(fallbackEncoder.encode.mock.calls).toEqual([[0.8], [0.7]]);
+  });
+  it("fallback 失敗仍拒絕上傳 PNG/JPEG 並釋放資源", async () => {
+    fallbackEncoder.encode.mockRejectedValue(new Error('照片處理失敗'));
+    const { canvas, bitmap } = encoderFixture([new Blob(["png"], { type: "image/png" })]);
+    await expect(compressImage(new File([readFileSync("tests/fixtures/qa-photo.jpg")], "photo.png", { type: "image/png" }))).rejects.toThrow("照片處理失敗");
+    expect(canvas.toBlob).toHaveBeenCalledOnce();
+    expect(fallbackEncoder.dispose).toHaveBeenCalledOnce();
     expect(bitmap.close).toHaveBeenCalledOnce();
     expect(() => imageUploadFormat(new Blob(["jpeg"], { type: "image/jpeg" }))).toThrow("處理");
   });

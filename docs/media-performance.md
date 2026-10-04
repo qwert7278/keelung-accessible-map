@@ -18,7 +18,7 @@ Supabase Storage 有 CDN，但冷快取仍須回源、快取不保證永久保�
 | 自動轉檔 | WebP only；直橫式保持比例、最長邊 1920px、小圖不放大、移除原始 EXIF |
 | 大小控制 | 目標 300 KiB，逐步使用品質 0.8／0.7／0.6；保留最小輸出，硬上限 1 MiB；無法達成時提示裁切重試，不無限降品質 |
 | 格式對齊 | 新 Storage path 為 UUID.webp、Content-Type image/webp；Repository 上傳前再驗 MIME／大小 |
-| 相容性 | 不支援 WebP 編碼時停止並提示更新瀏覽器；不能把 PNG 改副檔名當 WebP |
+| 相容性 | Safari Canvas 未輸出 WebP 時，延遲載入同站的 @jsquash/webp WASM worker，輸出真正 WebP；編碼器載入／處理失敗仍停止，不把 PNG 改副檔名當 WebP。iPhone 實機仍待驗證 |
 | 載入 | 案件前後照片與更新照片增加 lazy／async；既有列表／首頁延遲載入保留 |
 | 快取 | 新照片唯一 UUID、不覆寫，設定一小時 cache-control；仍須正式上傳後核對 CDN／瀏覽器 response headers |
 | 固定素材 | 首頁七張內容圖皆 WebP；地圖品牌圖 PNG 39,329 bytes → WebP 11,804 bytes |
