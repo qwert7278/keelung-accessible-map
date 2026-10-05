@@ -7,5 +7,5 @@
     "noUnusedLocals": true, "noUnusedParameters": true,
     "types": ["vite/client", "google.maps", "node"]
   },
-  "include": ["src", "api", "vite.config.ts"]
+  "include": ["src", "api", "server", "scripts/mcp-*.ts", "tests/mcp-*.ts", "vite.config.ts"]
 }
