@@ -56,11 +56,29 @@ await denied('legacy WebP call cannot change JPEG operation',()=>reserve(jpegId,
 await denied('public JPEG reservation forbidden',`select public.reserve_photo_verified_format('${jpegUid}',true,'${jpegId}','before','${jpegId}','${'d'.repeat(64)}','jpeg')`);
 await denied('private JPEG reservation forbidden',`select private.reserve_photo_format('${jpegId}','before','${jpegId}','jpeg')`);
 await denied('PNG reservation rejected',()=>reserve(jpegId,'before',jpegId,undefined,'png'));
-const object=(path,mime,size=50000,owner=jpegUid)=>`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos',${sqlQuote(path)},'${owner}','{"mimetype":"${mime}","size":${size}}')`;
-await denied('jpg cannot contain WebP',object(jpg.path,'image/webp'));
-await denied('jpg cannot contain PNG',object(jpg.path,'image/png'));
-await denied('JPEG over 1 MiB rejected',object(jpg.path,'image/jpeg',1048577));
-await denied('empty JPEG rejected',object(jpg.path,'image/jpeg',0));
+const object=(path,mime,size=50000,owner=jpegUid)=>`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos',${sqlQuote(path)},'${owner}',${sqlQuote(JSON.stringify({mimetype:mime,size}))})`;
+// This SQL harness cannot enforce HTTP bucket restrictions. Invalid finalized
+// metadata is rejected at claim, not INSERT. Real bucket checks live in test:storage.
+const invalidFinal=async(name,sql,path)=>{
+ await db.exec('savepoint final_metadata_fixture');await db.exec(sql);
+ await denied(name,`select private.claim_photo(${sqlQuote(path)})`,/照片上傳尚未完成/);
+ await db.exec('reset role');assert.equal(await scalar(`select state from private.photo_intents where path=${sqlQuote(path)}`),'active');
+ await db.exec('set role authenticated');
+ await db.exec('rollback to final_metadata_fixture;release final_metadata_fixture');
+};
+await db.exec('reset role');
+assert.equal(await scalar("select file_size_limit from storage.buckets where id='report-photos'"),1048576);
+assert.deepEqual(await scalar("select allowed_mime_types from storage.buckets where id='report-photos'"),['image/webp','image/jpeg']);ok('bucket constraints remain 1 MiB / WebP + JPEG');
+await login(jpegUid);
+for(const metadata of ['null',"'{}'::jsonb","'{\"size\":0}'::jsonb"]){
+ await invalidFinal('incomplete INSERT metadata accepted, incomplete final metadata cannot be claimed',
+  `insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos',${sqlQuote(jpg.path)},'${jpegUid}',${metadata})`,jpg.path);
+}
+await invalidFinal('jpg with finalized WebP MIME cannot be claimed',object(jpg.path,'image/webp'),jpg.path);
+await invalidFinal('jpg with finalized PNG MIME cannot be claimed',object(jpg.path,'image/png'),jpg.path);
+await invalidFinal('finalized JPEG over 1 MiB cannot be claimed',object(jpg.path,'image/jpeg',1048577),jpg.path);
+await invalidFinal('empty finalized JPEG cannot be claimed',object(jpg.path,'image/jpeg',0),jpg.path);
+await invalidFinal('malformed finalized size cannot be claimed',object(jpg.path,'image/jpeg','NaN'),jpg.path);
 await denied('JPEG wrong owner rejected',object(jpg.path,'image/jpeg',50000,crypto.randomUUID()));
 await denied('unreserved JPEG rejected',object(`${crypto.randomUUID()}/before/x.jpg`,'image/jpeg'));
 await denied('reserved jpg cannot change extension',object(jpg.path.replace('.jpg','.jpeg'),'image/jpeg'));
@@ -78,13 +96,28 @@ await db.exec(object(jpegUpdate.path,'image/jpeg'));await db.exec(`insert into p
 assert(await scalar(`select public.owned_update('${jpegId}','${jpegUpdateId}')`));ok('JPEG community update claimed');
 await denied('anonymous JPEG after photo denied',()=>reserve(jpegId,'after',crypto.randomUUID(),undefined,'jpeg'));
 const wpId=crypto.randomUUID(),wp=await reserve(wpId,'before',wpId,undefined,'webp');
-await denied('webp cannot contain JPEG',object(wp.path,'image/jpeg'));
+await invalidFinal('webp with finalized JPEG MIME cannot be claimed',object(wp.path,'image/jpeg'),wp.path);
 await denied('same operation cannot change WebP to JPEG',()=>reserve(wpId,'before',wpId,undefined,'jpeg'));
 const abandoned=crypto.randomUUID(),ab=await reserve(abandoned,'before',abandoned,undefined,'jpeg');
 await db.exec(`reset role;update private.photo_intents set expires_at=clock_timestamp()-interval '1 second' where path='${ab.path}'`);
 await login(jpegUid);await denied('expired JPEG upload denied',object(ab.path,'image/jpeg'));
 await denied('expired JPEG retry denied',()=>reserve(abandoned,'before',abandoned,undefined,'jpeg'));
 await db.exec('reset role;set role service_role');const jpegExpired=await scalar('select public.expired_photos()');assert(jpegExpired.includes(ab.path));assert(!jpegExpired.includes(jpg.path));ok('JPEG cleanup excludes referenced report photo');
+// Lifecycle model: authorization may see NULL metadata; only finalized metadata
+// can pass the actual report trigger. This is SQL regression, not HTTP evidence.
+await db.exec('reset role;savepoint lifecycle_fixture');
+const lifecycleUid=crypto.randomUUID(),lifecycleId=crypto.randomUUID();await login(lifecycleUid);
+const lifecycle=await reserve(lifecycleId,'before',lifecycleId,undefined,'jpeg');
+await db.exec(`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos',${sqlQuote(lifecycle.path)},'${lifecycleUid}',null)`);
+ok('reserved INSERT accepts NULL metadata at authorization time');
+const lifecycleInsert=`insert into public.reports(id,city_id,district,title,category,lat,lng,wheelchair_access,before_image_path) values('${lifecycleId}',${sqlQuote(jpegRegion.cityId)},${sqlQuote(jpegRegion.district)},'Lifecycle QA','ramp',${jpegRegion.point[0]},${jpegRegion.point[1]},'blocked',${sqlQuote(lifecycle.path)})`;
+await denied('report insert before metadata finalization rejected',lifecycleInsert,/照片上傳尚未完成/);
+await db.exec('reset role');assert.equal(await scalar(`select state from private.photo_intents where operation_id='${lifecycleId}'`),'active');
+assert.equal(await scalar(`select count(*) from public.reports where id='${lifecycleId}'`),0);ok('failed final validation rolls back report and photo claim');
+await db.exec(`update storage.objects set metadata='{"mimetype":"image/jpeg","size":50000}' where name=${sqlQuote(lifecycle.path)}`);
+await login(lifecycleUid);await db.exec(lifecycleInsert);
+assert.equal(await scalar(`select public.owned_report('${lifecycleId}')`),lifecycleId);ok('same reservation succeeds after final metadata persists');
+await db.exec('reset role;rollback to lifecycle_fixture;release lifecycle_fixture');
 await login('00000000-0000-4000-8000-000000000001');
 const id='10000000-0000-4000-8000-000000000001';
 assert.equal(await scalar(`select public.is_admin()`),false);ok('anonymous cannot become admin');
@@ -110,8 +143,8 @@ assert.equal(await scalar(`select public.owned_report('10000000-0000-4000-8000-0
 await denied('unreserved direct upload denied',`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos','${crypto.randomUUID()}/before/test.webp','00000000-0000-4000-8000-000000000001','{"mimetype":"image/webp","size":50000}')`);
 const fresh=crypto.randomUUID();
 const reservation=await reserve(fresh,'before',fresh);
-await denied('oversized direct upload denied',`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos','${reservation.path}','00000000-0000-4000-8000-000000000001','{"mimetype":"image/webp","size":1048577}')`);
-await denied('PNG metadata denied',`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos','${reservation.path}','00000000-0000-4000-8000-000000000001','{"mimetype":"image/png","size":50000}')`);
+await invalidFinal('oversized finalized WebP cannot be claimed',`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos','${reservation.path}','00000000-0000-4000-8000-000000000001','{"mimetype":"image/webp","size":1048577}')`,reservation.path);
+await invalidFinal('PNG finalized metadata cannot be claimed',`insert into storage.objects(bucket_id,name,owner_id,metadata) values('report-photos','${reservation.path}','00000000-0000-4000-8000-000000000001','{"mimetype":"image/png","size":50000}')`,reservation.path);
 assert.equal((await db.query(`update storage.objects set metadata='{}' where name='${id}/before/${id}.webp' returning id`)).rows.length,0);ok('photo overwrite blocked by RLS');
 assert.equal((await db.query(`delete from storage.objects where name='${id}/before/${id}.webp' returning id`)).rows.length,0);ok('photo delete blocked by RLS');
 const retried=await reserve(fresh,'before',fresh);assert.equal(retried.path,reservation.path);ok('retry reuses reservation path');

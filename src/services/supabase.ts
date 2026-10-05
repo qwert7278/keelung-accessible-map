@@ -217,7 +217,7 @@ export function createSupabaseRepository(): ReportRepository {
           ? resolve()
           : reject(
               new Error(
-                `照片上傳失敗（${xhr.status}），請確認 Storage 權限與容量。`,
+                "照片上傳沒有完成，請稍後重試。",
               ),
             );
       xhr.send(blob);

@@ -54,6 +54,16 @@ describe('uncertain report submission recovery',()=>{
   await expect(repo.addUpdate(id,{message:'現場補充',suggestedStatus:null},new Blob(['processed'],{type:'image/jpeg'}),vi.fn(),operation)).rejects.toThrow('無效');
   expect(xhr).not.toHaveBeenCalled();expect(mocks.insert).not.toHaveBeenCalled();
  });
+ it.each([400,403,413,500])('shows a plain retry message for upload HTTP %s without inserting',async status=>{
+  const id=crypto.randomUUID(),operation=crypto.randomUUID();mocks.rpc.mockResolvedValue({data:null,error:null});
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({path:`${id}/updates/${operation}.jpg`,uploaded:false})));
+  const xhr={open:vi.fn(),setRequestHeader:vi.fn(),upload:{},status,onload:()=>{},send:vi.fn()};
+  xhr.send.mockImplementation(()=>xhr.onload());vi.stubGlobal('XMLHttpRequest',function(){return xhr;});
+  const repo=(await import('./supabase')).createSupabaseRepository();
+  await expect(repo.addUpdate(id,{message:'現場補充',suggestedStatus:null},new Blob(['processed'],{type:'image/jpeg'}),vi.fn(),operation))
+   .rejects.toThrow('照片上傳沒有完成，請稍後重試。');
+  expect(mocks.insert).not.toHaveBeenCalled();
+ });
  it('preserves optimistic-lock failure when no committed operation exists',async()=>{
   mocks.getSession.mockResolvedValue({data:{session:{user:{id:'verified-user',is_anonymous:false},access_token:'verified-token'}},error:null});
   mocks.rpc.mockImplementation(async(name)=>({data:name==='is_admin'?true:null,error:name==='moderate_report'?{message:'案件已被其他管理者更新'}:null}));

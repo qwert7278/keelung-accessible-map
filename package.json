@@ -10,7 +10,8 @@
     "test": "vitest run && node scripts/location-runtime-check.mjs && node scripts/upload-runtime-check.mjs",
     "seo:check": "node scripts/seo-check.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "test:db": "node scripts/db-launch-check.mjs"
+    "test:db": "node scripts/db-launch-check.mjs",
+    "test:storage": "node scripts/storage-upload-integration.mjs"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.3",
