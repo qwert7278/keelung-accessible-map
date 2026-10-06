@@ -2,6 +2,7 @@ import {createRemoteJWKSet,jwtVerify,type JWTVerifyGetKey,type JWTPayload} from 
 import {z} from 'zod';
 import {hasAttachment,inspectAttachment} from './attachment-probe.js';
 import {downloadAttachment,normalizeAttachment} from './attachment-download.js';
+import {attachmentPhoto} from './attachment-photo.js';
 import {createMcpHandler} from '@modelcontextprotocol/server';
 import {buildMcpServer,readBounded} from './handler.js';
 import {RoadTagService} from '../roadtag/service.js';
@@ -63,7 +64,8 @@ export function oauthEndpoint(c:OAuthConfig){
     await backend.rpc('mcp_attachment_download_budget',{p:principal.id});
     const file=(input as {photo_file:{download_url:string}}).photo_file;
     const image=await normalizeAttachment(await downloadAttachment(file.download_url));
-    return {...facts,mode:'attachment_safe_fetch',downloaded:true,database_written:true,report_written:false,photo_written:false,normalized:{format:image.format,source_format:image.source_format,bytes:image.bytes.length,width:image.width,height:image.height,metadata_removed:image.metadata_removed}};
+    const finalized=await attachmentPhoto(service,name,input,principal,image.bytes);
+    return {...facts,mode:'attachment_photo_token',token_generated:!!finalized.photo_token,expires_at:finalized.expires_at,downloaded:true,database_written:true,report_written:false,photo_written:true,normalized:{format:image.format,source_format:image.source_format,bytes:image.bytes.length,width:image.width,height:image.height,metadata_removed:image.metadata_removed}};
    }
    return service.call(name,input,principal);
   },{securitySchemes:[{type:'oauth2',scopes:['openid']}],challenge:challenge(c),attachmentProbe:true}),{legacy:'stateless',maxRequestBodySize:32768});
