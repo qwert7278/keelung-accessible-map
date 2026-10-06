@@ -136,7 +136,7 @@ try{
  }ok('encrypted session table/RPC unavailable to public and actor roles');
  const saved={...process.env};
  try{
-  Object.assign(process.env,{MCP_ENABLED:'true',MCP_PUBLIC_ORIGIN:'https://preview.example',MCP_SUPABASE_URL:url,MCP_SUPABASE_SERVICE_KEY:service,MCP_SUPABASE_PUBLISHABLE_KEY:pub,MCP_SESSION_ENCRYPTION_KEY:key,MCP_PHOTO_SECRET:'x'.repeat(32),MCP_PRINCIPALS_JSON:JSON.stringify([{...a,credentialHash:'a'.repeat(64)}])});
+  Object.assign(process.env,{MCP_ENABLED:'true',MCP_LEGACY_ALPHA_ENABLED:'true',MCP_PUBLIC_ORIGIN:'https://preview.example',MCP_SUPABASE_URL:url,MCP_SUPABASE_SERVICE_KEY:service,MCP_SUPABASE_PUBLISHABLE_KEY:pub,MCP_SESSION_ENCRYPTION_KEY:key,MCP_PHOTO_SECRET:'x'.repeat(32),MCP_PRINCIPALS_JSON:JSON.stringify([{...a,credentialHash:'a'.repeat(64)}])});
   assert(environment());process.env.MCP_SUPABASE_URL='https://ifcicahnrpkwjcxmnmug.supabase.co';assert.equal(environment(),null);ok('Production project hard block retained with otherwise valid config');
   process.env.MCP_SUPABASE_URL=url;process.env.MCP_PRINCIPALS_JSON=JSON.stringify([{...a,credentialHash:'a'.repeat(64),actorToken:'deprecated'}]);assert.equal(environment(),null);ok('static actorToken config rejected');
  }finally{for(const name of Object.keys(process.env))if(!(name in saved))delete process.env[name];Object.assign(process.env,saved);}

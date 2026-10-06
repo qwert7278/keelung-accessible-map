@@ -7,23 +7,23 @@ import {buildMcpServer,readBounded} from './handler.js';
 import {RoadTagService} from '../roadtag/service.js';
 import {SupabaseBackend} from '../roadtag/supabase.js';
 import {RoadError,type Principal} from '../roadtag/contracts.js';
-const STAGING='https://wpravdqviylkcpsioybu.supabase.co';
+import {oauthTuple} from '../../src/utils/mcp-oauth-environment.js';
 const mapping=z.array(z.strictObject({id:z.string().min(1).max(100),actor:z.uuid(),write:z.boolean()})).min(1);
-export type OAuthConfig={origin:string;resource:string;issuer:string;serviceKey:string;publishable:string;sessionKey:string;photoSecret:string;principals:Principal[];clients:string[]};
+export type OAuthConfig={origin:string;supabaseUrl:string;resource:string;issuer:string;serviceKey:string;publishable:string;sessionKey:string;photoSecret:string;principals:Principal[];clients:string[]};
 export function oauthEnvironment():OAuthConfig|null{
  try{
-  if(process.env.VERCEL_ENV!=='preview'||process.env.MCP_ENABLED!=='true'||process.env.MCP_OAUTH_ENABLED!=='true'||process.env.MCP_SUPABASE_URL!==STAGING)return null;
-  const origin=new URL(process.env.MCP_PUBLIC_ORIGIN||'');
-  if(origin.protocol!=='https:'||origin.username||origin.password||origin.port||!origin.hostname.endsWith('.vercel.app')||origin.pathname!=='/'||origin.search||origin.hash)return null;
+  if(process.env.MCP_ENABLED!=='true'||process.env.MCP_OAUTH_ENABLED!=='true')return null;
+  const tuple=oauthTuple(process.env.MCP_PUBLIC_ORIGIN||'',process.env.MCP_SUPABASE_URL||'');
+  if(!tuple||tuple.environment!==process.env.VERCEL_ENV)return null;
   const serviceKey=process.env.MCP_SUPABASE_SERVICE_KEY||'',publishable=process.env.MCP_SUPABASE_PUBLISHABLE_KEY||'',sessionKey=process.env.MCP_SESSION_ENCRYPTION_KEY||'',photoSecret=process.env.MCP_PHOTO_SECRET||'';
   if(!serviceKey||!publishable.startsWith('sb_publishable_')||serviceKey===publishable||!/^[0-9a-f]{64}$/.test(sessionKey)||photoSecret.length<32)return null;
   const principals=mapping.parse(JSON.parse(process.env.MCP_OAUTH_PRINCIPALS_JSON||'[]')),clients=z.array(z.uuid()).parse(JSON.parse(process.env.MCP_OAUTH_CLIENTS_JSON||'[]'));
   if(new Set(principals.map(p=>p.actor)).size!==principals.length||new Set(principals.map(p=>p.id)).size!==principals.length)return null;
-  return {origin:origin.origin,resource:origin.origin+'/api/mcp-chatgpt',issuer:STAGING+'/auth/v1',serviceKey,publishable,sessionKey,photoSecret,principals,clients};
+  return {origin:tuple.origin,supabaseUrl:tuple.supabaseUrl,resource:tuple.origin+'/api/mcp-chatgpt',issuer:tuple.supabaseUrl+'/auth/v1',serviceKey,publishable,sessionKey,photoSecret,principals,clients};
  }catch{return null;}
 }
 export function challenge(c:OAuthConfig,error='invalid_token'){
- return 'Bearer resource_metadata="'+c.origin+'/api/mcp-oauth-resource", scope="openid", error="'+error+'", error_description="Road Tag staging OAuth authentication required"';
+ return 'Bearer resource_metadata="'+c.origin+'/api/mcp-oauth-resource", scope="openid", error="'+error+'", error_description="Road Tag OAuth authentication required"';
 }
 export function resourceMetadata(c:OAuthConfig){return {resource:c.resource,authorization_servers:[c.issuer],scopes_supported:['openid'],bearer_methods_supported:['header']};}
 export async function verifyOAuth(token:string,c:OAuthConfig,key:JWTVerifyGetKey):Promise<{principal:Principal;claims:JWTPayload}>{
@@ -36,6 +36,9 @@ export async function verifyOAuth(token:string,c:OAuthConfig,key:JWTVerifyGetKey
 }
 const keys=new Map<string,JWTVerifyGetKey>();
 function signingKeys(c:OAuthConfig){let k=keys.get(c.issuer);if(!k){k=createRemoteJWKSet(new URL(c.issuer+'/.well-known/jwks.json'),{timeoutDuration:5000,cooldownDuration:30000});keys.set(c.issuer,k);}return k;}
+export function oauthBackend(c:OAuthConfig,principal:Principal,token:string){
+ return new SupabaseBackend(c.supabaseUrl,c.serviceKey,c.publishable,c.sessionKey,{actor:principal.actor,token});
+}
 export function oauthEndpoint(c:OAuthConfig){
  return async(request:Request):Promise<Response>=>{
   const url=new URL(request.url);
@@ -52,7 +55,7 @@ export function oauthEndpoint(c:OAuthConfig){
   if(token){
    try{const verified=await verifyOAuth(token,c,signingKeys(c));principal=verified.principal;clientId=String(verified.claims.client_id);}catch{return Response.json({error:{code:'AUTH_REQUIRED'}},{status:401,headers:{'WWW-Authenticate':challenge(c),'Cache-Control':'no-store'}});}
   }else if(!discovery)return Response.json({error:{code:'AUTH_REQUIRED'}},{status:401,headers:{'WWW-Authenticate':challenge(c),'Cache-Control':'no-store'}});
-  const backend=principal?new SupabaseBackend(STAGING,c.serviceKey,c.publishable,c.sessionKey,{actor:principal.actor,token}):undefined;
+  const backend=principal?oauthBackend(c,principal,token):undefined;
   const service=backend?new RoadTagService(backend,c.origin,c.photoSecret):undefined;
   const handler=createMcpHandler(()=>buildMcpServer(async(name,input)=>{
    if(!principal||!service||!backend)throw new RoadError('AUTH_REQUIRED');
