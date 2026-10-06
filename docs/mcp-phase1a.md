@@ -71,7 +71,7 @@ SQL advisory transaction lock 以 operation 序列化；same payload 返回原 I
 
 ## Env、local run 與測試
 
-Server-only env：`MCP_ENABLED`（預設false）、`MCP_PUBLIC_ORIGIN`、`MCP_SUPABASE_URL`、`MCP_SUPABASE_PUBLISHABLE_KEY`、`MCP_SUPABASE_SERVICE_KEY`、`MCP_SESSION_ENCRYPTION_KEY`、`MCP_PHOTO_SECRET`、`MCP_PRINCIPALS_JSON`。
+Server-only env：`MCP_ENABLED`（預設false）、`MCP_LEGACY_ALPHA_ENABLED`（預設false；獨立 legacy 授權必須明確 true，Production hard block 保留）、`MCP_PUBLIC_ORIGIN`、`MCP_SUPABASE_URL`、`MCP_SUPABASE_PUBLISHABLE_KEY`、`MCP_SUPABASE_SERVICE_KEY`、`MCP_SESSION_ENCRYPTION_KEY`、`MCP_PHOTO_SECRET`、`MCP_PRINCIPALS_JSON`。
 
 Principals JSON 的欄位：id、actor、write、credentialHash。Access/refresh token 不進 env mapping；加密保存在 private SQL session table。此文件不放任何 secret value。Phase 1A config 明確拒絕 Production project URL，避免誤用既有環境。
 
