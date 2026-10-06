@@ -19,9 +19,9 @@ Consent is staging-only, noindex, with an in-memory Auth session and explicit Ap
 - Supabase OAuth Server + DCR enabled on free staging; discovery HTTP 200, ES256 JWKS present.
 - Local Phase 1A: 73 checks PASS; mocked Auth/session: 27 checks PASS; emitted Node runtime PASS.
 - Local OAuth: JWT negative tests, official MCP client discovery of exactly five tools, anonymous call rejection, Storage credential separation and SQL hook/authorization tests PASS.
-- Forward migration mcp_phase1b_oauth applied to staging only. Auth hook configuration is still PENDING.
-- Vercel Preview activation, actual ChatGPT OAuth link + Scan Tools: PENDING.
-- Real fileParams attachment evidence: PENDING. No attachment schema/probe/downloader implemented before this gate.
+- Forward migration mcp_phase1b_oauth applied to staging only. Auth hook enabled; consent Site URL saved and read back.
+- Vercel feature Preview activated with staging keys as Secret. Exact branch alias protection exception authorized and saved; no global protection change. Hosted metadata 200, anonymous tools/call 401, official MCP Client initialize/list PASS. Actual ChatGPT OAuth link + tool scan PASS (Write 2 / Read 3); native PKCE S256 approved. ChatGPT owns its tokens; independent real refresh/Storage verification remains PENDING.
+- Real fileParams attachment evidence: PENDING. A staging OAuth-only, no-download/no-write structure probe was added after the OAuth gate; exactly five tools retained. SSRF downloader remains unimplemented until real attachment evidence.
 - SSRF-safe fetch, normalization, bridge to photo-token pipeline, ChatGPT create_report/add_observation E2E and HEIC: PENDING.
 
 No Production env, database, OAuth principal/session/report/photo or main merge changes.

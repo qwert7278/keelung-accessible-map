@@ -1,5 +1,6 @@
 import {createRemoteJWKSet,jwtVerify,type JWTVerifyGetKey,type JWTPayload} from 'jose';
 import {z} from 'zod';
+import {hasAttachment,inspectAttachment} from './attachment-probe.js';
 import {createMcpHandler} from '@modelcontextprotocol/server';
 import {buildMcpServer,readBounded} from './handler.js';
 import {RoadTagService} from '../roadtag/service.js';
@@ -56,8 +57,9 @@ export function oauthEndpoint(c:OAuthConfig){
    if(!principal||!service||!backend)throw new RoadError('AUTH_REQUIRED');
    const live=await backend.rpc('mcp_oauth_actor',{p:principal.id,a:principal.actor,c:clientId,r:c.resource});
    if(live.actor!==principal.actor||live.can_write!==principal.write)throw new RoadError('FORBIDDEN');
+   if(hasAttachment(name,input)){if(!principal.write)throw new RoadError('FORBIDDEN');return inspectAttachment(name,input);}
    return service.call(name,input,principal);
-  },{securitySchemes:[{type:'oauth2',scopes:['openid']}],challenge:challenge(c)}),{legacy:'stateless',maxRequestBodySize:32768});
+  },{securitySchemes:[{type:'oauth2',scopes:['openid']}],challenge:challenge(c),attachmentProbe:true}),{legacy:'stateless',maxRequestBodySize:32768});
   try{
    const replay=request.method==='POST'?new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(rpc)}):request;
    const response=await handler.fetch(replay);response.headers.set('Cache-Control','no-store');return response;
