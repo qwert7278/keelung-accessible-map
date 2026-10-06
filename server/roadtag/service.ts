@@ -38,6 +38,9 @@ export class RoadTagService {
   data.photo_hash=i.photo_token?hash(String(i.photo_token)):null;delete data.photo_token;
   // The RPC checks successful replay before token expiry/cooldown and owns the transaction.
   const result=await this.backend.rpc('mcp_write',{p:principal.id,tool_name:name,op:operation,data});
+  return this.writeResult(result);
+ }
+ async writeResult(result:PublicRow):Promise<PublicRow>{
   const report=(await this.backend.feed({id:String(result.report_id)},0,1))[0];
   return {...result,url:reportUrl(this.origin,String(result.report_id),report?String(report.city_id):undefined,report?String(report.district):undefined)};
  }

@@ -3,7 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const db=new PGlite();
-await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
+await db.exec(`create role supabase_auth_admin;create role anon;create role authenticated;create role service_role bypassrls;
  create schema auth;create schema storage;grant usage on schema public,auth,storage to anon,authenticated,service_role;
  create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
 `);

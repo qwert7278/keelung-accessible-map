@@ -1,8 +1,7 @@
 import {createRemoteJWKSet,jwtVerify,type JWTVerifyGetKey,type JWTPayload} from 'jose';
 import {z} from 'zod';
-import {hasAttachment,inspectAttachment} from './attachment-probe.js';
-import {downloadAttachment,normalizeAttachment} from './attachment-download.js';
-import {attachmentPhoto} from './attachment-photo.js';
+import {hasAttachment} from './attachment-probe.js';
+import {attachmentWrite} from './attachment-write.js';
 import {createMcpHandler} from '@modelcontextprotocol/server';
 import {buildMcpServer,readBounded} from './handler.js';
 import {RoadTagService} from '../roadtag/service.js';
@@ -59,14 +58,7 @@ export function oauthEndpoint(c:OAuthConfig){
    if(!principal||!service||!backend)throw new RoadError('AUTH_REQUIRED');
    const live=await backend.rpc('mcp_oauth_actor',{p:principal.id,a:principal.actor,c:clientId,r:c.resource});
    if(live.actor!==principal.actor||live.can_write!==principal.write)throw new RoadError('FORBIDDEN');
-   if(hasAttachment(name,input)){
-    if(!principal.write)throw new RoadError('FORBIDDEN');const facts=inspectAttachment(name,input);
-    await backend.rpc('mcp_attachment_download_budget',{p:principal.id});
-    const file=(input as {photo_file:{download_url:string}}).photo_file;
-    const image=await normalizeAttachment(await downloadAttachment(file.download_url));
-    const finalized=await attachmentPhoto(service,name,input,principal,image.bytes);
-    return {...facts,mode:'attachment_photo_token',token_generated:!!finalized.photo_token,expires_at:finalized.expires_at,downloaded:true,database_written:true,report_written:false,photo_written:true,normalized:{format:image.format,source_format:image.source_format,bytes:image.bytes.length,width:image.width,height:image.height,metadata_removed:image.metadata_removed}};
-   }
+   if(hasAttachment(name,input))return attachmentWrite(service,name,input,principal);
    return service.call(name,input,principal);
   },{securitySchemes:[{type:'oauth2',scopes:['openid']}],challenge:challenge(c),attachmentProbe:true}),{legacy:'stateless',maxRequestBodySize:32768});
   try{
