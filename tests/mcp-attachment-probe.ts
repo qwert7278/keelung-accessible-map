@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {attachmentSchemas,hasAttachment,inspectAttachment} from '../server/mcp/attachment-probe.js';
+const file={download_url:'https://example.com/test.jpg?secret=never-log',file_id:'private-file-id',mime_type:'image/jpeg',file_name:'qa.jpg'};
+const input={operation_id:randomUUID(),photo_file:file,city_id:'TW-KEE',district:'仁愛區',lat:25.13,lng:121.74,title:'Staging structure probe',category:'other',wheelchair_access:'passable',confirmed:true};
+const result=inspectAttachment('create_report',input);
+assert.equal(result.downloaded,false);assert.equal(result.database_written,false);assert.equal(result.download_url_parse_success,true);assert.equal(result.file_id_present,true);
+for(const secret of [file.download_url,file.file_id,file.file_name,'never-log'])assert(!JSON.stringify(result).includes(secret));
+assert(hasAttachment('create_report',input));assert(!hasAttachment('get_report',input));
+assert(!attachmentSchemas.create_report.safeParse({...input,photo_token:'a'.repeat(43)}).success);
+assert(!attachmentSchemas.create_report.safeParse({...input,photo_file:undefined}).success);
+assert(!attachmentSchemas.create_report.safeParse({...input,confirmed:false}).success);
+assert(!attachmentSchemas.add_observation.safeParse({operation_id:randomUUID(),report_id:randomUUID(),message:'probe',confirmed:true,photo_file:file,photo_token:'a'.repeat(43)}).success);
+assert.throws(()=>inspectAttachment('create_report',{...input,photo_file:{...file,file_id:''}}));
+assert.equal(inspectAttachment('create_report',{...input,photo_file:{...file,download_url:'not a url'}}).download_url_parse_success,false);
+assert.equal(inspectAttachment('create_report',{...input,photo_file:{...file,mime_type:'secret'}}).mime_type,'unknown');
+console.log('PASS attachment probe: no download/write flags, sensitive-field redaction, strict file shape and token exclusivity');
