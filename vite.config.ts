@@ -9,6 +9,7 @@ import { GET as locationReverse } from './api/location/reverse.ts'
 
 function appRouteAliases(): Plugin {
   const seoRoutes: Record<string, string> = {
+    '/oauth/consent': '/oauth-consent.html',
     '/how-to': '/seo-pages/how-to.html',
     '/about': '/seo-pages/about.html',
     '/privacy': '/seo-pages/privacy.html',
@@ -73,6 +74,7 @@ export default defineConfig(({ mode }) => {
       manifest: true,
       rollupOptions: {
         input: {
+          oauthConsent: resolve(process.cwd(), 'oauth-consent.html'),
           consent: resolve(process.cwd(), 'src/consent-entry.tsx'),
           homepage: resolve(process.cwd(), 'index.html'),
           map: resolve(process.cwd(), 'map.html'),

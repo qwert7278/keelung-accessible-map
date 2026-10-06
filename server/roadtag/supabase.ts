@@ -3,7 +3,7 @@ import {ActorSessions} from './actor-session.js';
 const reportFields='id,city_id,district,title,address,description,category,lat,lng,status,wheelchair_access,created_at,updated_at,before_image_path,after_image_path';
 export class SupabaseBackend implements Backend {
  readonly sessions:ActorSessions;
- constructor(private url:string,private key:string,private publishable:string,sessionKey:string){
+ constructor(private url:string,private key:string,private publishable:string,sessionKey:string,private oauthToken?:{actor:string;token:string}){
   if(!publishable.startsWith('sb_publishable_')||publishable===key)throw new RoadError('SERVICE_UNAVAILABLE');
   this.sessions=new ActorSessions(url,publishable,sessionKey,(name,args)=>this.rpc(name,args));
  }
@@ -15,7 +15,8 @@ export class SupabaseBackend implements Backend {
   if(!response.ok){let code='SERVICE_UNAVAILABLE';try{const e=await response.json();if(typeof e.message==='string')code=e.message;}catch{/* Never return upstream bytes. */}throw new RoadError(code);}return response;
  }
  private async actorRequest(path:string,p:Principal,init:RequestInit={}){
-  const token=await this.sessions.access(p),headers=new Headers(init.headers);
+  if(this.oauthToken&&this.oauthToken.actor!==p.actor)throw new RoadError('FORBIDDEN');
+  const token=this.oauthToken?this.oauthToken.token:await this.sessions.access(p),headers=new Headers(init.headers);
   headers.set('apikey',this.publishable);headers.set('authorization','Bearer '+token);
   const response=await fetch(this.url+path,{...init,headers,signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new RoadError('SERVICE_UNAVAILABLE');return response;

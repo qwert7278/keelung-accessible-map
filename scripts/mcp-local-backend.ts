@@ -9,7 +9,7 @@ export class LocalBackend implements Backend {
  static async open(root:string,origin:string){
   await mkdir(root,{recursive:true});const db=new PGlite(resolve(root,'database'));
   if(!(await db.query<{exists:boolean}>("select to_regclass('public.reports') is not null as exists")).rows[0].exists){
-   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
+   await db.exec(`create role supabase_auth_admin;create role anon;create role authenticated;create role service_role bypassrls;
     create schema auth;create schema storage;grant usage on schema public,auth,storage to anon,authenticated,service_role;
     create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
     create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}')$$;
