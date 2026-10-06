@@ -14,7 +14,7 @@
     "test:storage": "node scripts/storage-upload-integration.mjs",
     "test:mcp": "tsx tests/mcp-phase1a.ts && tsx tests/mcp-hosted-auth.ts && node scripts/mcp-runtime-check.mjs",
     "mcp:local": "tsx scripts/mcp-local.ts",
-    "test:mcp:oauth": "tsx tests/mcp-oauth.ts && tsx tests/mcp-attachment-probe.ts"
+    "test:mcp:oauth": "tsx tests/mcp-oauth.ts && tsx tests/mcp-attachment-probe.ts && tsx tests/mcp-attachment-download.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.3",
@@ -24,6 +24,7 @@
     "gsap": "3.15.0",
     "heic-to": "1.6.5",
     "idb-keyval": "^6.3.0",
+    "ipaddr.js": "2.5.0",
     "jose": "6.2.12",
     "leaflet": "^1.9.4",
     "react": "^19.3.0",
