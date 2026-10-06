@@ -1,0 +1,143 @@
+import assert from 'node:assert/strict';
+import {randomUUID,randomBytes} from 'node:crypto';
+import {mkdtemp,mkdir,writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import sharp from 'sharp';
+import {Client,StreamableHTTPClientTransport} from '@modelcontextprotocol/client';
+import {startLocal} from '../scripts/mcp-local-server.js';
+import {hash,validateProcessed} from '../server/roadtag/service.js';
+import {candidates,regions,distance} from '../server/roadtag/geography.js';
+import {type PublicRow,type ToolName} from '../server/roadtag/contracts.js';
+import {environment} from '../server/mcp/config.js';
+import {mcpEndpoint} from '../server/mcp/handler.js';
+import {POST as deployedEndpoint} from '../api/mcp.js';
+await mkdir('output',{recursive:true});const root=await mkdtemp(resolve('output/mcp-test-'));
+const tokens=[randomBytes(32).toString('base64url'),randomBytes(32).toString('base64url'),randomBytes(32).toString('base64url')];
+const principals=tokens.map((token,i)=>({id:'test-'+i,actor:randomUUID(),write:i!==2,credentialHash:hash(token)}));
+const settings={enabled:true,origin:'http://127.0.0.1',principals},secret=randomBytes(32).toString('base64url');
+let app=await startLocal(root,settings,secret);let client:Client;const clients:Client[]=[];const passed:string[]=[];
+const ok=(name:string)=>{passed.push(name);console.log('PASS '+name);};
+async function connect(index=0,legacy=false){const c=new Client({name:'roadtag-test',version:'0.1.0'},legacy?{supportedProtocolVersions:['2025-11-25']}:{versionNegotiation:{mode:{pin:'2026-07-28'}}});
+ await c.connect(new StreamableHTTPClientTransport(new URL(app.origin+'/api/mcp'),{...(legacy?{protocolVersion:'2025-11-25'}:{}),requestInit:{headers:{authorization:'Bearer '+tokens[index]}}}));clients.push(c);return c;}
+async function call(name:ToolName,args:PublicRow,c=client){const result=await c.callTool({name,arguments:args});return result.structuredContent as {ok:boolean;data:PublicRow;error:{code:string}};}
+async function denied(name:ToolName,args:PublicRow,code:string,c=client){
+ const result=await call(name,args,c);assert.equal(result.ok,false);assert.equal(result.error.code,code);
+ ok(name+' rejects '+code);
+}
+async function photo(meta:PublicRow,bytes:Uint8Array,index=0){
+ const headers={authorization:'Bearer '+tokens[index],'Content-Type':'application/json'};
+ const post=async(path:string)=>{const r=await fetch(app.origin+path,{method:'POST',headers,body:JSON.stringify(meta)});const value=await r.json();assert.equal(r.status,200,JSON.stringify(value));return value;};
+ const reserved=await post('/api/mcp-photo');
+ if(!reserved.uploaded){const r=await fetch(app.origin+'/api/mcp-photo/upload',{method:'POST',headers:{authorization:headers.authorization,'Content-Type':meta.format==='jpeg'?'image/jpeg':'image/webp','x-roadtag-photo':JSON.stringify(meta)},body:bytes as BodyInit});assert.equal(r.status,200,await r.text());}
+ const token=await post('/api/mcp-photo/finalize');return {...token,path:reserved.path};
+}
+try{
+ assert.equal(environment(),null);assert.equal((await deployedEndpoint(new Request('http://localhost/api/mcp',{method:'POST'}))).status,503);ok('default disabled endpoint fails closed');
+ for(const token of ['',randomBytes(32).toString('base64url')]){assert.equal((await fetch(app.origin+'/api/mcp',{method:'POST',headers:{authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'})).status,401);}ok('missing/bad alpha auth rejected');
+ assert.equal((await fetch(app.origin+'/api/mcp',{method:'POST',headers:{authorization:'Bearer '+tokens[0],origin:'https://evil.example','Content-Type':'application/json'},body:'{}'})).status,403);ok('foreign Origin rejected');
+ assert.equal((await mcpEndpoint(app.service,settings)(new Request('http://evil.example/api/mcp',{method:'POST',headers:{authorization:'Bearer '+tokens[0]}}))).status,403);ok('foreign Host rejected');
+ client=await connect();assert.equal(client.getProtocolEra(),'modern');assert.equal(client.getNegotiatedProtocolVersion(),'2026-07-28');const tools=await client.listTools();assert.deepEqual(tools.tools.map(t=>t.name).sort(),['resolve_location','search_nearby_reports','create_report','add_observation','get_report'].sort());
+ for(const t of tools.tools)assert.equal(t.inputSchema.additionalProperties,false);ok('official HTTP SDK discovery lists exactly five strict tools');
+ assert.equal((await fetch(app.origin+'/api/mcp',{method:'POST',headers:{authorization:'Bearer '+tokens[0],'Content-Type':'application/json'},body:JSON.stringify({large:'x'.repeat(33000)})})).status,413);ok('MCP body size bounded before parsing');
+ const old=await connect(0,true);assert.equal(old.getProtocolEra(),'legacy');assert.equal(old.getNegotiatedProtocolVersion(),'2025-11-25');assert.equal((await old.listTools()).tools.length,5);ok('2025-11-25 legacy initialize/list supported');
+ const region=regions.find(r=>r.cityId==='TW-KEE'&&r.district==='仁愛區')!,[lat,lng]=region.point;
+ const resolved=await call('resolve_location',{lat,lng,city_hint:'TW-TPE'});assert.equal(resolved.ok,true);assert.equal(resolved.data.lat,lat);assert((resolved.data.candidates as PublicRow[]).some(c=>c.city_id==='TW-KEE'));ok('coordinate resolution ignores misleading hint');
+ for(const city of new Set(regions.map(r=>r.cityId))){const r=regions.find(r=>r.cityId===city)!;const value=await call('resolve_location',{lat:r.point[0],lng:r.point[1]});assert(value.ok);assert((value.data.candidates as PublicRow[]).some(c=>c.city_id===city));}ok('22 cities including offshore coordinates resolved');
+ await denied('resolve_location',{lat:100,lng},'INVALID_INPUT');await denied('resolve_location',{lat:0,lng:0},'LOCATION_MISMATCH');await denied('resolve_location',{query:'基隆車站'},'LOCATION_SEARCH_UNAVAILABLE');
+ let boundary:number[]|undefined;for(const r of regions.filter(r=>r.cityId==='TW-KEE')){for(const pt of r.polygons[0][0]){if(candidates(pt[1],pt[0]).length>1){boundary=pt;break;}}if(boundary)break;}
+ assert(boundary);const ambiguous=await call('resolve_location',{lat:boundary[1],lng:boundary[0]});assert.equal(ambiguous.data.status,'ambiguous');assert.equal(ambiguous.data.code,'LOCATION_AMBIGUOUS');ok('boundary ambiguity returns candidates without moving pin');
+ const op=randomUUID();const processed=await sharp('tests/fixtures/qa-photo.jpg').rotate().resize({width:1920,height:1920,fit:'inside',withoutEnlargement:true}).jpeg({quality:80}).toBuffer();
+ await validateProcessed(processed,'jpeg');const meta={operation_id:op,report_id:op,kind:'before',format:'jpeg'};
+ const token=await photo(meta,processed);assert.equal((await photo(meta,processed)).photo_token,token.photo_token);ok('real JPEG bytes uploaded, decoded, token issued and finalize retry stable');
+ assert.deepEqual(Buffer.from(await(await fetch(app.origin+'/local-storage/'+token.path)).arrayBuffer()),processed);ok('public Storage URL returns original processed bytes');
+ const fields={operation_id:op,photo_token:token.photo_token,city_id:region.cityId,district:region.district,lat,lng,title:' Local closed loop ',category:'ramp',wheelchair_access:'blocked',confirmed:true};
+ assert.equal((await call('search_nearby_reports',{lat,lng})).data.truncated,false);
+ const created=await call('create_report',fields);assert(created.ok,JSON.stringify(created));assert.equal(created.data.status,'open');assert.equal(created.data.report_id,op);assert.equal((await fetch(String(created.data.url))).status,200);
+ const fetched=await call('get_report',{report_id:op});assert.equal((fetched.data.report as PublicRow).title,'Local closed loop');assert.equal((fetched.data.report as PublicRow).status,'open');
+ assert(!/created_by|admin_note|token|risk_hash/.test(JSON.stringify(fetched)));ok('new report closed loop and real openable local URL, no private output');
+ const same=await Promise.all([call('create_report',fields),call('create_report',{...fields,title:'Local closed loop',address:'',description:''})]);assert(same.every(r=>r.ok&&r.data.report_id===op&&r.data.replayed));
+ assert.equal((await app.backend.db.query<{n:number}>('select count(*)::int n from public.reports')).rows[0].n,1);ok('parallel/sequential normalized retry creates only one report');
+ await denied('create_report',{...fields,title:'Changed'},'IDEMPOTENCY_CONFLICT');const other=await connect(1),readOnly=await connect(2);
+ await denied('create_report',fields,'FORBIDDEN',other);await denied('create_report',fields,'FORBIDDEN',readOnly);
+ for(const key of ['actor','admin','created_by','status','admin_note','official_source','before_image_path'])await denied('create_report',{...fields,[key]:key==='status'?'resolved':true},'INVALID_INPUT');
+ await denied('create_report',{...fields,confirmed:false},'CONFIRMATION_REQUIRED');await denied('create_report',{...fields,photo_token:undefined},'PHOTO_REQUIRED');
+ await denied('create_report',{...fields,operation_id:randomUUID(),photo_token:randomBytes(32).toString('base64url')},'PHOTO_TOKEN_INVALID');
+ await denied('create_report',{...fields,operation_id:randomUUID()},'PHOTO_TOKEN_INVALID');
+ const concurrentOp=randomUUID(),concurrentPhoto=await photo({operation_id:concurrentOp,report_id:concurrentOp,kind:'before',format:'jpeg'},processed,1);
+ const concurrentFields={...fields,operation_id:concurrentOp,photo_token:concurrentPhoto.photo_token,title:'Concurrent caller'};
+ const concurrent=await Promise.all([call('create_report',concurrentFields,other),call('create_report',concurrentFields,other)]);
+ assert(concurrent.every(r=>r.ok&&r.data.report_id===concurrentOp));assert.equal(concurrent.filter(r=>r.data.replayed===false).length,1);ok('first concurrent duplicate creates once, second replays');
+ const raceOp=randomUUID(),raceObservation={operation_id:raceOp,report_id:op,message:'First parallel observation',confirmed:true};
+ const race=await Promise.all([call('add_observation',raceObservation,other),call('add_observation',{...raceObservation,message:'Different'},other)]);
+ assert.equal(race.filter(r=>r.ok).length,1);assert.equal(race.find(r=>!r.ok)?.error.code,'IDEMPOTENCY_CONFLICT');ok('different-payload first-write race has one winner and one conflict');
+ const mismatchOp=randomUUID(),mismatchPhoto=await photo({operation_id:mismatchOp,report_id:mismatchOp,kind:'before',format:'jpeg'},processed,1);
+ await denied('create_report',{...fields,operation_id:mismatchOp,photo_token:mismatchPhoto.photo_token,city_id:'TW-TPE'},'LOCATION_MISMATCH',other);
+ assert.equal((await app.backend.db.query<{consumed:boolean}>('select consumed from private.mcp_photos where operation=$1',[mismatchOp])).rows[0].consumed,false);
+ assert.equal((await app.backend.db.query<{state:string}>('select state from private.photo_intents where operation_id=$1',[mismatchOp])).rows[0].state,'active');
+ assert.equal((await app.backend.db.query('select * from private.mcp_operations where operation=$1',[mismatchOp])).rows.length,0);ok('failed location write rolls back token, reservation and ledger');
+ const nearby=await call('search_nearby_reports',{lat,lng,radius_m:50});assert((nearby.data.reports as PublicRow[]).some(r=>r.id===op));ok('50m nearby returns created report');
+ const observation={operation_id:randomUUID(),report_id:op,message:'使用者確認補充',suggested_status:'resolved',confirmed:true};
+ // Discard the acknowledgement as if the consumer lost it, then retry.
+ await call('add_observation',observation);const parallel=await Promise.all([call('add_observation',observation),call('add_observation',observation)]);
+ assert(parallel.every(r=>r.ok&&r.data.replayed));assert.equal(parallel[0].data.observation_id,parallel[1].data.observation_id);ok('observation lost acknowledgement and parallel retry replay same ID');
+ await denied('add_observation',{...observation,message:'Changed'},'IDEMPOTENCY_CONFLICT');await denied('add_observation',observation,'FORBIDDEN',other);await denied('add_observation',observation,'FORBIDDEN',readOnly);
+ await denied('add_observation',{...observation,type:'admin'},'INVALID_INPUT');
+ const timeline=await call('get_report',{report_id:op,include_observations:true});const rows=timeline.data.observations as PublicRow[];assert.equal(rows.length,2);assert(rows.every(r=>r.type==='community'));assert.equal((timeline.data.report as PublicRow).status,'open');
+ assert.equal((await app.backend.db.query<{admin_note:string}>('select admin_note from public.reports where id=$1',[op])).rows[0].admin_note,'');ok('existing report loop adds community timeline without status/admin mutation');
+ const updateOp=randomUUID(),wp=await sharp(processed).webp({quality:80}).toBuffer(),updateMeta={operation_id:updateOp,report_id:op,kind:'updates',format:'webp'},updatePhoto=await photo(updateMeta,wp);
+ await denied('add_observation',{operation_id:updateOp,report_id:randomUUID(),message:'x',photo_token:updatePhoto.photo_token,confirmed:true},'NOT_FOUND');
+ await denied('add_observation',{operation_id:updateOp,report_id:concurrentOp,message:'x',photo_token:updatePhoto.photo_token,confirmed:true},'PHOTO_TOKEN_INVALID');
+ await denied('create_report',{...fields,operation_id:updateOp,photo_token:updatePhoto.photo_token},'PHOTO_TOKEN_INVALID');
+ await denied('add_observation',{operation_id:updateOp,report_id:op,message:'x',photo_token:token.photo_token,confirmed:true},'PHOTO_TOKEN_INVALID');
+ await denied('add_observation',{operation_id:updateOp,report_id:op,message:'x',photo_token:updatePhoto.photo_token,confirmed:true},'PHOTO_TOKEN_INVALID',other);ok('token cross principal/report/operation/kind isolation');
+ await app.backend.db.query("update private.rate_limits set last_at=now()-interval '1 hour'");
+ const withPhoto=await call('add_observation',{operation_id:updateOp,report_id:op,message:'WebP 實際照片',photo_token:updatePhoto.photo_token,confirmed:true});assert(withPhoto.ok);ok('real WebP observation handoff completes');
+ const expiredOp=randomUUID(),expiredPhoto=await photo({operation_id:expiredOp,report_id:expiredOp,kind:'before',format:'jpeg'},processed);
+ await app.backend.db.query("update private.mcp_photos set expires_at=now()-interval '1 hour' where operation=$1",[expiredOp]);
+ await denied('create_report',{...fields,operation_id:expiredOp,photo_token:expiredPhoto.photo_token},'PHOTO_TOKEN_EXPIRED');
+ const invalidOp=randomUUID(),invalidMeta={operation_id:invalidOp,report_id:invalidOp,kind:'before',format:'jpeg'};
+ const reserve=await app.service.reserve(invalidMeta,principals[0]);await app.backend.put(String(reserve.path),Buffer.from('not an image'),'image/jpeg',principals[0]);
+ await assert.rejects(app.service.finalize(invalidMeta,principals[0]),/PHOTO_TOKEN_INVALID/);ok('real decode rejects fake JPEG despite valid MIME metadata');
+ await assert.rejects(app.backend.put(token.path,processed,'image/jpeg',principals[0]));ok('immutable bytes cannot be overwritten');
+ await assert.rejects(app.service.reserve({operation_id:randomUUID(),report_id:randomUUID(),kind:'before',format:'jpeg'},principals[2]),/FORBIDDEN/);ok('read-only principal cannot obtain photo reservation');
+ await assert.rejects(validateProcessed(await sharp(processed).withExif({IFD0:{Artist:'QA only'}}).jpeg().toBuffer(),'jpeg'),/PHOTO_TOKEN_INVALID/);ok('trusted decode rejects processed images retaining EXIF');
+ const rawOp=randomUUID(),rawMeta={operation_id:rawOp,report_id:rawOp,kind:'before',format:'jpeg'},uploadHeaders={authorization:'Bearer '+tokens[0],'Content-Type':'image/jpeg','x-roadtag-photo':JSON.stringify(rawMeta)};
+ const rawResponse=await fetch(app.origin+'/api/mcp-photo/upload',{method:'POST',headers:uploadHeaders,body:await sharp(processed).withExif({IFD0:{Artist:'QA only'}}).jpeg().toBuffer()});
+ assert.equal(rawResponse.status,400);assert.equal((await rawResponse.json()).error.code,'PHOTO_TOKEN_INVALID');
+ assert.equal((await app.backend.db.query('select id from storage.objects where name=$1',[`${rawOp}/before/${rawOp}.jpg`])).rows.length,0);ok('HTTP upload rejects EXIF before public Storage write');
+ const large=await fetch(app.origin+'/api/mcp-photo/upload',{method:'POST',headers:uploadHeaders,body:Buffer.alloc(2*1048576)});assert.equal(large.status,400);assert.equal((await large.json()).error.code,'INVALID_INPUT');ok('streamed oversize upload rejected without crashing local endpoint');
+ await denied('add_observation',{operation_id:randomUUID(),report_id:op,message:'Cooldown',confirmed:true},'RATE_LIMITED');
+ await app.backend.db.query("update private.mcp_photos set expires_at=now()-interval '1 hour' where operation=$1",[op]);
+ assert.equal((await call('create_report',fields)).data.replayed,true);ok('successful replay precedes expired token and cooldown');
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local role authenticated');await assert.rejects(tx.query('select * from private.mcp_operations'),/permission denied/);});ok('authenticated caller cannot read private ledger');
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local role authenticated');await assert.rejects(tx.query('select public.mcp_write($1,$2,$3,$4)',['test-0','create_report',randomUUID(),{}]),/permission denied/);});ok('authenticated caller cannot execute service-only write RPC');
+ // Radius fixtures only: local SQL fixtures bypass triggers to test >500 candidates and sorting.
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local session_replication_role=replica');
+  for(let n=0;n<520;n++)await tx.query('insert into public.reports(id,city_id,district,title,category,lat,lng,wheelchair_access,before_image_path,created_by) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',[randomUUID(),region.cityId,n===519?'跨區測試':region.district,'Radius fixture','other',lat+(n===519?0.000001:0.0001+n/1000000),lng,'passable',token.path,principals[0].actor]);
+ });
+ const many=await call('search_nearby_reports',{lat,lng,radius_m:500,category:'other',limit:1});assert.equal(many.data.truncated,false);const nearest=(many.data.reports as PublicRow[])[0];assert.equal(nearest.district,'跨區測試');assert(Number(nearest.distance_m)<1);ok('500m cross-district nearest preserved beyond first candidate page');
+ const filtered=await call('search_nearby_reports',{lat,lng,radius_m:50,category:'ramp',limit:20});assert.equal((filtered.data.reports as PublicRow[]).length,2);assert((filtered.data.reports as PublicRow[]).every(r=>r.category==='ramp'));ok('category filter applied');
+ const sorted1=await call('search_nearby_reports',{lat,lng,radius_m:500,category:'other',limit:20}),sorted2=await call('search_nearby_reports',{lat,lng,radius_m:500,category:'other',limit:20});assert.deepEqual(sorted1,sorted2);assert(distance(lat,lng,lat,lng)===0);ok('distance/updated_at/id deterministic sorting');
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local session_replication_role=replica');await tx.query("update public.reports set status='resolved',after_image_path=before_image_path where id=$1",[nearest.id]);});
+ const excluded=await call('search_nearby_reports',{lat,lng,radius_m:500,category:'other',limit:20});assert(!(excluded.data.reports as PublicRow[]).some(r=>r.id===nearest.id));ok('resolved excluded by default');
+ const included=await call('search_nearby_reports',{lat,lng,radius_m:500,category:'other',include_resolved:true,limit:1});assert.equal((included.data.reports as PublicRow[])[0].id,nearest.id);ok('explicit include_resolved honored');
+ const tieIds=['00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003'];
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local session_replication_role=replica');for(let n=0;n<3;n++)await tx.query('insert into public.reports(id,city_id,district,title,category,lat,lng,wheelchair_access,before_image_path,created_by,updated_at) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',[tieIds[n],region.cityId,region.district,'Sorting fixture','narrow',lat,lng,'passable',token.path,principals[0].actor,n<2?'2026-10-05T00:00:00Z':'2026-01-05T00:00:00Z']);});
+ const ties=await call('search_nearby_reports',{lat,lng,category:'narrow'});assert.deepEqual((ties.data.reports as PublicRow[]).map(r=>r.id),tieIds);ok('equal distances sort by actual updated_at descending then ID ascending');
+ await denied('search_nearby_reports',{lat,lng,radius_m:501},'INVALID_INPUT');await denied('get_report',{report_id:randomUUID()},'NOT_FOUND');
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local session_replication_role=replica');for(let n=0;n<51;n++)await tx.query('insert into public.report_updates(report_id,message,created_by) values($1,$2,$3)',[op,'Timeline fixture',principals[0].actor]);});
+ const capped=await call('get_report',{report_id:op,include_observations:true});assert.equal((capped.data.observations as PublicRow[]).length,50);assert.equal(capped.data.has_more,true);ok('timeline limited to 50 with explicit has_more');
+ await app.backend.db.transaction(async tx=>{await tx.exec('set local session_replication_role=replica');await tx.query(`insert into public.reports(id,city_id,district,title,category,lat,lng,wheelchair_access,before_image_path,created_by)
+ select gen_random_uuid(),$1,$2,'Candidate cap fixture','other',$3,$4,'passable',$5,$6 from generate_series(1,5000)`,[region.cityId,region.district,lat,lng,token.path,principals[0].actor]);});
+ const truncated=await call('search_nearby_reports',{lat,lng,radius_m:500,category:'other'});assert.equal(truncated.data.truncated,true);assert.equal(truncated.data.requires_refinement,true);assert.deepEqual(truncated.data.reports,[]);ok('candidate cap reports refinement, not a false empty search');
+ await app.backend.db.query('insert into private.admin_users(user_id) values($1)',[principals[1].actor]);
+ await denied('add_observation',{...raceObservation,operation_id:randomUUID()},'FORBIDDEN',other);ok('actor elevated to admin is blocked by service-only RPC');
+ for(const c of clients)await c.close();clients.length=0;await app.close();
+ const probe=root+'/restart-input.json';await writeFile(probe,JSON.stringify({root,settings,secret,credential:tokens[0],fields,observation,observationId:parallel[0].data.observation_id,path:token.path,photoDigest:hash(processed)}));
+ const probeResult=execFileSync(process.execPath,[resolve('node_modules/tsx/dist/cli.mjs'),'scripts/mcp-restart-probe.ts',probe],{encoding:'utf8'});assert.match(probeResult,/Separate OS process/);
+ app=await startLocal(root,settings,secret);client=await connect();
+ assert.equal((await call('create_report',fields)).data.report_id,op);assert.equal((await call('add_observation',observation)).data.observation_id,parallel[0].data.observation_id);assert.deepEqual(await app.backend.bytes(token.path,principals[0]),processed);ok('separate OS process restart preserves ledger and real photo bytes');
+ await writeFile(root+'/result.json',JSON.stringify({passed,checks:passed.length,productionWrites:false,storage:'local filesystem bytes + existing SQL RLS/claims',targetClientAttachmentBridge:'PENDING'},null,2));
+ console.log(`MCP Phase 1A: ${passed.length} checks passed. Evidence: ${root}/result.json`);
+}finally{for(const c of clients)await c.close();await app.close();}

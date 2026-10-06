@@ -1,0 +1,16 @@
+import {execFileSync} from 'node:child_process';
+import {mkdirSync,mkdtempSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+mkdirSync('output',{recursive:true});const directory=mkdtempSync(resolve('output/mcp-node-'));
+execFileSync(process.execPath,[resolve('node_modules/typescript/bin/tsc'),'api/mcp.ts','api/mcp-photo.ts','--ignoreConfig','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--resolveJsonModule','--esModuleInterop','--skipLibCheck','--strict','--types','node','--outDir',directory],{stdio:'inherit'});
+const {POST}=await import(pathToFileURL(join(directory,'api/mcp.js')).href);
+assert.equal((await POST(new Request('https://roadtag.org/api/mcp',{method:'POST'}))).status,503);
+const {POST:photoPOST}=await import(pathToFileURL(join(directory,'api/mcp-photo.js')).href);
+assert.equal((await photoPOST(new Request('https://roadtag.org/api/mcp-photo',{method:'POST'}))).status,503);
+const {default:sharp}=await import('sharp');
+assert.equal((await sharp('tests/fixtures/qa-photo.jpg').metadata()).format,'jpeg');
+const {candidates}=await import(pathToFileURL(join(directory,'server/roadtag/geography.js')).href);
+assert(candidates(25.1283,121.7419).some(r=>r.city_id==='TW-KEE'&&r.district==='仁愛區'));
+console.log('Emitted Node MCP/photo endpoints load disabled; sharp decodes JPEG; bundled geography resolves without Vite/window. Hosted runtime remains PENDING.');
