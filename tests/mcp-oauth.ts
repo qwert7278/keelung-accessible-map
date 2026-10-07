@@ -8,7 +8,7 @@ import {oauthEndpoint,oauthEnvironment,verifyOAuth,resourceMetadata,type OAuthCo
 import {SupabaseBackend} from '../server/roadtag/supabase.js';
 import {LocalBackend} from '../scripts/mcp-local-backend.js';
 const actor=randomUUID(),clientId=randomUUID(),p={id:'oauth-test',actor,write:true};
-const c:OAuthConfig={origin:'https://oauth-test.vercel.app',resource:'https://oauth-test.vercel.app/api/mcp-chatgpt',issuer:'https://wpravdqviylkcpsioybu.supabase.co/auth/v1',serviceKey:'sb_secret_test',publishable:'sb_publishable_test',sessionKey:randomBytes(32).toString('hex'),photoSecret:randomBytes(32).toString('base64url'),principals:[p],clients:[clientId]};
+const c:OAuthConfig={supabaseUrl:'https://wpravdqviylkcpsioybu.supabase.co',origin:'https://oauth-test.vercel.app',resource:'https://oauth-test.vercel.app/api/mcp-chatgpt',issuer:'https://wpravdqviylkcpsioybu.supabase.co/auth/v1',serviceKey:'sb_secret_test',publishable:'sb_publishable_test',sessionKey:randomBytes(32).toString('hex'),photoSecret:randomBytes(32).toString('base64url'),principals:[p],clients:[clientId]};
 const passed:string[]=[];const ok=(s:string)=>{passed.push(s);console.log('PASS '+s);};
 const env={...process.env};
 try{

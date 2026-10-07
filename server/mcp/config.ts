@@ -6,7 +6,7 @@ const principalSchema=z.array(z.strictObject({id:z.string().min(1).max(100),acto
 export function environment(){
  const disabled:Settings={enabled:false,origin:'https://roadtag.org',principals:[]};
  try{
-  if(process.env.MCP_ENABLED!=='true')return null;
+  if(process.env.MCP_ENABLED!=='true'||process.env.MCP_LEGACY_ALPHA_ENABLED!=='true')return null;
   const publicUrl=new URL(process.env.MCP_PUBLIC_ORIGIN||''),origin=publicUrl.origin,url=new URL(process.env.MCP_SUPABASE_URL||'');
   if(publicUrl.protocol!=='https:'&&!['localhost','127.0.0.1'].includes(publicUrl.hostname))return null;
   // Phase 1A never enables the production project, including by accidental env reuse.
