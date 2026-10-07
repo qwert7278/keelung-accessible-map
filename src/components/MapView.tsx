@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "./MapView.css";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
 
 import { cameraKey } from "../utils/mapCamera";
+import { watchMapTileHealth } from "../utils/mapTileHealth";
 type Props = {
   city?: City;
   reports: Report[];
@@ -16,7 +18,7 @@ type Props = {
   focusZoom?: number;
   focusRevision?: number;
 };
-type Controller = { render: (props: Props) => void; destroy: () => void };
+type Controller = { render: (props: Props) => void; destroy: () => void; retryTiles?: () => void };
 function markerElement(report: Report) {
   const el = document.createElement("button");
   el.type = "button";
@@ -36,6 +38,7 @@ export default function MapView(props: Props) {
     latest = useRef(props),
     controller = useRef<Controller | null>(null);
   const [notice, setNotice] = useState("");
+  const [tileFailure, setTileFailure] = useState(false);
   latest.current = props;
   useEffect(() => {
     let disposed = false;
@@ -76,10 +79,9 @@ export default function MapView(props: Props) {
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         },
-      ).addTo(map);
-      tiles.on("tileerror", () =>
-        setNotice("底圖部分載入失敗，仍可使用案件列表或輸入座標回報。"),
       );
+      const stopWatchingTiles = watchMapTileHealth(map, tiles, setTileFailure);
+      tiles.addTo(map);
       const layer = L.layerGroup().addTo(map);
       let lastCamera = '';
       map.on("click", (e: L.LeafletMouseEvent) => {
@@ -121,7 +123,11 @@ export default function MapView(props: Props) {
           node.current?.classList.toggle("picking", !!p.picking);
         },
         destroy() {
+          stopWatchingTiles();
           map.remove();
+        },
+        retryTiles() {
+          tiles.redraw();
         },
       };
       controller.current.render(latest.current);
@@ -155,9 +161,14 @@ export default function MapView(props: Props) {
             : `${props.city?.name || CITY.name}騎樓與人行道回報地圖，亦可使用旁邊案件列表`
         }
       />
-      {notice && (
+      {(tileFailure || notice) && (
         <p className="map-notice" role="status">
-          {notice}
+          {tileFailure ? "底圖部分載入失敗，仍可使用案件列表或輸入座標回報。" : notice}
+          {tileFailure && (
+            <button className="map-tile-retry" type="button" onClick={() => controller.current?.retryTiles?.()}>
+              重新載入底圖
+            </button>
+          )}
         </p>
       )}
     </div>
