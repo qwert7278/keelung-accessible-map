@@ -2,7 +2,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 // This bound is per runtime, NOT a distributed quota. TGOS stays disabled until
 // a shared limiter and authenticated transports have been verified.
 const secret=process.env.LOCATION_RISK_SECRET || randomBytes(32).toString('hex');
-export const locationCapabilities=()=>({searchReady:false,reverseReady:false});
+export const locationCapabilities=()=>({searchReady:process.env.GEOAPIFY_LOCATION_ENABLED==='true' && !!process.env.GEOAPIFY_API_KEY,reverseReady:process.env.GEOAPIFY_LOCATION_ENABLED==='true' && !!process.env.GEOAPIFY_API_KEY});
 export function createLocationLimiter(now=()=>Date.now(), networkMax=30, totalMax=300, trustVercelHeaders=process.env.VERCEL==='1') {
   let window=0,total=0;
   const buckets=new Map<string,number>();

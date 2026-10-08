@@ -181,6 +181,12 @@ export default function ReportForm({
       if (!request.signal.aborted) setSearching(false);
     }
   }
+  useEffect(() => {
+    if (!capabilities.searchReady || step!==1 || locationQuery.trim().length<2) return;
+    const timer=window.setTimeout(() => { void search(); }, 350);
+    return () => { window.clearTimeout(timer); searchRequest.current?.abort(); };
+  // The timer tracks the query and city; stale requests are aborted.
+  }, [locationQuery, city.id, capabilities.searchReady, step]);
   async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'|'manual'='map', geography?:{city:City;district:string}) {
     invalidateSelection();
     const request = new AbortController();

@@ -2,6 +2,7 @@ import {createHash,createHmac} from 'node:crypto';
 import sharp from 'sharp';
 import {schemas,handoffSchema,RoadError,type Backend,type Principal,type PublicRow,type ToolName} from './contracts.js';
 import {candidates,distance,reportUrl,validateLocation} from './geography.js';
+import {geoapifyProvider} from '../location/geoapify.js';
 export const hash=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');
 export class RoadTagService {
  constructor(public backend:Backend,public origin:string,private photoSecret:string){}
@@ -12,7 +13,14 @@ export class RoadTagService {
   const parsed=schemas[name].safeParse(raw);if(!parsed.success)throw new RoadError('INVALID_INPUT');
   if(name==='resolve_location'){
    const input=schemas.resolve_location.parse(raw);
-   if(input.query){if(input.lat!==undefined||input.lng!==undefined)throw new RoadError('INVALID_INPUT');throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');}
+   if(input.query){
+    if(input.lat!==undefined||input.lng!==undefined)throw new RoadError('INVALID_INPUT');
+    if(process.env.GEOAPIFY_LOCATION_ENABLED!=='true'||!process.env.GEOAPIFY_API_KEY)throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');
+    try {
+     const matches=await geoapifyProvider.search(input.query);
+     return {status:matches.length===1?'candidate':'ambiguous',needs_confirmation:true,candidates:matches};
+    } catch {throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');}
+   }
    if(input.lat===undefined||input.lng===undefined)throw new RoadError('INVALID_INPUT');
    const found=candidates(input.lat,input.lng);if(!found.length)throw new RoadError('LOCATION_MISMATCH');
    return {status:found.length===1?'resolved':'ambiguous',lat:input.lat,lng:input.lng,...(found.length===1?found[0]:{city_id:null,city_name:null,district:null}),needs_confirmation:true,candidates:found,...(found.length>1?{code:'LOCATION_AMBIGUOUS'}:{})};
