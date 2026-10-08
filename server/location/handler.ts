@@ -5,6 +5,8 @@ import { geoapifyProvider } from './geoapify.js';
 
 const headers = { 'Cache-Control':'private, no-store, max-age=0', 'X-Robots-Tag':'noindex', 'X-Content-Type-Options':'nosniff' };
 export async function locationResponse(request:Request, operation:'search'|'reverse', provider:LocationProvider=process.env.GEOAPIFY_LOCATION_ENABLED==='true' ? geoapifyProvider : tgosProvider) {
+  const origin=request.headers.get('origin');
+  if(origin && origin!==new URL(request.url).origin || request.headers.get('sec-fetch-site')==='cross-site')return Response.json({error:'LOCATION_FORBIDDEN'},{status:403,headers});
   const parameters = new URL(request.url).searchParams;
   const invalid = () => Response.json({ error:'INVALID_LOCATION_REQUEST' }, {status:400,headers});
   if (request.method !== 'GET') return Response.json({ error:'METHOD_NOT_ALLOWED' }, {status:405,headers:{...headers,Allow:'GET'}});

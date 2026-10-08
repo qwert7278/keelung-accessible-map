@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -157,7 +157,7 @@ export default function ReportForm({
     setLocating(false);
     setReverseNote('');
   }
-  async function search() {
+  const search=useCallback(async () => {
     searchRequest.current?.abort();
     const request = new AbortController();
     searchRequest.current = request;
@@ -180,13 +180,13 @@ export default function ReportForm({
     } finally {
       if (!request.signal.aborted) setSearching(false);
     }
-  }
+  },[locationQuery,city.id]);
   useEffect(() => {
     if (!capabilities.searchReady || step!==1 || locationQuery.trim().length<2) return;
     const timer=window.setTimeout(() => { void search(); }, 350);
     return () => { window.clearTimeout(timer); searchRequest.current?.abort(); };
   // The timer tracks the query and city; stale requests are aborted.
-  }, [locationQuery, city.id, capabilities.searchReady, step]);
+  }, [locationQuery, city.id, capabilities.searchReady, step, search]);
   async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'|'manual'='map', geography?:{city:City;district:string}) {
     invalidateSelection();
     const request = new AbortController();
@@ -214,7 +214,7 @@ export default function ReportForm({
       if (found) setDraft(d => ({...d,district:found}));
       else setError(`選點不在${city.name}行政區內，請重新選擇。`);
     }).catch(() => { if (!request.signal.aborted) setReverseNote('行政區將於下一步重新確認。'); });
-    if (candidate) { setReverseNote('已選取搜尋結果，請確認現場位置。'); return; }
+    if (candidate) { setReverseNote('已選取候選地址或地標，請確認現場障礙位置。'); return; }
     if (!capabilities.reverseReady) {setReverseNote('地址暫時無法自動取得，可手動補充；位置已保留。');return;}
     try {
       const address=await reverseLocation(location,request.signal);
@@ -433,6 +433,7 @@ export default function ReportForm({
                 </label>
                 <button className="button secondary" type="button" onClick={() => void search()}>{searching ? '搜尋中…' : '搜尋'}</button>
               </div>
+              <p className="muted">候選位置僅供參考 · <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / OpenStreetMap</p>
               {searchNote && <p className="muted" role="status">{searchNote}</p>}
               {candidates.length > 0 && <ul className="location-results" aria-label="搜尋候選位置">
                 {candidates.map((candidate,index) => <li key={`${candidate.label}-${index}`}>

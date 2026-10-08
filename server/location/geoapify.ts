@@ -18,15 +18,29 @@ export function normalizeGeoapifySearch(payload: unknown): LocationResult[] {
     const label=value(r.name || r.address_line1 || r.formatted);
     if (!label) return [];
     const type=value(r.result_type);
+    const rank=r.rank && typeof r.rank==='object' ? r.rank as GeoRow : {};
+    const confidence=typeof rank.confidence==='number' && Number.isFinite(rank.confidence) ? Math.max(0,Math.min(1,rank.confidence)) : null;
+    const precision=value(rank.match_type || type,40);
     const kind:LocationResult['kind'] = type==='amenity'?'poi':type==='street'?'road':['city','county','state','district','suburb'].includes(type)?'district':['building','postcode','unknown'].includes(type)?'address':'other';
-    return [{label,address:value(r.formatted),city:city(r),district:district(r),location:point,kind}];
+    return [{label,address:value(r.formatted),city:city(r),district:district(r),location:point,kind,precision,confidence,needs_confirmation:true as const,source:'Geoapify' as const}];
   }).slice(0,5);
 }
 export function normalizeGeoapifyReverse(payload:unknown):ReverseLocationResult|null {
   const r=rows(payload).find(isTaiwan);
   return r ? {address:value(r.formatted),city:city(r),district:district(r)} : null;
 }
+export function createGeoapifyBudget(now=()=>Date.now(), minuteMax=80, dayMax=1000) {
+  let minute=-1,day=-1,minuteCount=0,dayCount=0;
+  return () => {
+    const m=Math.floor(now()/60000),d=Math.floor(now()/86400000);
+    if(m!==minute){minute=m;minuteCount=0;}if(d!==day){day=d;dayCount=0;}
+    if(minuteCount>=minuteMax||dayCount>=dayMax)throw new Error('Geoapify quota unavailable');
+    minuteCount++;dayCount++;
+  };
+}
+const reserveLookup=createGeoapifyBudget();
 async function lookup(url:URL):Promise<unknown> {
+  reserveLookup();
   const response=await fetch(url,{signal:AbortSignal.timeout(5000),redirect:'error'});
   if (!response.ok) throw new Error('Geoapify unavailable');
   return response.json();
@@ -41,8 +55,9 @@ function endpoint(action:'autocomplete'|'reverse') {
 }
 export const geoapifyProvider:LocationProvider={
   async search(query,cityId) {
+    if(query.trim().length<2 || query.trim().length>200)throw new Error('Invalid location query');
     const url=endpoint('autocomplete');
-    url.searchParams.set('text',query);
+    url.searchParams.set('text',query.trim().replace(/(\d+)之(\d+)(?=號)/g,'$1-$2'));
     url.searchParams.set('filter','countrycode:tw');
     url.searchParams.set('limit','5');
     // City hint is a ranking hint, never an exclusion: users can search across Taiwan.
@@ -50,7 +65,7 @@ export const geoapifyProvider:LocationProvider={
     return normalizeGeoapifySearch(await lookup(url));
   },
   async reverse(point:LocationPoint) {
-    if (!validLocation(point)) throw new Error('Invalid location');
+    if (!validLocation(point) || point.lat<21 || point.lat>26.5 || point.lng<118 || point.lng>123) throw new Error('Invalid location');
     const url=endpoint('reverse');
     url.searchParams.set('lat',String(point.lat));
     url.searchParams.set('lon',String(point.lng));
