@@ -87,3 +87,26 @@ h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.35; letter-spacing: 0; }
 
 .status.open { background:transparent; color:#a83c2e; border:1px solid #a83c2e; }
 .home-faq details p { max-width:none; }
+
+/* Private Closed Alpha guide; no public connector launch link. */
+.chatgpt-report { color: var(--roadtag-text); }
+.chatgpt-report h2 { color: var(--roadtag-primary-dark); font-size: clamp(25px, 3vw, 36px); line-height: 1.4; }
+.chatgpt-report p { line-height: 1.8; max-width: 76ch; }
+.chatgpt-status { display: inline-block; padding: 8px 12px; border: 1px solid var(--roadtag-control-border); border-radius: 6px; background: var(--roadtag-mist); color: var(--roadtag-primary-dark); font-weight: 700; }
+.chatgpt-lead { font-size: 20px; }
+.chatgpt-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 32px; }
+.chatgpt-guide { scroll-margin-top: 24px; }
+.chatgpt-guide h3 { color: var(--roadtag-primary-dark); font-size: 23px; }
+.chatgpt-guide h4 { font-size: 18px; margin: 0 0 8px; }
+.chatgpt-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; padding-left: 26px; margin: 24px 0; }
+.chatgpt-steps li { padding-left: 6px; }
+.chatgpt-steps li::marker { color: var(--roadtag-primary); font-weight: 700; }
+.chatgpt-example { padding: 24px; border-left: 4px solid var(--roadtag-primary); background: var(--roadtag-mist); }
+.chatgpt-example blockquote { margin: 12px 0; line-height: 1.8; }
+.chatgpt-example p { color: var(--roadtag-muted); margin-bottom: 0; }
+@media (max-width: 640px) {
+  .chatgpt-steps { grid-template-columns: 1fr; gap: 16px; }
+  .chatgpt-actions { flex-direction: column; align-items: stretch; }
+  .chatgpt-actions .button { white-space: normal; text-align: center; }
+  .chatgpt-example { padding: 16px; }
+}

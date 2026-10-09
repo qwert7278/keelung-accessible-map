@@ -1015,7 +1015,7 @@
     </style>
     <link rel="stylesheet" href="/brand-tokens.css" />
     <link rel="stylesheet" href="/roadtag-home.css" />
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"__PUBLIC_SITE_URL__/#faq","mainEntity":[{"@type":"Question","name":"這個平台主要回報哪些問題？","acceptedAnswer":{"@type":"Answer","text":"路見不平以騎樓與人行道為核心，記錄高低差、路面破損、通道阻塞、缺乏坡道等通行障礙，並留下位置、照片及現場說明。"}},{"@type":"Question","name":"可以選擇哪些縣市？","acceptedAnswer":{"@type":"Answer","text":"地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。"}},{"@type":"Question","name":"回報會自動送交政府嗎？","acceptedAnswer":{"@type":"Answer","text":"目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。"}},{"@type":"Question","name":"為什麼切換縣市後先顯示某個行政區？","acceptedAnswer":{"@type":"Answer","text":"每個縣市先設定一個中心行政區作為瀏覽起點，例如基隆市仁愛區、臺北市中山區。這是操作起點，不是人流或改善需求排名；你可以切換其他行政區。"}},{"@type":"Question","name":"誰負責建置與維護 Road Tag？","acceptedAnswer":{"@type":"Answer","text":"路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。"}}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"__PUBLIC_SITE_URL__/#faq","mainEntity":[{"@type":"Question","name":"這個平台主要回報哪些問題？","acceptedAnswer":{"@type":"Answer","text":"路見不平以騎樓與人行道為核心，記錄高低差、路面破損、通道阻塞、缺乏坡道等通行障礙，並留下位置、照片及現場說明。"}},{"@type":"Question","name":"可以選擇哪些縣市？","acceptedAnswer":{"@type":"Answer","text":"地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。"}},{"@type":"Question","name":"回報會自動送交政府嗎？","acceptedAnswer":{"@type":"Answer","text":"目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。"}},{"@type":"Question","name":"為什麼切換縣市後先顯示某個行政區？","acceptedAnswer":{"@type":"Answer","text":"每個縣市先設定一個中心行政區作為瀏覽起點，例如基隆市仁愛區、臺北市中山區。這是操作起點，不是人流或改善需求排名；你可以切換其他行政區。"}},{"@type":"Question","name":"誰負責建置與維護 Road Tag？","acceptedAnswer":{"@type":"Answer","text":"路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。"}},{"@type":"Question","name":"一定要 GPS 或 Google Maps 才能透過 ChatGPT 回報嗎？","acceptedAnswer":{"@type":"Answer","text":"已獲邀請的測試使用者可以先提供地址或地標，不必複製 Google Maps 網址或座標。候選位置仍須確認；定位不明確時，請補充說明或使用網站地圖選點。"}},{"@type":"Question","name":"ChatGPT 會直接發布我的回報嗎？","acceptedAnswer":{"@type":"Answer","text":"不會。會先核對候選位置與附近案件，最後由你確認照片、內容與提交。附近案件不會自動視為相同障礙。"}},{"@type":"Question","name":"沒有 ChatGPT 或尚未獲邀請，可以回報嗎？","acceptedAnswer":{"@type":"Answer","text":"可以使用網站回報。ChatGPT 回報目前是私有封閉測試，暫未提供所有人可用的連線入口。"}}]}</script>
   <script type="application/ld+json" data-roadtag-page>{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"__PUBLIC_SITE_URL__/#page","url":"__PUBLIC_SITE_URL__/","name":"路見不平 Road Tag｜台灣騎樓與人行道通行回報平台","inLanguage":"zh-TW","isPartOf":{"@id":"__PUBLIC_SITE_URL__/#website"}},{"@type":"BreadcrumbList","@id":"__PUBLIC_SITE_URL__/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"路見不平","item":"__PUBLIC_SITE_URL__/"}]}]}</script>
 </head>
   <body>
@@ -1027,6 +1027,7 @@
       </a>
       <nav class="nav" aria-label="主要導覽">
         <a href="#how">使用方式</a>
+        <a href="#chatgpt">ChatGPT 回報</a>
         <a href="#map">即時地圖</a>
         <a class="button" href="/map" data-map-link>開啟通行地圖 <span aria-hidden="true">↗</span></a>
       </nav>
@@ -1151,6 +1152,27 @@
         </div>
       </section>
 
+      <section class="section wrap chatgpt-report" id="chatgpt" aria-labelledby="chatgpt-title">
+        <p class="chatgpt-status">ChatGPT 回報｜封閉測試中</p>
+        <h2 id="chatgpt-title">用 ChatGPT，也能協助回報道路障礙</h2>
+        <p class="chatgpt-lead">拍下障礙，說出在哪裡，確認後交給 Road Tag。</p>
+        <p>已獲邀請並連線的測試使用者，可在 ChatGPT 傳送現場照片，提供大致地址、店名或附近地標。系統會尋找候選位置、查詢附近案件，等你確認內容後建立回報。</p>
+        <p><strong>封閉測試中，暫未對所有人開放。</strong>尚未獲邀請或沒有 ChatGPT，仍可使用網站回報。</p>
+        <div class="chatgpt-actions">
+          <a class="button secondary" href="#chatgpt-guide">了解 ChatGPT 回報方式 <span aria-hidden="true">↓</span></a>
+          <a class="button" href="/map" data-map-link>使用網站回報 <span aria-hidden="true">↗</span></a>
+        </div>
+        <div id="chatgpt-guide" class="chatgpt-guide" tabindex="-1" aria-labelledby="chatgpt-guide-title">
+          <h3 id="chatgpt-guide-title">已獲邀請？依照三步驟回報</h3>
+          <ol class="chatgpt-steps">
+            <li><h4>拍照並描述</h4><p>傳送現場照片，說明障礙與大致地址或地標。請避開人臉、車牌等個資。</p></li>
+            <li><h4>確認位置與附近案件</h4><p>核對候選位置與障礙點；位置不明確時補充說明或用地圖選點。附近案件不一定是同一個障礙。</p></li>
+            <li><h4>確認送出，取得案件連結</h4><p>確認位置、照片與內容後才送出。如有相同案件，可確認後補充現場觀察。</p></li>
+          </ol>
+          <div class="chatgpt-example"><h4>示意對話</h4><blockquote>我想回報車站附近的騎樓高低差，輪椅無法通過，這是現場照片。請協助確認位置、查詢附近是否有相同案件，讓我確認後送出。</blockquote><p>實際使用時，請補上縣市、地址或地標；系統不會只憑照片猜測精確位置。</p></div>
+        </div>
+      </section>
+
       <section class="wrap" aria-labelledby="closing-title">
         <div class="closing closing-row">
           <div>
@@ -1164,7 +1186,10 @@
 <details><summary>可以選擇哪些縣市？</summary><p>地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。</p></details>
 <details><summary>回報會自動送交政府嗎？</summary><p>目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。</p></details>
 <details><summary>為什麼切換縣市後先顯示某個行政區？</summary><p>每個縣市先設定一個中心行政區作為瀏覽起點，例如基隆市仁愛區、臺北市中山區。這是操作起點，不是人流或改善需求排名；你可以切換其他行政區。</p></details>
-<details><summary>誰負責建置與維護 Road Tag？</summary><p>路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。</p></details></section>
+<details><summary>誰負責建置與維護 Road Tag？</summary><p>路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。</p></details>
+<details><summary>一定要 GPS 或 Google Maps 才能透過 ChatGPT 回報嗎？</summary><p>已獲邀請的測試使用者可以先提供地址或地標，不必複製 Google Maps 網址或座標。候選位置仍須確認；定位不明確時，請補充說明或使用網站地圖選點。</p></details>
+<details><summary>ChatGPT 會直接發布我的回報嗎？</summary><p>不會。會先核對候選位置與附近案件，最後由你確認照片、內容與提交。附近案件不會自動視為相同障礙。</p></details>
+<details><summary>沒有 ChatGPT 或尚未獲邀請，可以回報嗎？</summary><p>可以使用網站回報。ChatGPT 回報目前是私有封閉測試，暫未提供所有人可用的連線入口。</p></details></section>
     </main>
 
     <footer class="site-footer" id="footer">
