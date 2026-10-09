@@ -78,6 +78,9 @@ export default defineConfig(({ mode }) => {
           consent: resolve(process.cwd(), 'src/consent-entry.tsx'),
           homepage: resolve(process.cwd(), 'index.html'),
           map: resolve(process.cwd(), 'map.html'),
+          // Staging has anonymous Auth disabled. This read-only harness grants no
+          // backend access and is never an entry in the Production artifact.
+          ...(env.VERCEL_ENV === 'preview' ? {phase3Location:resolve(process.cwd(), 'tests/phase3-hosted-location.html')} : {}),
         },
       },
     },

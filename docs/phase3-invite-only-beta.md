@@ -51,6 +51,8 @@ After-state: bounded in-flow listbox (desktop 260px / mobile 220px maximum, addi
 
 Local fixture: `/tests/phase3-location.html`, deliberately absent from production build inputs. It provides bounded success / empty / failure / slow-stale-response scenarios without Auth, Storage, or report writes.
 
+The staging website's pre-existing `Anonymous sign-ins are disabled` policy prevents its ordinary guest reporting dialog from opening. That policy remains unchanged. `/tests/phase3-hosted-location.html` is therefore included **only when VERCEL_ENV=preview**: it renders the actual ReportForm against the public real Geoapify API with a local repository whose create/addUpdate/moderate methods always reject. It does not log in, connect to Supabase data, or grant MCP rights. Production builds exclude this entry. Hosted harness UX PASS does not mean staging guest Auth or new-tester OAuth passed.
+
 Evidence is stored separately in `artifacts/phase3` in the original project: desktop/mobile before and after screenshots. After screenshots use local fixed candidates; hosted real Geoapify validation is recorded in the release checkpoint. No screenshot is represented as an actual iPhone test.
 
 - Build including typecheck and SEO check: PASS.
