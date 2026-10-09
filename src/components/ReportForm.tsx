@@ -442,7 +442,7 @@ export default function ReportForm({
               <h3>障礙在哪裡？</h3>
               <p className="muted">{capabilities.searchReady ? '直接輸入街名、地址或地標，不用先選縣市；選取後會自動定位。' : `回報縣市：${city.name}。使用目前位置，或直接點地圖標記障礙。`}</p>
               {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
-                onQuery={value=>{searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
+                onQuery={value=>{invalidateSelection();setPicked(false);searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
                 onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}
               <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={locate}>
                 <CrosshairIcon size={20}/>{locating ? '正在取得位置…' : '使用目前位置'}
