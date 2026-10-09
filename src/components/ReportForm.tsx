@@ -23,6 +23,7 @@ import {
   validateDraft,
 } from "../utils/validation";
 import MapView from "./MapView";
+import LocationSearch from './LocationSearch';
 import Modal from "./Modal";
 import PhotoUploader from "./PhotoUploader";
 import GuidedTourPrompt from "./GuidedTourPrompt";
@@ -161,7 +162,6 @@ export default function ReportForm({
     searchRequest.current?.abort();
     const request = new AbortController();
     searchRequest.current = request;
-    setCandidates([]);
     setSearchNote('');
     const query=locationQuery.trim();
     if (query.length < 2 || query.length > 120) {
@@ -176,7 +176,7 @@ export default function ReportForm({
       setCandidates(results);
       setSearchNote(results.length ? '請選擇正確位置，再確認地圖標記。' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
     } catch {
-      if (!request.signal.aborted) setSearchNote(LOCATION_SEARCH_UNAVAILABLE);
+      if (!request.signal.aborted) { setCandidates([]); setSearchNote(LOCATION_SEARCH_UNAVAILABLE); }
     } finally {
       if (!request.signal.aborted) setSearching(false);
     }
@@ -425,24 +425,9 @@ export default function ReportForm({
             <>
               <h3>障礙在哪裡？</h3>
               <p className="muted">回報縣市：{city.name}。{capabilities.searchReady ? '搜尋地址或地標，也可以直接點地圖。' : '使用目前位置，或直接點地圖標記障礙。'}</p>
-              {capabilities.searchReady && <><p className="muted">不知道完整地址，也可以輸入地標或店家名稱。</p><div className="location-search-row">
-                <label>搜尋地址
-                  <input value={locationQuery} maxLength={120} placeholder="例如：海洋大學、車站、路名"
-                    onChange={event => { searchRequest.current?.abort(); setSearching(false); setCandidates([]); setSearchNote(''); setLocationQuery(event.target.value); }}
-                    onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) { event.preventDefault(); void search(); } }}/>
-                </label>
-                <button className="button secondary" type="button" onClick={() => void search()}>{searching ? '搜尋中…' : '搜尋'}</button>
-              </div>
-              <p className="muted">候選位置僅供參考 · <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / OpenStreetMap</p>
-              {searchNote && <p className="muted" role="status">{searchNote}</p>}
-              {candidates.length > 0 && <ul className="location-results" aria-label="搜尋候選位置">
-                {candidates.map((candidate,index) => <li key={`${candidate.label}-${index}`}>
-                  <button className="button secondary" type="button" onClick={() => void selectLocation(candidate.location,candidate,'search')}>
-                    <strong>{candidate.label}</strong><small>{candidate.city} {candidate.district} · {candidate.address || '請在地圖確認現場位置'}</small>
-                  </button>
-                </li>)}
-              </ul>}
-              </>}
+              {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
+                onQuery={value=>{searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
+                onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}
               <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={locate}>
                 <CrosshairIcon size={20}/>{locating ? '正在取得位置…' : '使用目前位置'}
               </button>

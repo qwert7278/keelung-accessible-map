@@ -56,7 +56,7 @@ check(faqSchema?.mainEntity?.length === [...visibleFaq.matchAll(/<details\b/g)].
 const chatgptGuide = index.match(/<section[^>]*id="chatgpt"[\s\S]*?<\/section>/)?.[0] || '';
 check(chatgptGuide.includes('封閉測試中，暫未對所有人開放'), 'ChatGPT guide must disclose private Closed Alpha access.');
 check(chatgptGuide.includes('id="chatgpt-guide"') && chatgptGuide.includes('href="#chatgpt-guide"') && chatgptGuide.includes('href="/map"'), 'ChatGPT guide needs working tutorial and website links.');
-check((chatgptGuide.match(/<li>/g) || []).length === 3 && chatgptGuide.includes('示意對話'), 'ChatGPT guide needs three steps and a labelled example.');
+check((chatgptGuide.match(/<li>/g) || []).length === 6 && chatgptGuide.includes('示意對話') && chatgptGuide.includes('id="copy-chatgpt-example"'), 'ChatGPT guide needs six invite-only steps and a copyable labelled example.');
 check(!/href=["']https?:\/\/(?:chatgpt\.com|chat\.openai\.com)/i.test(chatgptGuide), 'Private connector must not expose an invented launch URL.');
 check(faqSchema?.mainEntity?.some(q => q.name === '誰負責建置與維護 Road Tag？'), 'Association FAQ is required.');
 for (const q of faqSchema?.mainEntity || []) { check(visibleFaq.includes(q.name) && visibleFaq.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
