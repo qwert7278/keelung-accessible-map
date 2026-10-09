@@ -94,6 +94,12 @@ describe('TGOS isolation',()=>{
   });
 });
 describe('thin location client',()=>{
+  it('searches nationwide without requiring a selected city',async()=>{
+    const taipei={...result,city:'臺北市',district:'信義區',label:'吳興街4號'};
+    const fetch=vi.fn<typeof globalThis.fetch>(async()=>Response.json({results:[taipei]}));vi.stubGlobal('fetch',fetch);
+    expect(await searchLocations(' 吳興街 ')).toEqual([taipei]);
+    expect(fetch.mock.calls[0]?.[0]).toBe('/api/location/search?q=%E5%90%B3%E8%88%88%E8%A1%97');
+  });
   it('uses only Road Tag endpoints and passes abort signals',async()=>{
     const fetch=vi.fn<typeof globalThis.fetch>(async()=>Response.json({results:[result]}));vi.stubGlobal('fetch',fetch);
     const controller=new AbortController();

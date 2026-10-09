@@ -1763,14 +1763,17 @@ progress {
 .public-report-content .report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 14px; }
 .location-search-row { display: flex; gap: 8px; align-items: flex-end; }
 .location-search-row label { flex: 1; min-width: 0; }
-.location-search { position: relative; min-width: 0; }
+.location-search { position: relative; min-width: 0; text-align: left; }
 .location-search-row input { font-size: 16px; }
 .location-search-status { min-height: 1.5em; margin: 8px 0; }
 .location-results { list-style: none; padding: 4px; margin: 8px 0; display: grid; gap: 2px; max-height: min(260px, 32dvh); overflow-y: auto; overscroll-behavior: contain; scroll-padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
 .location-results[hidden] { display: none; }
-.location-results [role="option"] { display: grid; gap: 4px; padding: 12px; min-height: 48px; text-align: left; overflow-wrap: anywhere; cursor: pointer; border-radius: 8px; }
-.location-results [role="option"]:hover, .location-results .is-active { background: var(--mist-blue); outline: 2px solid var(--green); outline-offset: -2px; }
+.location-results [role="option"] { display: grid; gap: 2px; padding: 8px 10px; min-height: 44px; text-align: left; justify-items: start; color: var(--text); overflow-wrap: anywhere; cursor: pointer; border-radius: 6px; font-size: 14px; line-height: 1.4; }
+.location-results [role="option"] strong { color: inherit; font-size: 14px; text-align: left; }
+.location-results [role="option"]:hover, .location-results .is-active { background: var(--green-dark); color: #fff; outline: 2px solid var(--green); outline-offset: -2px; }
 .location-results [role="option"] span, .location-results small { color: var(--muted); }
+.location-results [role="option"]:hover small, .location-results .is-active small { color: #fff; }
+.location-results small { font-size: 12px; text-align: left; }
 .location-results[aria-busy="true"] { opacity: .65; pointer-events: none; }
 @media (max-width: 640px) { .location-results { max-height: min(220px, 28dvh); } }
 .selected-location { padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-block: 12px; overflow-wrap: anywhere; }

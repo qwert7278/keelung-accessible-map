@@ -13,8 +13,10 @@ async function request(path:string, parameters:URLSearchParams, signal?:AbortSig
   return await response.json();
   } finally {pending.cleanup();}
 }
-export async function searchLocations(query:string, cityId:string, signal?:AbortSignal):Promise<LocationResult[]> {
-  const payload = await request('search', new URLSearchParams({ q:query.trim(), cityId }), signal) as { results?:LocationResult[] };
+export async function searchLocations(query:string, cityId?:string, signal?:AbortSignal):Promise<LocationResult[]> {
+  const parameters=new URLSearchParams({q:query.trim()});
+  if(cityId) parameters.set('cityId',cityId);
+  const payload = await request('search', parameters, signal) as { results?:LocationResult[] };
   if (!Array.isArray(payload?.results) || payload.results.some(result => !result || !validLocation(result.location ?? { lat:NaN,lng:NaN }) || typeof result.label !== 'string' || typeof result.address !== 'string' || typeof result.city !== 'string' || typeof result.district !== 'string')) throw new Error(LOCATION_SEARCH_UNAVAILABLE);
   return payload.results.slice(0,5);
 }

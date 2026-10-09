@@ -8,7 +8,7 @@ import {
   WarningCircleIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
-import { type City, DEMO_MODE } from "../config";
+import { CITIES, type City, DEMO_MODE } from "../config";
 import {
   ACCESS,
   CATEGORIES,
@@ -171,7 +171,7 @@ export default function ReportForm({
     }
     setSearching(true);
     try {
-      const results = await searchLocations(query, city.id, request.signal);
+      const results = await searchLocations(query, undefined, request.signal);
       if (request.signal.aborted) return;
       setCandidates(results);
       setSearchNote(results.length ? '請選擇正確位置，再確認地圖標記。' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
@@ -180,27 +180,43 @@ export default function ReportForm({
     } finally {
       if (!request.signal.aborted) setSearching(false);
     }
-  },[locationQuery,city.id]);
+  },[locationQuery]);
   useEffect(() => {
     if (!capabilities.searchReady || step!==1 || locationQuery.trim().length<2) return;
     const timer=window.setTimeout(() => { void search(); }, 350);
     return () => { window.clearTimeout(timer); searchRequest.current?.abort(); };
-  // The timer tracks the query and city; stale requests are aborted.
-  }, [locationQuery, city.id, capabilities.searchReady, step, search]);
+  // Searching is nationwide; changing the selected city must not repeat the query.
+  }, [locationQuery, capabilities.searchReady, step, search]);
   async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'|'manual'='map', geography?:{city:City;district:string}) {
     invalidateSelection();
     const request = new AbortController();
     selectionRequest.current = request;
+    if(candidate) {
+      setError('');
+      setPicked(false);
+      setReverseNote('正在確認位置與行政區…');
+      try {
+        const preferred=CITIES.find(c=>c.name.replace(/台/g,'臺')===candidate.city.replace(/台/g,'臺'));
+        const found=await geographyAt(location,preferred);
+        if(request.signal.aborted)return;
+        if(!found){setReverseNote('');setError('此位置不在可回報的行政區範圍，請選擇其他候選或地圖位置。');return;}
+        geography=found;
+      } catch {
+        if(!request.signal.aborted){setReverseNote('');setError('行政區資料暫時無法載入，請重選位置。');}
+        return;
+      }
+    }
     const selectedCity=geography?.city || city;
     const b=selectedCity.bounds;
-    if ((candidate && candidate.city.replace(/台/g,'臺') !== city.name.replace(/台/g,'臺')) || !Number.isFinite(location.lat) || !Number.isFinite(location.lng) || location.lat < b.south || location.lat > b.north || location.lng < b.west || location.lng > b.east) {
-      setError(`此位置不在${city.name}，請先切換縣市，或重新點選地圖。`);
+    if (!Number.isFinite(location.lat) || !Number.isFinite(location.lng) || location.lat < b.south || location.lat > b.north || location.lng < b.west || location.lng > b.east) {
+      setError('此位置不在可回報範圍，請選擇其他候選或地圖位置。');
       return;
     }
     const addressVersion=++addressRevision.current;
     setCandidates([]);
     setSearchNote('');
     setCity(selectedCity);
+    if(candidate&&geography)onLocated?.(geography,location);
     setDraft(d => ({...d,cityId:selectedCity.id,district:geography?.district || d.district,location,address:candidate?.address ?? ''}));
     setManualCoordinates({lat:false,lng:false});
     setPicked(true);
@@ -212,7 +228,7 @@ export default function ReportForm({
     void districtAt(selectedCity.id, geography?.district || candidate?.district || draft.district, location).then(found => {
       if (request.signal.aborted) return;
       if (found) setDraft(d => ({...d,district:found}));
-      else setError(`選點不在${city.name}行政區內，請重新選擇。`);
+      else setError(`選點不在${selectedCity.name}行政區內，請重新選擇。`);
     }).catch(() => { if (!request.signal.aborted) setReverseNote('行政區將於下一步重新確認。'); });
     if (candidate) { setReverseNote('已選取候選地址或地標，請確認現場障礙位置。'); return; }
     if (!capabilities.reverseReady) {setReverseNote('地址暫時無法自動取得，可手動補充；位置已保留。');return;}
@@ -424,7 +440,7 @@ export default function ReportForm({
           {step === 1 && (
             <>
               <h3>障礙在哪裡？</h3>
-              <p className="muted">回報縣市：{city.name}。{capabilities.searchReady ? '搜尋地址或地標，也可以直接點地圖。' : '使用目前位置，或直接點地圖標記障礙。'}</p>
+              <p className="muted">{capabilities.searchReady ? '直接輸入街名、地址或地標，不用先選縣市；選取後會自動定位。' : `回報縣市：${city.name}。使用目前位置，或直接點地圖標記障礙。`}</p>
               {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
                 onQuery={value=>{searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
                 onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}

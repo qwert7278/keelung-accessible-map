@@ -14,6 +14,7 @@ window.fetch=async(input,init)=>{
   const q=url.searchParams.get('q')||'';
   await new Promise(resolve=>setTimeout(resolve,q.includes('慢')?1800:100));
   if(q.includes('失敗'))return Response.json({error:'LOCATION_TEMPORARILY_UNAVAILABLE'},{status:503});
+  if(q.includes('吳興'))return Response.json({results:Array.from({length:5},(_,i)=>({label:`吳興街${4+i}號`,city:'臺北市',district:'信義區',address:`臺北市信義區吳興街${4+i}號`,location:{lat:25.0325+i*.00001,lng:121.56},kind:'address'}))});
   return Response.json({results:q.includes('空')?[]:Array.from({length:6},(_,i)=>({
     label:`${q} 候選 ${i+1}`,city:'基隆市',district:'仁愛區',address:`基隆市仁愛區精一路${19+i}號附近 · 請確認騎樓入口`,
     location:{lat:25.1262937+i*.00001,lng:121.741373},kind:'address',

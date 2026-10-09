@@ -35,8 +35,8 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
       {results.map((result,index)=><li id={`${id}-option-${index}`} key={`${result.label}-${index}`} role="option"
         aria-selected={active===index} className={active===index?'is-active':''}
         onMouseDown={event=>event.preventDefault()} onClick={()=>{if(!loading)select(result);}}>
-        <strong>{result.label}</strong><span>{result.city} · {result.district}</span>
-        <small>{result.address||'沒有完整地址，請確認地圖上的現場位置'}</small>
+        <strong>{result.label}</strong>
+        <small>{result.city} · {result.district}{result.address?` · ${result.address}`:' · 請確認地圖上的現場位置'}</small>
       </li>)}
     </ul>
     <p className="muted">候選位置僅供參考 · <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / OpenStreetMap</p>
