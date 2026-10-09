@@ -2,6 +2,7 @@ export type LocationPoint = { lat:number; lng:number };
 export type LocationResult = {
   label:string; address:string; location:LocationPoint; city:string; district:string;
   kind:'address'|'poi'|'road'|'district'|'other';
+  precision?:string; confidence?:number|null; needs_confirmation?:true; source?:'Geoapify';
 };
 export type ReverseLocationResult = { address:string; city:string; district:string };
 export function validLocation(point:LocationPoint) {

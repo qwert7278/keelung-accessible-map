@@ -1,8 +1,8 @@
 import { createHmac, randomBytes } from 'node:crypto';
-// This bound is per runtime, NOT a distributed quota. TGOS stays disabled until
-// a shared limiter and authenticated transports have been verified.
+// Per-runtime abuse ceilings are not an account-wide spend cap. Provider free
+// quota/overage restrictions must be verified before enabling live geocoding.
 const secret=process.env.LOCATION_RISK_SECRET || randomBytes(32).toString('hex');
-export const locationCapabilities=()=>({searchReady:false,reverseReady:false});
+export const locationCapabilities=()=>({searchReady:process.env.GEOAPIFY_LOCATION_ENABLED==='true' && !!process.env.GEOAPIFY_API_KEY,reverseReady:process.env.GEOAPIFY_LOCATION_ENABLED==='true' && !!process.env.GEOAPIFY_API_KEY});
 export function createLocationLimiter(now=()=>Date.now(), networkMax=30, totalMax=300, trustVercelHeaders=process.env.VERCEL==='1') {
   let window=0,total=0;
   const buckets=new Map<string,number>();
@@ -19,3 +19,6 @@ export function createLocationLimiter(now=()=>Date.now(), networkMax=30, totalMa
   };
 }
 export const limitLocation=createLocationLimiter();
+
+const actorLimiter=createLocationLimiter(()=>Date.now(),20,100,true);
+export const limitLocationActor=(id:string)=>actorLimiter(new Request("https://roadtag.internal/location",{headers:{"x-forwarded-for":id}}));
