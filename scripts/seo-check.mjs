@@ -51,8 +51,13 @@ check(index.includes("路見不平，一起標註"), "Homepage must include the 
 check(!/localhost|\.vercel\.app\//i.test(index.replaceAll(base, "")), "Homepage must not contain a preview or localhost URL.");
 
 const faqSchema = [...index.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1])).find(e => e['@type'] === 'FAQPage');
-check(faqSchema?.mainEntity?.length === 5, 'Homepage needs the matching visible FAQ schema.');
 const visibleFaq = index.match(/<section[^>]*class="section wrap home-faq"[\s\S]*?<\/section>/)?.[0] || '';
+check(faqSchema?.mainEntity?.length === [...visibleFaq.matchAll(/<details\b/g)].length && faqSchema?.mainEntity?.length >= 5, 'Homepage needs the matching visible FAQ schema.');
+const chatgptGuide = index.match(/<section[^>]*id="chatgpt"[\s\S]*?<\/section>/)?.[0] || '';
+check(chatgptGuide.includes('封閉測試中，暫未對所有人開放'), 'ChatGPT guide must disclose private Closed Alpha access.');
+check(chatgptGuide.includes('id="chatgpt-guide"') && chatgptGuide.includes('href="#chatgpt-guide"') && chatgptGuide.includes('href="/map"'), 'ChatGPT guide needs working tutorial and website links.');
+check((chatgptGuide.match(/<li>/g) || []).length === 3 && chatgptGuide.includes('示意對話'), 'ChatGPT guide needs three steps and a labelled example.');
+check(!/href=["']https?:\/\/(?:chatgpt\.com|chat\.openai\.com)/i.test(chatgptGuide), 'Private connector must not expose an invented launch URL.');
 check(faqSchema?.mainEntity?.some(q => q.name === '誰負責建置與維護 Road Tag？'), 'Association FAQ is required.');
 for (const q of faqSchema?.mainEntity || []) { check(visibleFaq.includes(q.name) && visibleFaq.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
 const mapPage = await read("map.html");
