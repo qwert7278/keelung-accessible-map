@@ -20,4 +20,3 @@ Desktop7曝光、Mobile3、Tablet3；不足判定裝置差異。
 
 下一期：取得足量相關query後選1項標題或教學改善；核對/how-to索引與內鏈；提供台灣繁中CSV後對照GSC，最多10項；必要時補/map渲染抓取證據。
 本輪公開文案 NO CHANGE — measure only。不建立薄內容、批量地域頁、不投放廣告。
-

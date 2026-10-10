@@ -7,4 +7,3 @@ export async function jsonRequest(url,options={},request=fetch,wait=ms=>new Prom
  return response.json()
  }
 }
-

@@ -14,4 +14,3 @@ test('429 recovery and empty response',async()=>{
  const result=await jsonRequest('https://example.test',{},async()=>++requests===1?{status:429,ok:false}:{status:200,ok:true,json:async()=>({})},async()=>{})
  assert.deepEqual(result,{})
 })
-

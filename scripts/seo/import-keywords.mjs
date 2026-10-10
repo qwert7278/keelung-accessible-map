@@ -15,6 +15,3 @@ async function main(){
  console.log(JSON.stringify({status:'CSV_FALLBACK',keywords:rows.length,missingVolume:rows.filter(r=>r.monthlySearches===null&&r.volumeMin===null).length}))
 }
 main().catch(e=>{console.error(['INPUT_REQUIRED','FILE_TOO_LARGE','MARKET_LANGUAGE_REQUIRED','MISSING_KEYWORD_COLUMN','INVALID_CSV'].includes(e.message)?e.message:'LOCAL_IMPORT_ERROR');process.exitCode=1})
-
-
-

@@ -12,4 +12,3 @@
 - Manual static Code Review: PASS after fixes for bounded pagination cap, snapshot invalidation, matching provenance, credential path against module repo root.
 - No independent human approval asserted. PR awaits review. No merge or Production deployment authorized this round.
 - Existing HEIC chunk size build warning persists; no related runtime change.
-

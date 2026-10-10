@@ -66,7 +66,3 @@ async function main(){
 main().catch(async e=>{const safe=['AUTH_REQUIRED','RATE_LIMITED','UNAVAILABLE','INVALID_REQUEST','WRONG_PROPERTY','INVALID_PERIOD','CREDENTIALS_MUST_BE_OUTSIDE_REPO'];const status=safe.includes(e.message)?e.message:'LOCAL_OR_NETWORK_ERROR';console.error(status);
 try{await mkdir('artifacts/seo',{recursive:true});await writeFile('artifacts/seo/gsc-summary.json',JSON.stringify({status,generatedAt:new Date().toISOString(),reports:{}})+'\n',{mode:0o600});await writeFile('artifacts/seo/gsc-recommendations.md','# GSC report unavailable\n'+status+'\n',{mode:0o600})}catch{/* Console remains safe even if local output is unavailable. */}
 process.exitCode=1})
-
-
-
-

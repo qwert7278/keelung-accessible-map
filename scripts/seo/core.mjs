@@ -92,5 +92,3 @@ export function combineEvidence(gscRows,plannerRows){
  return {keyword:r.keyword,source:r.source,market:r.market,language:r.language,dataPeriod:r.dataPeriod,monthlySearches:r.monthlySearches,volumeMin:r.volumeMin,volumeMax:r.volumeMax,competition:r.competition,gsc:match?{clicks:match.clicks,impressions:match.impressions,ctr:match.ctr,position:match.position}:null,intent:/申訴|1999/.test(r.keyword)?'government_complaint':/地圖|路線/.test(r.keyword)?'route_lookup':/回報|通報/.test(r.keyword)?'report':'information',needsHumanReview:true}
  }).slice(0,10)
 }
-
-
