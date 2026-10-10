@@ -30,6 +30,7 @@ import GuidedTourPrompt from "./GuidedTourPrompt";
 import { districtCamera } from '../utils/mapCamera';
 import { geographyAt } from '../utils/locationSelection';
 import { defaultReportTitle } from '../utils/reportTitle';
+import { displayLocationAddress } from '../utils/locationDisplay';
 import { districtAt } from '../utils/districtBoundary';
 import { LOCATION_SEARCH_UNAVAILABLE, searchLocations, reverseLocation, locationCapabilities } from '../services/locationApi';
 import type { LocationResult } from '../services/locationContract';
@@ -464,7 +465,7 @@ export default function ReportForm({
               </div>
               {picked && <section className="selected-location" aria-label="已選位置">
                 <strong>已選位置</strong>
-                <p>{draft.address || '地址待確認'} · {city.name} {draft.district}</p>
+                <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && ' · 地址待確認'}</p>
                 <small className="selected-coordinates">緯度 {draft.location.lat.toFixed(5)} · 經度 {draft.location.lng.toFixed(5)}</small>
                 <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); setManualCoordinates({lat:false,lng:false}); }}>重新選擇</button>
               </section>}
@@ -602,7 +603,7 @@ export default function ReportForm({
               </label>
               <div className="review-card">
                 <MapPinIcon size={28} />
-                <p>{draft.address || "地址待確認，依地圖標記定位"}</p>
+                <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && " · 依地圖標記定位"}</p>
                 <p>
                   {city.name} {draft.district} · {CATEGORIES[draft.category]}
                 </p>
