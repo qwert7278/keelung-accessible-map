@@ -1163,13 +1163,19 @@
           <a class="button" href="/map" data-map-link>使用網站回報 <span aria-hidden="true">↗</span></a>
         </div>
         <div id="chatgpt-guide" class="chatgpt-guide" tabindex="-1" aria-labelledby="chatgpt-guide-title">
-          <h3 id="chatgpt-guide-title">已獲邀請？依照三步驟回報</h3>
+          <h3 id="chatgpt-guide-title">受邀後，從連線到回報</h3>
+          <p>目前採管理員核准名單制，沒有邀請碼，也不提供公開自助加入。請先由邀請你的管理員確認可收信的 email 與 ChatGPT 連線資格；Road Tag 不會要求你的 ChatGPT 密碼。</p>
           <ol class="chatgpt-steps">
+            <li><h4>取得測試資格</h4><p>管理員核准你的獨立測試帳號，並提供適用於你帳號或工作區的 Road Tag 連線方式。收到邀請不代表已完成 ChatGPT 平台授權。</p></li>
+            <li><h4>連接 Road Tag</h4><p>在 ChatGPT 網頁版進入 Settings → Plugins（部分帳號顯示 Apps）。找到管理員提供的 Road Tag，依 OAuth 畫面登入你的 Road Tag 測試帳號並確認授權。若看不到 Road Tag，請聯絡管理員；先不要建立不明連線。</p></li>
+            <li><h4>在聊天中啟用</h4><p>已連線者可在 Road Tag 詳細頁選 Try in chat，或從聊天工具選單選擇 Road Tag。若你的介面或方案沒有這項功能，仍可使用網站回報。</p></li>
             <li><h4>拍照並描述</h4><p>傳送現場照片，說明障礙與大致地址或地標。請避開人臉、車牌等個資。</p></li>
             <li><h4>確認位置與附近案件</h4><p>核對候選位置與障礙點；位置不明確時補充說明或用地圖選點。附近案件不一定是同一個障礙。</p></li>
             <li><h4>確認送出，取得案件連結</h4><p>確認位置、照片與內容後才送出。如有相同案件，可確認後補充現場觀察。</p></li>
           </ol>
-          <div class="chatgpt-example"><h4>示意對話</h4><blockquote>我想回報車站附近的騎樓高低差，輪椅無法通過，這是現場照片。請協助確認位置、查詢附近是否有相同案件，讓我確認後送出。</blockquote><p>實際使用時，請補上縣市、地址或地標；系統不會只憑照片猜測精確位置。</p></div>
+          <div class="chatgpt-example"><h4>示意對話：複製後換成你的現場資訊</h4><blockquote id="chatgpt-example-text">我要透過 Road Tag 回報道路障礙。地點是基隆市仁愛區精一路19號附近，騎樓入口有高低差，輪椅無法通過。我已上傳現場照片，請幫我確認位置及附近是否有相同案件，讓我確認後再正式回報。</blockquote><button type="button" class="button secondary" id="copy-chatgpt-example">複製回報範例</button><p id="copy-chatgpt-status" role="status" aria-live="polite"></p><p>不需要複製 Google Maps 連結。ChatGPT 可利用 Geoapify 搜尋地址或地標；位置不精確時，仍須由你確認。實際使用前請先上傳照片，並替換成真正的現場資訊。</p><p><strong>公開前會請你確認。</strong>送出後，照片及案件內容可能公開顯示在 Road Tag。完成後可開啟案件網址查看結果。</p></div>
+          <details><summary>收到邀請，卻找不到 Road Tag？</summary><p>Road Tag 的測試資格與 ChatGPT 平台的 App 權限是兩件事。你的方案、工作區政策或自訂 App 存取可能尚未支援；請回覆邀請你的管理員，暫時改用網站回報。我們尚未完成外部測試者驗收，不代表所有帳號都能連接。</p></details>
+          <details><summary>可以用手機或其他 AI 服務嗎？</summary><p>本輪先以 ChatGPT 網頁版測試連線，手機可以使用 Road Tag 網站回報。Claude、Gemini 與其他 MCP Client 尚未在本輪驗收，暫不宣稱支援。</p></details>
         </div>
       </section>
 
