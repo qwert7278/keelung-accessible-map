@@ -8,6 +8,46 @@ async function request(body=JSON.stringify({report:id,kind:'before',operation:id
  const stamp=String(Date.now());return new Request('https://example.test',{method:'POST',headers:{authorization,'x-roadtag-timestamp':stamp,'x-roadtag-risk-hash':risk,'x-roadtag-signature':await signGate(secret,stamp,risk,authorization,body)},body});
 }
 describe('trusted photo preparation',()=>{
+ it.each([
+  ['PGRST202','Could not find function private.secret_details',503],
+  ['08006','database offline private.secret_details',503],
+  ['42501','permission denied for private table',503],
+  ['P0001','unexpected internal private.secret_details',503],
+  ['P0001','Authentication required',401],
+  ['P0001','Admin required',403],
+  ['P0001','Upload belongs to another operation',403],
+  ['P0001','Report not found',404],
+  ['P0001','Invalid upload request',400],
+  ['P0001','Verified request required',403],
+  ['P0001','Original upload must use its report ID',400],
+  ['P0001','Invalid photo format',400],
+  ['XX000','Admin required',503],
+  ['P0001','toString',503],
+  ['P0001','Upload reservation expired; start a new report',409],
+  ['P0001','照片上傳過於頻繁，請稍後再試',429],
+  ['P0001','今日照片上傳額度已達上限，請稍後再試',429],
+  ['P0001','尚有未完成的照片上傳，請完成後再試',429],
+  ['P0001','此網路的照片請求過於頻繁，請稍後再試。',429],
+ ])('classifies reservation error %s / %s as HTTP %s without exposing DB details',async(code,message,status)=>{
+  const rpc=vi.fn().mockResolvedValue({data:null,error:{code,message}});
+  const handler=preparePhotoHandler({gateSecret:secret,authenticate:async()=>({id,anonymous:true}),maintenance:()=>({rpc}) as unknown as SupabaseClient});
+  const response=await handler(await request());
+  expect(response.status).toBe(status);
+  const body=await response.json();expect(typeof body.error).toBe('string');expect(body.error).not.toContain('private.');
+ });
+ it('returns the reservation without waiting for slow expired-photo cleanup',async()=>{
+  let releaseCleanup!:()=>void;
+  const pendingCleanup=new Promise<{data:string[];error:null}>(resolve=>{releaseCleanup=()=>resolve({data:[],error:null});});
+  const reservation={path:`${id}/before/${id}.webp`,uploaded:false};
+  const rpc=vi.fn().mockImplementation(async(name)=>name==='reserve_photo_verified_format'?{data:reservation,error:null}:pendingCleanup);
+  const handler=preparePhotoHandler({gateSecret:secret,authenticate:async()=>({id,anonymous:true}),maintenance:()=>({rpc}) as unknown as SupabaseClient});
+  let timeout:ReturnType<typeof setTimeout>|undefined;
+  try {
+   const result=await Promise.race([handler(await request()),new Promise<null>(resolve=>{timeout=setTimeout(()=>resolve(null),1000);})]);
+   expect(result).not.toBeNull();expect(result!.status).toBe(200);expect(await result!.json()).toEqual(reservation);
+   expect(rpc.mock.calls.map(([name])=>name)).toEqual(['reserve_photo_verified_format']);
+  } finally {clearTimeout(timeout);releaseCleanup();}
+ });
  it('bounds scheduled batches and leaves backlog indicated for the next run',async()=>{
   const paths=Array.from({length:20},(_,i)=>`expired-${i}.webp`),rpc=vi.fn().mockImplementation(async(name)=>({data:name==='expired_photos'?paths:null,error:null})),remove=vi.fn().mockResolvedValue({error:null});
   const result=await cleanupPhotos({rpc,storage:{from:()=>({remove})}} as unknown as SupabaseClient,2);
