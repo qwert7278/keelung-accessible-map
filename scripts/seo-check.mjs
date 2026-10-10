@@ -67,6 +67,28 @@ for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", 
     .flatMap(match => { const parsed = JSON.parse(match[1]); return parsed['@graph'] || [parsed]; });
   check(entities.some(entity => ['WebPage', 'AboutPage'].includes(entity['@type'])), `${path} needs its page schema.`);
   check(entities.some(entity => entity['@type'] === 'BreadcrumbList'), `${path} needs breadcrumb schema.`);
+  // Validate existing graph relationships against the canonical page; no new schema types.
+  const canonicalPath = path === 'index.html' ? '/' : path === 'map.html' ? '/map' : '/' + path.split('/')[0];
+  const canonicalUrl = base + canonicalPath;
+  const pageEntities = entities.filter(entity => ['WebPage', 'AboutPage'].includes(entity['@type']));
+  check(pageEntities.length === 1, path + ' needs exactly one page entity.');
+  for (const entity of entities) {
+    if (entity['@id']) check(entity['@id'].startsWith(canonicalUrl + '#') || [base + '/#website', base + '/#organization'].includes(entity['@id']), path + ' schema @id conflicts with canonical.');
+    if (entity.publisher) check(entity.publisher['@id'] === base + '/#organization', path + ' publisher must reference the association.');
+    if (['WebPage', 'AboutPage'].includes(entity['@type'])) {
+      check(entity.url === canonicalUrl, path + ' page schema URL must match canonical.');
+      check(entity.isPartOf?.['@id'] === base + '/#website', path + ' page schema must reference the shared WebSite.');
+      if (entity.breadcrumb) check(entities.some(item => item['@type'] === 'BreadcrumbList' && item['@id'] === entity.breadcrumb['@id']), path + ' breadcrumb reference is unresolved.');
+    }
+    if (entity['@type'] === 'WebSite') check(entity['@id'] === base + '/#website' && entity.url === base + '/', path + ' WebSite identity must match the production host.');
+    if (entity['@type'] === 'BreadcrumbList') {
+      check(entity['@id'] === canonicalUrl + '#breadcrumb', path + ' breadcrumb identity must match canonical.');
+      const items = entity.itemListElement || [];
+      check(items.length > 0 && items.every((item, i) => item['@type'] === 'ListItem' && item.position === i + 1 && item.name && [base + '/', canonicalUrl].includes(item.item)), path + ' breadcrumb items must have ordered public URLs.');
+      check(items.at(-1)?.item === canonicalUrl, path + ' final breadcrumb must identify this page.');
+    }
+  }
+
   if (path === 'map.html') {
     const mapEntities = entities.filter(entity => entity['@type'] === 'WebPage');
     check(mapEntities.length === 1, 'Map needs exactly one WebPage entity.');
