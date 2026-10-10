@@ -74,13 +74,16 @@ export function parseKeywords(text,metadata) {
  const column=k=>header.findIndex(c=>aliases[k].includes(c))
  const count=s=>{
  const n=s.trim().replace(/,/g,'').match(/^(\d+(?:\.\d+)?)\s*([kKmM]?)$/)
- return n?Number(n[1])*({k:1000,m:1000000}[n[2].toLowerCase()]??1):null
+ const value=n?Number(n[1])*({k:1000,m:1000000}[n[2].toLowerCase()]??1):null
+ return Number.isFinite(value)?value:null
  }
  return rows.slice(headerIndex+1).filter(r=>r[column('keyword')]?.trim()).map(r=>{
  const raw=(r[column('volume')]??'').trim()
  const range=raw.split(/\s*[-–—]\s*/)
  const exact=range.length===1?count(raw):null
- return {keyword:r[column('keyword')].trim(),monthlySearches:exact,volumeMin:range.length===2?count(range[0]):exact,volumeMax:range.length===2?count(range[1]):exact,competition:r[column('competition')]?.trim()||null,market:'TW',language:'zh-Hant',dataPeriod:metadata.dataPeriod||'unknown',metadataSource:'operator_declared',source:'keyword_planner_csv'}
+ const min=range.length===2?count(range[0]):exact,max=range.length===2?count(range[1]):exact
+ const valid=min!==null&&max!==null&&min<=max
+ return {keyword:r[column('keyword')].trim(),monthlySearches:exact,volumeMin:valid?min:null,volumeMax:valid?max:null,competition:r[column('competition')]?.trim()||null,market:'TW',language:'zh-Hant',dataPeriod:metadata.dataPeriod||'unknown',metadataSource:'operator_declared',source:'keyword_planner_csv'}
  }).filter(r=>safeQuery(r.keyword))
 }
 

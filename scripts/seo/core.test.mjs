@@ -80,3 +80,12 @@ test('combined evidence keeps missing GSC unknown and ranges intact',async()=>{
  assert.equal(rows[0].intent,'report')
  assert.equal(rows[0].needsHumanReview,true)
 })
+
+test('invalid volume ranges and nonfinite numbers remain unknown',()=>{
+ for(const volume of ['1000-100','100-bad','bad-100','1e309','9'.repeat(400)]){
+ const rows=parseKeywords('Keyword,Avg. monthly searches\n無障礙地圖,'+volume,{market:'TW',language:'zh-Hant'})
+ assert.equal(rows[0].monthlySearches,null)
+ assert.equal(rows[0].volumeMin,null)
+ assert.equal(rows[0].volumeMax,null)
+ }
+})
