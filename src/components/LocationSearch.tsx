@@ -29,7 +29,7 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
       </label>
       <button className="button secondary" type="button" disabled={loading} onClick={()=>{setOpen(true);setActive(-1);onSearch();}}>搜尋</button>
     </div>
-    <p id={`${id}-help`} className="muted">輸入後自動搜尋；用上下鍵選擇、Enter 確認、Escape 收起。選取後仍須核對地圖位置。</p>
+    <p id={`${id}-help`} className="muted">直接輸入地址或地標。上下鍵選擇，Enter 選取，Escape 收起。</p>
     <p id={`${id}-status`} className="location-search-status muted" role="status" aria-live="polite" aria-atomic="true">{loading?'正在搜尋地址與地標…':note}</p>
     <ul ref={list} id={`${id}-list`} className="location-results" role="listbox" aria-label="搜尋候選位置" aria-busy={loading} hidden={!expanded||!results.length}>
       {results.map((result,index)=><li id={`${id}-option-${index}`} key={`${result.label}-${index}`} role="option"

@@ -1,3 +1,5 @@
+> Superseded for the final minimal UX revision by [Phase 3 final UX gate](phase3-public-beta-final-ux.md). Earlier race-only results below remain historical.
+
 # Phase 3 final review closure — 2026-10-09
 
 ## Technical review
