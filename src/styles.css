@@ -2505,3 +2505,9 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 .report-modal .review-card p + p { margin-top: 6px; }
 .report-modal .review-title-edit { margin-block: 8px; }
 .report-modal .review-title-edit summary { min-height: 44px; padding-block: 10px; cursor: pointer; color: var(--green); }
+
+/* Keep completion feedback concise and close to its header. */
+.report-complete-content { padding: 16px 22px 20px; }
+.report-complete-content > p { margin: 0 0 12px; }
+.report-complete-note { color: var(--muted); font-size: 14px; }
+.report-complete-modal .report-success { padding-top: 16px; }

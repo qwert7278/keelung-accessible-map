@@ -35,3 +35,7 @@ Local code review PASS: mobile selectors are scoped to report-modal; other dialo
 ## Local submit result fix
 
 The fixture previously closed ReportForm without rendering a result; Production App already uses ReportSuccessPanel. Fixture now retains a simple completion dialog explicitly stating no public report was created. Verified synthetic photo → consent → submit → completion dialog and Done control in local browser. Runtime submission and Production are unchanged. Lint/typecheck/build/SEO PASS.
+
+## Appreciation copy and spacing
+
+Completion heading is now 感謝你的回報, with a concise message thanking reports for helping wheelchair users and pedestrians travel with confidence. Production success panel retains its existing published-record status and actions. Local fixture explicitly labels simulated completion. Scoped completion styles reduce header-to-content gap; local DOM measured 16px. Local mock submit result verified; lint/typecheck/build/SEO PASS. No deployment or real report created.
