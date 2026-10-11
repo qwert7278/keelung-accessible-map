@@ -23,3 +23,11 @@ Step changes reset both dialog and content scroll to zero and focus the current 
 ## Review and release
 
 Local code review PASS: mobile selectors are scoped to report-modal; other dialogs retain existing behavior; closed dialogs remain hidden; long/error/nearby content can scroll; controls and privacy confirmation retained. No Production data or writes. This is a local change, not a Production release. No push/merge/deploy in this request.
+
+## Confirmation page follow-up
+
+- Review displays one location line and one category/access line; description appears only when provided. Duplicate district, coordinates and empty-description placeholder removed.
+- Title remains editable inside a native disclosure. Public-photo consent and nearby-report warning retained.
+- Submit progress is announced in the disabled submit button; the separate upload status block is removed and progress resets on each attempt.
+- Local synthetic JPEG flow: title disclosure opens, unchecked consent blocks submit, checked consent permits submit; observed disabled `送出中… 0%`, then successful dialog close. QA repository simulates progress only and creates no report or backend upload. Preview reopened and left at step 3 with consent unchecked.
+- This follow-up lint, typecheck/build and SEO check PASS. Physical devices and real backend upload are not newly verified by this UI simulation.

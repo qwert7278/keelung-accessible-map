@@ -3,7 +3,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CrosshairIcon,
-  MapPinIcon,
   CheckCircleIcon,
   WarningCircleIcon,
   XCircleIcon,
@@ -318,6 +317,7 @@ export default function ReportForm({
       return;
     }
     setBusy(true);
+    setProgress(0);
     setError("");
     try {
       const fingerprint = JSON.stringify(draft);
@@ -583,22 +583,17 @@ export default function ReportForm({
             <>
               <h3 tabIndex={-1}>確認後送出</h3>
               {photo && photoPreview && <img className="report-review-photo" src={photoPreview} alt="即將公開的現場照片"/>}
-              <label>回報標題
-                <input required maxLength={80} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
-              </label>
               <div className="review-card">
-                <MapPinIcon size={28} />
                 <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && " · 依地圖標記定位"}</p>
-                <p>
-                  <span className="review-geography">{city.name} {draft.district} · </span>{CATEGORIES[draft.category]}
-                </p>
-                <strong>{ACCESS[draft.wheelchairAccess]}</strong>
-                <p className="review-coordinates">
-                  {draft.location.lat.toFixed(5)},{" "}
-                  {draft.location.lng.toFixed(5)}
-                </p>
-                <p>{draft.description || "未填寫補充說明"}</p>
+                <p>{CATEGORIES[draft.category]} · <strong>{ACCESS[draft.wheelchairAccess]}</strong></p>
+                {draft.description.trim() && <p>{draft.description}</p>}
               </div>
+              <details className="review-title-edit">
+                <summary>修改回報標題</summary>
+                <label>回報標題
+                  <input required maxLength={80} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
+                </label>
+              </details>
               {nearby && (
                 <div className="notice">
                   30 公尺內已有同類型回報「{nearby.title}」。
@@ -653,15 +648,6 @@ export default function ReportForm({
             {error}
           </p>
         )}
-        {busy && (
-          <div role="status">
-            <p>
-              {DEMO_MODE ? "正在儲存測試回報" : "正在上傳照片與儲存回報"}…{" "}
-              {progress}%
-            </p>
-            <progress value={progress} max={100} />
-          </div>
-        )}
         <footer className="form-actions">
           {step > 1 ? (
             <button
@@ -698,7 +684,7 @@ export default function ReportForm({
             {step === 3 ? (
               <>
                 <CheckCircleIcon size={20} />
-                {busy ? "送出中…" : "確認送出"}
+                <span aria-live="polite">{busy ? `送出中… ${progress}%` : "確認送出"}</span>
               </>
             ) : (
               <>

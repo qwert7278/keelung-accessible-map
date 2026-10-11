@@ -20,6 +20,11 @@ window.fetch=async(input,init)=>{
     location:{lat:25.1262937+i*.00001,lng:121.741373},kind:'address',
   }))});
 };
+const qaRepository: typeof demoRepository={...demoRepository,create:async(draft,photo,onProgress)=>{
+  void draft;void photo;
+  for(const progress of [0,25,60,100]){onProgress?.(progress);await new Promise(resolve=>setTimeout(resolve,800));}
+  return 'local-ui-only-no-report-created';
+}};
 function QA(){const [open,setOpen]=useState(true);
 useEffect(()=>{
   if(!open)return;
@@ -34,5 +39,5 @@ useEffect(()=>{
     input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
   };
   document.querySelector('dialog')?.append(button);return()=>button.remove();
-},[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={demoRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>setOpen(false)} onExisting={()=>{}}/>}</>;}
+},[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={qaRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>setOpen(false)} onExisting={()=>{}}/>}</>;}
 createRoot(document.getElementById('root')!).render(<QA/>);

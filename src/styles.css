@@ -2494,12 +2494,14 @@ h1 { letter-spacing: 0; line-height: 1.4; }
   .report-modal .report-form textarea { min-height: 64px; }
   .report-modal .report-review-photo { max-height: 110px; }
   .report-modal .review-card { padding: 10px; margin-block: 8px; }
-  .report-modal .review-card > svg,
-  .report-modal .review-geography,
-  .report-modal .review-coordinates { display: none; }
   .report-modal .review-card p { margin-block: 4px; }
   .report-modal .report-form .form-actions { position: static; flex-shrink: 0; margin-top: 0; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); flex-wrap: nowrap; align-items: center; }
   .report-modal .report-form .report-cancel { display: none; }
   .report-modal .form-actions > .button { min-height: 44px; padding: 8px 12px; }
   .report-modal .report-form > .error { flex-shrink: 0; margin-block: 6px; }
 }
+
+.report-modal .review-card { padding: 12px; margin-block: 10px; }
+.report-modal .review-card p + p { margin-top: 6px; }
+.report-modal .review-title-edit { margin-block: 8px; }
+.report-modal .review-title-edit summary { min-height: 44px; padding-block: 10px; cursor: pointer; color: var(--green); }
