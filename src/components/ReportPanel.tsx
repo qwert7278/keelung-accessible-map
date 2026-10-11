@@ -173,7 +173,7 @@ export default function ReportPanel({
     admin && status === "resolved" && !photo && !report.afterImageUrl;
   const updateForm = (
     <form onSubmit={submit} className="update-form">
-      <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
+      {admin && <h3>管理案件</h3>}
       {!admin && (
         <p className="muted">
           你的補充會公開顯示；若提出狀況改善，正式案件狀態仍由管理者確認後更新。
@@ -237,6 +237,8 @@ export default function ReportPanel({
           />
         </label>
         <PhotoUploader
+          compact={!admin}
+          hideLabel={false}
           onProcessingChange={onPhotoProcessing}
           label={admin ? "改善後照片" : "最新照片（選填）"}
           value={photo}
@@ -414,7 +416,7 @@ export default function ReportPanel({
     <ReportDetailShell title={report.title} onClose={onClose} busy={busy}>
       {content}
     </ReportDetailShell>
-    {showUpdateForm && <Modal title="補充最新狀況" busy={busy} onClose={()=>setShowUpdateForm(false)}><div id="public-report-update" className="panel-content">{updateForm}</div></Modal>}
+    {showUpdateForm && <Modal title="補充最新狀況" className="report-update-modal" busy={busy} onClose={()=>setShowUpdateForm(false)}><div id="public-report-update" className="panel-content">{updateForm}</div></Modal>}
     {secondary && <Modal title={secondary==='photos' ? '現場照片' : secondary==='timeline' ? '現場紀錄' : '完整案件說明'} onClose={()=>setSecondary(null)}><div className="panel-content">{secondary==='photos' ? evidence : secondary==='timeline' ? <>{timeline}{metadata}</> : <><h3>{report.title}</h3><p>{report.district} · {report.address || '尚無地址'}</p><small>緯度 {report.location.lat.toFixed(5)} · 經度 {report.location.lng.toFixed(5)}</small><p>{report.description || '此案件尚無補充說明。'}</p>{metadata}</>}</div></Modal>}
     </>
   );

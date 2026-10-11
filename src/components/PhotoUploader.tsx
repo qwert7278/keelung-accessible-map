@@ -10,6 +10,7 @@ export default function PhotoUploader({
   label,
   required = false,
   compact = false,
+  hideLabel = compact,
   disabled = false,
   onProcessingChange,
 }: {
@@ -18,6 +19,7 @@ export default function PhotoUploader({
   label: string;
   required?: boolean;
   compact?: boolean;
+  hideLabel?: boolean;
   disabled?: boolean;
   onProcessingChange?: (processing: boolean) => void;
 }) {
@@ -65,7 +67,7 @@ export default function PhotoUploader({
   }
   return (
     <div className="photo-uploader">
-      <span className={compact ? "sr-only" : "field-label"}>
+      <span className={hideLabel ? "sr-only" : "field-label"}>
         {label}
         {required && "（必填）"}
       </span>
