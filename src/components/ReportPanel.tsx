@@ -30,12 +30,13 @@ const date = (value: string) =>
     timeStyle: "short",
   });
 function Photo({ src, label }: { src: string | null; label: string }) {
+  const [enlarged,setEnlarged] = useState(false);
   return (
     <figure>
       {src ? (
-        <a href={src} target="_blank" rel="noreferrer">
+        <button type="button" className="report-photo-open" aria-label={`放大${label}`} onClick={()=>setEnlarged(true)}>
           <img src={src} alt={label} loading="lazy" decoding="async" />
-        </a>
+        </button>
       ) : (
         <div className="photo-empty">
           <ImageIcon size={32} />
@@ -43,6 +44,7 @@ function Photo({ src, label }: { src: string | null; label: string }) {
         </div>
       )}
       <figcaption>{label}</figcaption>
+      {enlarged && src && <Modal title={label} className="report-photo-modal" onClose={()=>setEnlarged(false)} wide><img className="report-photo-enlarged" src={src} alt={label}/></Modal>}
     </figure>
   );
 }
@@ -173,7 +175,7 @@ export default function ReportPanel({
     admin && status === "resolved" && !photo && !report.afterImageUrl;
   const updateForm = (
     <form onSubmit={submit} className="update-form">
-      <h3>{admin ? "管理案件" : "補充最新狀況"}</h3>
+      {admin && <h3>管理案件</h3>}
       {!admin && (
         <p className="muted">
           你的補充會公開顯示；若提出狀況改善，正式案件狀態仍由管理者確認後更新。
@@ -237,6 +239,8 @@ export default function ReportPanel({
           />
         </label>
         <PhotoUploader
+          compact={!admin}
+          hideLabel={false}
           onProcessingChange={onPhotoProcessing}
           label={admin ? "改善後照片" : "最新照片（選填）"}
           value={photo}
@@ -299,7 +303,7 @@ export default function ReportPanel({
   const evidence=(<section className="evidence-section" aria-label="現場照片與改善證據">
           <h3>現場照片</h3>
           <div className="evidence-grid">
-            {embedded && <Photo src={report.beforeImageUrl} label="原始回報照片" />}
+            <Photo src={report.beforeImageUrl} label="原始回報照片" />
             <Photo
               src={latestCommunityPhoto || null}
               label="最新民眾補充照片"
@@ -411,11 +415,11 @@ export default function ReportPanel({
   }
   return (
     <>
-    <ReportDetailShell title={report.title} onClose={onClose} busy={busy}>
+    <ReportDetailShell centered={!admin} title={report.title} onClose={onClose} busy={busy}>
       {content}
     </ReportDetailShell>
-    {showUpdateForm && <Modal title="補充最新狀況" busy={busy} onClose={()=>setShowUpdateForm(false)}><div id="public-report-update" className="panel-content">{updateForm}</div></Modal>}
-    {secondary && <Modal title={secondary==='photos' ? '現場照片' : secondary==='timeline' ? '現場紀錄' : '完整案件說明'} onClose={()=>setSecondary(null)}><div className="panel-content">{secondary==='photos' ? evidence : secondary==='timeline' ? <>{timeline}{metadata}</> : <><h3>{report.title}</h3><p>{report.district} · {report.address || '尚無地址'}</p><small>緯度 {report.location.lat.toFixed(5)} · 經度 {report.location.lng.toFixed(5)}</small><p>{report.description || '此案件尚無補充說明。'}</p>{metadata}</>}</div></Modal>}
+    {showUpdateForm && <Modal title="補充最新狀況" className="report-update-modal" busy={busy} onClose={()=>setShowUpdateForm(false)}><div id="public-report-update" className="panel-content">{updateForm}</div></Modal>}
+    {secondary && <Modal className="report-secondary-modal" title={secondary==='photos' ? '現場照片' : secondary==='timeline' ? '現場紀錄' : '完整案件說明'} onClose={()=>setSecondary(null)}><div className="panel-content">{secondary==='photos' ? evidence : secondary==='timeline' ? <>{timeline}{metadata}</> : <><h3>{report.title}</h3><p>{report.district} · {report.address || '尚無地址'}</p><small>緯度 {report.location.lat.toFixed(5)} · 經度 {report.location.lng.toFixed(5)}</small><p>{report.description || '此案件尚無補充說明。'}</p>{metadata}</>}</div></Modal>}
     </>
   );
 }

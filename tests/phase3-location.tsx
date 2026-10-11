@@ -1,9 +1,10 @@
 // Local-only fixture: no build entry and no remote Auth, Storage, or report writes.
 import {createRoot} from 'react-dom/client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {CITIES} from '../src/config';
 import {demoRepository} from '../src/services/demo';
 import ReportForm from '../src/components/ReportForm';
+import Modal from '../src/components/Modal';
 import '../src/styles.css';
 import 'leaflet/dist/leaflet.css';
 const originalFetch=window.fetch.bind(window);
@@ -16,9 +17,28 @@ window.fetch=async(input,init)=>{
   if(q.includes('失敗'))return Response.json({error:'LOCATION_TEMPORARILY_UNAVAILABLE'},{status:503});
   if(q.includes('吳興'))return Response.json({results:Array.from({length:5},(_,i)=>({label:`吳興街${4+i}號`,city:'臺北市',district:'信義區',address:`臺北市信義區吳興街${4+i}號`,location:{lat:25.0325+i*.00001,lng:121.56},kind:'address'}))});
   return Response.json({results:q.includes('空')?[]:Array.from({length:6},(_,i)=>({
-    label:`${q} 候選 ${i+1}`,city:'基隆市',district:'仁愛區',address:`基隆市仁愛區精一路${19+i}號附近 · 請確認騎樓入口`,
+    label:`${q} 候選 ${i+1}`,city:'基隆市',district:'仁愛區',address:`基隆市仁愛區精一路${19+i}號附近`,
     location:{lat:25.1262937+i*.00001,lng:121.741373},kind:'address',
   }))});
 };
-function QA(){const [open,setOpen]=useState(true);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={demoRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>setOpen(false)} onExisting={()=>{}}/>}</>;}
+const qaRepository: typeof demoRepository={...demoRepository,create:async(draft,photo,onProgress)=>{
+  void draft;void photo;
+  for(const progress of [0,25,60,100]){onProgress?.(progress);await new Promise(resolve=>setTimeout(resolve,800));}
+  return 'local-ui-only-no-report-created';
+}};
+function QA(){const [open,setOpen]=useState(true);const [completed,setCompleted]=useState(false);
+useEffect(()=>{
+  if(!open)return;
+  const button=document.createElement('button');button.type='button';button.textContent='QA 合成照片';
+  button.style.cssText='position:fixed;right:4px;bottom:0;z-index:1100;font-size:10px';
+  button.onclick=async()=>{
+    const input=document.querySelector<HTMLInputElement>('.photo-uploader input[type=file]');if(!input)return;
+    const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;
+    const context=canvas.getContext('2d')!;context.fillStyle='#08787c';context.fillRect(0,0,640,480);
+    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,'image/jpeg'));if(!blob)return;
+    const transfer=new DataTransfer();transfer.items.add(new File([blob],'synthetic-mobile-qa.jpg',{type:'image/jpeg'}));
+    input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  document.querySelector('dialog')?.append(button);return()=>button.remove();
+},[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={qaRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>{setOpen(false);setCompleted(true);}} onExisting={()=>{}}/>}{completed&&<Modal title="感謝你的回報" className="report-complete-modal" onClose={()=>setCompleted(false)}><div className="report-complete-content"><p>每一次回報，都讓城市多一份理解，讓輪椅使用者與每一位行人更安心通行。</p><p className="report-complete-note">本地模擬完成，未建立公開案件。</p><button className="button primary" onClick={()=>setCompleted(false)}>完成</button></div></Modal>}</>;}
 createRoot(document.getElementById('root')!).render(<QA/>);

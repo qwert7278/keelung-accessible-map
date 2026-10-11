@@ -157,13 +157,13 @@ export default function MapView(props: Props) {
         role="region"
         aria-label={
           props.picking
-            ? "選擇回報位置的地圖，也可在下方輸入座標"
+            ? "選擇回報位置的地圖，可直接點選障礙現場"
             : `${props.city?.name || CITY.name}騎樓與人行道回報地圖，亦可使用旁邊案件列表`
         }
       />
       {(tileFailure || notice) && (
         <p className="map-notice" role="status">
-          {tileFailure ? "底圖部分載入失敗，仍可使用案件列表或輸入座標回報。" : notice}
+          {tileFailure ? "底圖部分載入失敗，仍可使用案件列表或搜尋地點回報。" : notice}
           {tileFailure && (
             <button className="map-tile-retry" type="button" onClick={() => controller.current?.retryTiles?.()}>
               重新載入底圖

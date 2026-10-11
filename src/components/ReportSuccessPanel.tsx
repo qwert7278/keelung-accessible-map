@@ -33,7 +33,7 @@ export default function ReportSuccessPanel({
     }
   }
   return (
-    <Modal title="回報完成" onClose={onClose}>
+    <Modal title="感謝你的回報" className="report-complete-modal" onClose={onClose}>
       <section className="report-success" aria-live="polite">
         <CheckCircleIcon size={42} aria-hidden="true" />
         <h3>
@@ -44,7 +44,7 @@ export default function ReportSuccessPanel({
         <p>
           {DEMO_MODE
             ? "Demo 資料不會分享給其他使用者，也不會送交政府。"
-            : "感謝你留下現場狀況。正式案件狀態由管理者確認後更新。"}
+            : "每一次回報，都讓城市多一份理解，讓輪椅使用者與每一位行人更安心通行。"}
         </p>
         {message && <p role="status">{message}</p>}
         <div className="report-success-actions">

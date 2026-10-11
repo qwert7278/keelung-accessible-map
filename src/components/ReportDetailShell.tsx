@@ -2,8 +2,8 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { XIcon } from '@phosphor-icons/react';
 import Modal from './Modal';
 
-export default function ReportDetailShell({ title, busy, onClose, children }: {
-  title:string; busy:boolean; onClose:()=>void; children:ReactNode;
+export default function ReportDetailShell({ title, busy, onClose, children, centered = false }: {
+  title:string; busy:boolean; onClose:()=>void; children:ReactNode; centered?:boolean;
 }) {
   const heading = useId();
   const drawer = useRef<HTMLElement>(null);
@@ -20,15 +20,15 @@ export default function ReportDetailShell({ title, busy, onClose, children }: {
     onClose();
   };
   useEffect(() => {
-    if (!desktop) return;
+    if (!desktop || centered) return;
     const escape = (event:KeyboardEvent) => {
       // A help/report modal owns Escape while it is above the non-modal drawer.
       if (event.key === 'Escape' && !event.defaultPrevented && !busy && !document.querySelector('dialog[open]')) closeDrawer();
     };
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
-  }, [desktop, busy, closeDrawer]);
-  if (!desktop) return <Modal title={title} busy={busy} onClose={onClose} wide sheet>{children}</Modal>;
+  }, [desktop, centered, busy, closeDrawer]);
+  if (!desktop || centered) return <Modal title={title} busy={busy} onClose={onClose} wide sheet={!centered}>{children}</Modal>;
   return <aside ref={drawer} className="report-detail-drawer" aria-labelledby={heading}>
     <header className="report-detail-header">
       <h2 id={heading}>{title}</h2>

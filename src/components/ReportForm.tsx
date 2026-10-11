@@ -3,7 +3,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CrosshairIcon,
-  MapPinIcon,
   CheckCircleIcon,
   WarningCircleIcon,
   XCircleIcon,
@@ -39,11 +38,11 @@ import type { LocationResult } from '../services/locationContract';
 const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   1: {
     title: "選擇障礙位置",
-    body: "點選閃動的地圖標記障礙位置，或按「使用目前位置」。不想開 GPS 也可以完成。",
+    body: "搜尋地址或地標、按「使用目前位置」，或直接點選地圖。",
   },
   2: {
     title: "確認障礙位置",
-    body: "核對地圖與已選位置，勾選位置確認後再繼續。",
+    body: "核對地圖與已選位置，按「下一步」繼續。",
   },
   3: {
     title: "前往現場資訊",
@@ -51,7 +50,7 @@ const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   },
   4: {
     title: "上傳現場照片",
-    body: "按閃動區域內的「選擇檔案」，上傳一張能看見障礙本身與周圍通行空間的照片。",
+    body: "按「拍照」或「從相簿選擇」，上傳一張清楚的障礙照片，避免人臉或車牌。",
   },
   5: {
     title: "選擇輪椅通行程度",
@@ -99,6 +98,7 @@ export default function ReportForm({
   useEffect(()=>{const controller=new AbortController();void locationCapabilities(controller.signal).then(value=>{if(!controller.signal.aborted)setCapabilities(value);}).catch(()=>{});return ()=>controller.abort();},[]);
   const [camera,setCamera]=useState(()=>({...districtCamera(initialCity,initialDistrict)}));
   const photoProcessingRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const searchRequest = useRef<AbortController|null>(null);
   const selectionRequest = useRef<AbortController|null>(null);
   const addressRevision = useRef(0);
@@ -120,17 +120,13 @@ export default function ReportForm({
   }, []);
   const attempt = useRef<{ id:string; draft:string; photo:Blob } | null>(null);
   const [checkingLocation, setCheckingLocation] = useState(false);
-  const [locationConfirmed, setLocationConfirmed] = useState(false);
+
   const titleEdited = useRef(false);
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoProcessing, setPhotoProcessing] = useState(false);
   const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [locating, setLocating] = useState(false),
     [locationNote, setLocationNote] = useState("");
-  const [manualCoordinates, setManualCoordinates] = useState({
-    lat: false,
-    lng: false,
-  });
   const [step, setStep] = useState(1),
     [photo, setPhoto] = useState<Blob | null>(null),
     [error, setError] = useState(""),
@@ -177,7 +173,7 @@ export default function ReportForm({
     setLocationNote('');
     setReverseNote('');
     setPicked(false);
-    setLocationConfirmed(false);
+
     setConfirmed(false);
     setCheckingLocation(false);
     addressRevision.current++;
@@ -199,7 +195,7 @@ export default function ReportForm({
       const results = await searchLocations(query, undefined, request.signal);
       if (request.signal.aborted) return;
       setCandidates(results);
-      setSearchNote(results.length ? '請選擇正確位置，再確認地圖標記。' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
+      setSearchNote(results.length ? '' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
     } catch {
       if (!request.signal.aborted) { setCandidates([]); setSearchNote(LOCATION_SEARCH_UNAVAILABLE); }
     } finally {
@@ -212,7 +208,7 @@ export default function ReportForm({
     return () => { window.clearTimeout(timer); searchRequest.current?.abort(); };
   // Searching is nationwide; changing the selected city must not repeat the query.
   }, [locationQuery, capabilities.searchReady, step, search]);
-  async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'|'manual'='map', geography?:{city:City;district:string}) {
+  async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'='map', geography?:{city:City;district:string}) {
     invalidateSelection();
     const request = new AbortController();
     selectionRequest.current = request;
@@ -244,7 +240,6 @@ export default function ReportForm({
     setCity(selectedCity);
     onLocated?.(geography,location);
     setDraft(d => ({...d,cityId:selectedCity.id,district:geography?.district || d.district,location,address:candidate && candidate.city.replace(/台/g,'臺')===selectedCity.name.replace(/台/g,'臺') && candidate.district===geography.district ? candidate.address : ''}));
-    setManualCoordinates({lat:false,lng:false});
     setPicked(true);
     setError('');
     if (source!=='map') {setCamera({focus:location,zoom:17});setCameraRevision(value => value+1);}
@@ -263,21 +258,11 @@ export default function ReportForm({
       if (!request.signal.aborted) setReverseNote('地址待確認；請核對地圖後繼續。');
     }
   }
-  function updateManualCoordinate(axis: "lat" | "lng", value: string) {
-    invalidateSelection();
-    const location = { ...draft.location, [axis]: value.trim() ? Number(value) : NaN };
-    const touched = { ...manualCoordinates, [axis]: true };
-    setManualCoordinates(touched);
-    update("location", location);
-    if (touched.lat && touched.lng && Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
-      void selectLocation(location,undefined,'manual');
-    }
-  }
   async function next() {
     const selectedRevision = locationRevision.current;
     const error = validateDraft({...draft,title:draft.title || defaultReportTitle(draft)});
     if (!picked) {
-      setError("請在地圖選點、使用定位，或輸入座標。");
+      setError("請搜尋地點、使用目前位置，或直接點選地圖。");
       return;
     }
     if (error) {
@@ -285,7 +270,7 @@ export default function ReportForm({
       return;
     }
     if (step === 1) {
-      if (!locationConfirmed) {setError("請先確認位置位於障礙現場。");return;}
+
       setCheckingLocation(true);
       try {
         const found = await districtAt(city.id,draft.district,draft.location);
@@ -293,7 +278,7 @@ export default function ReportForm({
         if (!found) { setError(`所選位置不在${city.name}的行政區範圍，請重新選點。`); return; }
         if (found !== draft.district) {
           update('district',found);
-          setLocationConfirmed(false);
+
           setError(`依所選位置已改為${found}，請確認後再按下一步。`);
           return;
         }
@@ -318,7 +303,7 @@ export default function ReportForm({
       if (!checkingLocation) await next();
       return;
     }
-    if (!photo || !confirmed || !picked || !locationConfirmed || honeypot || busy || photoProcessingRef.current) return;
+    if (!photo || !confirmed || !picked || honeypot || busy || photoProcessingRef.current) return;
     const validationError=validateDraft(draft);
     if(validationError){setError(validationError);return;}
     let last = 0;
@@ -332,6 +317,7 @@ export default function ReportForm({
       return;
     }
     setBusy(true);
+    setProgress(0);
     setError("");
     try {
       const fingerprint = JSON.stringify(draft);
@@ -391,6 +377,15 @@ export default function ReportForm({
       if (gpsRevision.current === gpsVersion) setLocating(false);
     }
   }
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const form = formRef.current;
+      form?.closest('dialog')?.scrollTo({top:0, behavior:'instant'});
+      form?.querySelector('fieldset')?.scrollTo({top:0, behavior:'instant'});
+      form?.querySelector<HTMLElement>('h3')?.focus({preventScroll:true});
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [step]);
   const currentGuide =
     guidedStep !== null ? GUIDE_COPY[guidedStep] : undefined;
 
@@ -413,7 +408,7 @@ export default function ReportForm({
   }, [guidedStep, step]);
 
   return (
-    <Modal title="回報通行障礙" onClose={onClose} busy={busy} wide>
+    <Modal title="回報通行障礙" onClose={onClose} busy={busy} wide className="report-modal">
       <div className="report-step-status">
         <ol className="steps" aria-label="回報步驟">
           {["障礙在哪裡？", "現場是什麼狀況？", "確認後送出"].map((label, i) => (
@@ -429,6 +424,7 @@ export default function ReportForm({
         </ol>
         <div
           className="report-step-progress"
+          data-step={step}
           role="progressbar"
           aria-label="回報進度"
           aria-valuemin={1}
@@ -449,20 +445,21 @@ export default function ReportForm({
           {currentGuide.body}
         </GuidedTourPrompt>
       )}
-      <form onSubmit={submit} className="report-form">
+      <form ref={formRef} onSubmit={submit} className="report-form" data-step={step}>
         <fieldset disabled={busy}>
           {step === 1 && (
             <>
-              <h3>障礙在哪裡？</h3>
-              <p className="muted">{capabilities.searchReady ? '直接輸入街名、地址或地標，不用先選縣市；選取後會自動定位。' : `回報縣市：${city.name}。使用目前位置，或直接點地圖標記障礙。`}</p>
+              <h3 tabIndex={-1}>障礙在哪裡？</h3>
               {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
                 onQuery={value=>{invalidateSelection();setPicked(false);searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
                 onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}
+              {capabilities.searchReady && <div className="location-method-divider" aria-hidden="true"><span>或</span></div>}
               <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={()=>void locate()}>
                 <CrosshairIcon size={20}/>{locating ? '正在取得位置…' : '使用目前位置'}
               </button>
               {locating && <p role="status">正在取得並確認目前位置，最長約 30 秒；也可直接搜尋或點選地圖。</p>}
               {gpsError && <p className="error" role="alert">{gpsError}</p>}
+              <p className="muted location-map-help">拖動或縮放地圖，點選對應的位置。</p>
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
@@ -478,60 +475,29 @@ export default function ReportForm({
                   focusRevision={cameraRevision}
                 />
               </div>
-              {picked && <section className="selected-location" aria-label="已選位置">
+              {picked && <section className={`selected-location${guidedStep === 2 ? ' guide-target-active' : ''}`} aria-label="已選位置">
                 <strong>已選位置</strong>
                 <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && ' · 地址待確認'}</p>
                 <small className="selected-coordinates">緯度 {draft.location.lat.toFixed(5)} · 經度 {draft.location.lng.toFixed(5)}</small>
-                <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); setManualCoordinates({lat:false,lng:false}); }}>重新選擇</button>
+                <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); }}>重新選擇</button>
               </section>}
-              {picked && <label className={`check-label${guidedStep === 2 ? ' guide-target-active' : ''}`}>
-                <input type="checkbox" checked={locationConfirmed} onChange={e=>{setLocationConfirmed(e.target.checked);if(e.target.checked && guidedStep===2)onGuidedStepChange?.(3);}}/>
-                我確認地圖標記位於障礙現場
-              </label>}
-              <p className="muted">點一下地圖即可微調障礙位置。</p>
+
               {reverseNote && <p className="muted" role="status">{reverseNote}</p>}
               {locationNote && (
                 <p className="muted" role="status">
                   {locationNote}
                 </p>
               )}
-              <details className="location-advanced"><summary>進階：手動輸入座標</summary><div className="form-grid">
-                <label>
-                  緯度
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={Number.isFinite(draft.location.lat) ? draft.location.lat : ""}
-                    onChange={(e) =>
-                      updateManualCoordinate("lat", e.target.value)
-                    }
-                  />
-                </label>
-                <label>
-                  經度
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={Number.isFinite(draft.location.lng) ? draft.location.lng : ""}
-                    onChange={(e) =>
-                      updateManualCoordinate("lng", e.target.value)
-                    }
-                  />
-                </label>
-              </div></details>
+
             </>
           )}
           {step === 2 && (
             <>
-              <h3>現場是什麼狀況？</h3>
-              <p className="photo-guidance">
-                拍到障礙本身，也盡量拍到周圍通行空間。請避免刻意拍攝可辨識的人臉、車牌或其他不必要個資。
-              </p>
+              <h3 tabIndex={-1}>現場是什麼狀況？（必填）</h3>
               <div className={guidedStep === 4 ? "guide-target-active guide-target-block" : undefined}>
                 <PhotoUploader
           onProcessingChange={onPhotoProcessing}
+                  compact
                   label="現場照片"
                   required
                   value={photo}
@@ -600,7 +566,7 @@ export default function ReportForm({
               <label>
                 簡短說明（選填）
                 <textarea
-                  rows={3}
+                  rows={2}
                   maxLength={1000}
                   value={draft.description}
                   onChange={(e) => update("description", e.target.value)}
@@ -611,24 +577,19 @@ export default function ReportForm({
           )}
           {step === 3 && (
             <>
-              <h3>確認後送出</h3>
+              <h3 tabIndex={-1}>確認後送出</h3>
               {photo && photoPreview && <img className="report-review-photo" src={photoPreview} alt="即將公開的現場照片"/>}
-              <label>回報標題
-                <input required maxLength={80} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
-              </label>
               <div className="review-card">
-                <MapPinIcon size={28} />
                 <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && " · 依地圖標記定位"}</p>
-                <p>
-                  {city.name} {draft.district} · {CATEGORIES[draft.category]}
-                </p>
-                <strong>{ACCESS[draft.wheelchairAccess]}</strong>
-                <p>
-                  {draft.location.lat.toFixed(5)},{" "}
-                  {draft.location.lng.toFixed(5)}
-                </p>
-                <p>{draft.description || "未填寫補充說明"}</p>
+                <p>{CATEGORIES[draft.category]} · <strong>{ACCESS[draft.wheelchairAccess]}</strong></p>
+                {draft.description.trim() && <p>{draft.description}</p>}
               </div>
+              <details className="review-title-edit">
+                <summary>修改回報標題</summary>
+                <label>回報標題
+                  <input required maxLength={80} onInvalid={e=>e.currentTarget.closest('details')?.setAttribute('open','')} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
+                </label>
+              </details>
               {nearby && (
                 <div className="notice">
                   30 公尺內已有同類型回報「{nearby.title}」。
@@ -659,11 +620,6 @@ export default function ReportForm({
                 我已確認照片未包含可辨識的人臉、車牌或個人資訊，並同意
                 {DEMO_MODE ? "將測試回報保存在此瀏覽器" : "公開此回報與照片"}。
               </label>
-              <p className="muted">
-                {DEMO_MODE
-                  ? "這是 Demo，資料不會送交政府，也不會分享給其他使用者。"
-                  : "送出後可公開瀏覽。此平台目前不會將案件自動轉交政府。"}
-              </p>
             </>
           )}
           <div className="honeypot" aria-hidden="true">
@@ -682,15 +638,6 @@ export default function ReportForm({
           <p className="error" role="alert">
             {error}
           </p>
-        )}
-        {busy && (
-          <div role="status">
-            <p>
-              {DEMO_MODE ? "正在儲存測試回報" : "正在上傳照片與儲存回報"}…{" "}
-              {progress}%
-            </p>
-            <progress value={progress} max={100} />
-          </div>
         )}
         <footer className="form-actions">
           {step > 1 ? (
@@ -716,19 +663,19 @@ export default function ReportForm({
           )}
           <button
             className={`button primary${
-              (step === 1 && guidedStep === 3) ||
+              (step === 1 && (guidedStep === 2 || guidedStep === 3)) ||
               (step === 2 && guidedStep === 6) ||
               (step === 3 && guidedStep === 8)
                 ? " guide-target-active"
                 : ""
             }`}
-            disabled={busy || checkingLocation || photoProcessing || (step === 1 && (!picked || !locationConfirmed || locating)) || (step === 3 && !confirmed)}
+            disabled={busy || checkingLocation || photoProcessing || (step === 1 && (!picked || locating)) || (step === 3 && !confirmed)}
             type="submit"
           >
             {step === 3 ? (
               <>
                 <CheckCircleIcon size={20} />
-                {busy ? "送出中…" : "確認送出"}
+                <span aria-live="polite">{busy ? `送出中… ${progress}%` : "確認送出"}</span>
               </>
             ) : (
               <>

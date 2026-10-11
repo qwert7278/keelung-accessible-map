@@ -694,7 +694,7 @@ export default function App() {
           </button>
         )}
       </main>
-      <footer className="site-footer clean-footer"><span>© 2026 路見不平 · Road Tag · 無礙玩家建置維護</span><a href="/" className="footer-home-link"><HouseIcon size={16} />回到首頁</a></footer>
+      <footer className="site-footer clean-footer"><span>© 2026 路見不平 · Road Tag · 無礙玩家建置維護</span>{!adminPage && <span className="map-data-attribution"><a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></span>}<a href="/" className="footer-home-link"><HouseIcon size={16} />回到首頁</a></footer>
       {toast && (
         <div className="toast" role="status">
           {toast}

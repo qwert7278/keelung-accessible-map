@@ -2451,3 +2451,95 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 
 .report-review-photo {display:block;width:100%;max-height:240px;object-fit:contain;border-radius:12px;background:var(--surface-soft);}
 .report-form .review-card {text-align:left;}
+
+/* Compact report only: the body can scroll when needed; actions never scroll away. */
+@media (max-width: 700px) {
+  .report-modal {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow: hidden;
+  }
+  .report-modal:not([open]) { display: none; }
+  .report-modal > .modal-header { position: static; flex-shrink: 0; padding: 8px 12px; }
+  .report-modal > .report-step-status { position: static; flex-shrink: 0; padding-bottom: 6px; }
+  .report-modal .steps { padding: 8px 12px 0; }
+  .report-modal .report-step-progress { margin: 6px 12px 0; }
+  .report-modal .report-form { display: flex; flex-direction: column; flex: 1; min-height: 0; padding: 0 12px; }
+  .report-modal .report-form > fieldset { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 2px; scroll-padding-block: 12px; }
+  .report-modal .report-form h3 { font-size: 18px; margin-bottom: 6px; }
+  .report-modal .report-form label { margin: 8px 0; }
+  .report-modal .location-intro,
+  .report-modal .selected-coordinates { display: none; }
+  .report-modal .location-search-row { margin-top: 0; }
+  .report-modal .location-search > p { font-size: 12px; line-height: 1.4; margin-block: 4px; }
+  .report-modal .location-search > p[id$="-help"] { display: none; }
+  .report-modal .picker-map { height: clamp(130px, 22dvh, 185px); margin: 8px 0; }
+  .report-modal .selected-location { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px; padding: 8px; margin-block: 6px; }
+  .report-modal .selected-location > strong { display: none; }
+  .report-modal .selected-location p { font-size: 13px; line-height: 1.4; }
+  .report-modal .selected-location .text-button { min-height: 44px; padding: 4px; }
+  .report-modal .photo-guidance { font-size: 12px; line-height: 1.4; margin-block: 4px 8px; }
+  .report-modal .photo-empty { min-height: 64px; gap: 4px; }
+  .report-modal .photo-empty > svg { display: none; }
+  .report-modal .photo-preview { max-height: 96px; }
+  .report-modal .photo-picker-actions { margin: 6px 0; gap: 8px; }
+  .report-modal .photo-picker-actions .button { flex: 1; padding-inline: 8px; }
+  .report-modal .photo-uploader small { display: block; font-size: 11px; line-height: 1.4; }
+  .report-modal .report-form .access-options { margin: 8px 0; gap: 6px; }
+  .report-modal .access-options label { min-height: 44px; padding: 6px 4px; gap: 3px; font-size: 12px; justify-content: center; }
+  .report-modal .access-options label > svg { display: none; }
+  .report-modal .report-form textarea { min-height: 64px; }
+  .report-modal .report-review-photo { max-height: 110px; }
+  .report-modal .review-card { padding: 10px; margin-block: 8px; }
+  .report-modal .review-card p { margin-block: 4px; }
+  .report-modal .report-form .form-actions { position: static; flex-shrink: 0; margin-top: 0; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); flex-wrap: nowrap; align-items: center; }
+  .report-modal .report-form .report-cancel { display: none; }
+  .report-modal .form-actions > .button { min-height: 44px; padding: 8px 12px; }
+  .report-modal .report-form > .error { flex-shrink: 0; margin-block: 6px; }
+}
+
+.report-modal .review-card { padding: 12px; margin-block: 10px; }
+.report-modal .review-card p + p { margin-top: 6px; }
+.report-modal .review-title-edit { margin-block: 8px; }
+.report-modal .review-title-edit summary { min-height: 44px; padding-block: 10px; cursor: pointer; color: var(--green); }
+
+/* Keep completion feedback concise and close to its header. */
+.report-complete-content { padding: 16px 22px 20px; }
+.report-complete-content > p { margin: 0 0 12px; }
+.report-complete-note { color: var(--muted); font-size: 14px; }
+.report-complete-modal .report-success { padding-top: 16px; }
+
+.report-modal .location-map-help { margin-block: 6px; font-size: 13px; }
+.report-modal .location-method-divider { display: flex; align-items: center; gap: 12px; margin-block: 4px 8px; color: var(--green); font-size: 16px; font-weight: 600; line-height: 1.4; }
+.report-modal .location-method-divider::before,
+.report-modal .location-method-divider::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+
+.report-modal .location-search-status:empty { min-height: 0; margin: 0; }
+
+:is(.report-modal, .report-update-modal) .photo-picker-compact { justify-content: center; align-items: center; min-height: 104px; padding: 16px 12px; margin-block: 8px 12px; border: 1px dashed var(--border); border-radius: 8px; background: #f1f5f2; }
+.report-modal .photo-uploader small.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 700px) { :is(.report-modal, .report-update-modal) .photo-picker-compact { min-height: 76px; padding: 10px 8px; gap: 8px; } }
+
+:is(.report-modal, .report-update-modal) .photo-picker-compact.photo-picker-selected { display: none; }
+
+.report-modal .report-step-progress { height: 7px; }
+.report-modal .report-step-progress > span { background: linear-gradient(90deg, #a6c9bd 0%, #548f7d 50%, var(--green) 100%); }
+
+.report-update-modal .update-form { margin-top: 0; padding-top: 0; border-top: 0; }
+.report-update-modal .panel-content { padding-top: 16px; }
+.report-update-modal .photo-uploader > small { display: block; margin-block: 8px; font-size: 13px; color: var(--muted); }
+
+.report-photo-open { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.report-photo-open img { display: block; }
+.report-photo-enlarged { display: block; width: 100%; max-height: calc(100dvh - 150px); object-fit: contain; padding: 12px; }
+.report-secondary-modal .panel-content { padding-top: 16px; }
+.report-secondary-modal .evidence-section,
+.report-secondary-modal .timeline { margin-top: 0; padding-top: 0; border-top: 0; }
+.report-secondary-modal .evidence-section > h3,
+.report-secondary-modal .timeline > h3 { display: none; }
+.report-secondary-modal .evidence-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.report-secondary-modal .panel-content > h3 { margin-top: 0; }
+.report-photo-modal img.report-photo-enlarged { height: auto; max-height: calc(100dvh - 150px); object-fit: contain; }
+.report-secondary-modal .evidence-grid img { height: 180px; }

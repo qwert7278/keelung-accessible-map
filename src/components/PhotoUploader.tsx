@@ -9,6 +9,8 @@ export default function PhotoUploader({
   onChange,
   label,
   required = false,
+  compact = false,
+  hideLabel = compact,
   disabled = false,
   onProcessingChange,
 }: {
@@ -16,6 +18,8 @@ export default function PhotoUploader({
   onChange: (blob: Blob | null) => void;
   label: string;
   required?: boolean;
+  compact?: boolean;
+  hideLabel?: boolean;
   disabled?: boolean;
   onProcessingChange?: (processing: boolean) => void;
 }) {
@@ -63,7 +67,7 @@ export default function PhotoUploader({
   }
   return (
     <div className="photo-uploader">
-      <span className="field-label">
+      <span className={hideLabel ? "sr-only" : "field-label"}>
         {label}
         {required && "（必填）"}
       </span>
@@ -85,19 +89,19 @@ export default function PhotoUploader({
                 inputRef.current.value = "";
               }
               if (cameraRef.current) cameraRef.current.value = "";
-              galleryButtonRef.current?.focus();
+              window.requestAnimationFrame(()=>galleryButtonRef.current?.focus());
             }}
           >
             <XIcon size={22} aria-hidden="true" />
           </button>
         </div>
-      ) : (
+      ) : !compact ? (
         <div className="photo-empty">
           <CameraIcon size={32} aria-hidden="true" />
           <span>記錄現場，讓問題更清楚</span>
         </div>
-      )}
-      <div className="photo-picker-actions">
+      ) : null}
+      <div className={['photo-picker-actions', compact ? 'photo-picker-compact' : '', compact && value ? 'photo-picker-selected' : ''].filter(Boolean).join(' ')}>
         <button type="button" className="button secondary" disabled={disabled || busy}
           aria-describedby={`${id}-help`} onClick={()=>cameraRef.current?.click()}>
           <CameraIcon size={20} aria-hidden="true" />拍照
@@ -120,7 +124,7 @@ export default function PhotoUploader({
           disabled={disabled || busy} onChange={selectPhoto}/>
       </div>
       <small id={`${id}-help`}>
-        一次選擇一張照片。可拍照或從相簿、檔案選取；取消選圖不會關閉回報視窗。系統會自動壓縮照片。
+        {compact ? "限一張照片，請拍清楚障礙，避免拍到人臉或車牌。" : "一次選擇一張照片。可拍照或從相簿、檔案選取；取消選圖不會關閉回報視窗。系統會自動壓縮照片。"}
       </small>
       {busy && <p role="status">正在處理照片…</p>}
       {error && (

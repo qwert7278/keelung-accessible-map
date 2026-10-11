@@ -26,11 +26,11 @@ export default function HelpPanel({
         <ol className="help-steps">
           <li>
             <strong>找到障礙位置</strong>
-            <span>使用目前位置、點選地圖，或輸入座標；不開 GPS 也能回報。</span>
+            <span>搜尋地址或地標、使用目前位置，或點選地圖；選好後按「下一步」。</span>
           </li>
           <li>
             <strong>拍攝現場照片</strong>
-            <span>拍到障礙與周圍通行空間，避免人臉、車牌與其他個人資訊。</span>
+            <span>按「拍照」或「從相簿選擇」，限一張照片，避免人臉、車牌與個人資訊。</span>
           </li>
           <li>
             <strong>描述問題並送出</strong>
@@ -43,7 +43,7 @@ export default function HelpPanel({
           <div>
             <dt>需要註冊或開啟 GPS 嗎？</dt>
             <dd>
-              不必建立一般帳號。定位只在你按下定位按鈕時使用；也可手動選點或輸入座標。
+              不必建立一般帳號。定位只在你按下定位按鈕時使用；也可搜尋地點或直接點選地圖。
             </dd>
           </div>
           <div>
