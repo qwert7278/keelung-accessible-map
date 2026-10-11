@@ -31,6 +31,7 @@ import { districtCamera } from '../utils/mapCamera';
 import { geographyAt } from '../utils/locationSelection';
 import { defaultReportTitle } from '../utils/reportTitle';
 import { displayLocationAddress } from '../utils/locationDisplay';
+import { currentPosition } from '../utils/geolocation';
 import { districtAt } from '../utils/districtBoundary';
 import { LOCATION_SEARCH_UNAVAILABLE, searchLocations, reverseLocation, locationCapabilities } from '../services/locationApi';
 import type { LocationResult } from '../services/locationContract';
@@ -102,6 +103,8 @@ export default function ReportForm({
   const selectionRequest = useRef<AbortController|null>(null);
   const addressRevision = useRef(0);
   const gpsRevision = useRef(0);
+  const gpsRequest = useRef<AbortController|null>(null);
+  const [gpsError, setGpsError] = useState('');
   const locationRevision = useRef(0);
   const [locationQuery, setLocationQuery] = useState('');
   const [candidates, setCandidates] = useState<LocationResult[]>([]);
@@ -112,6 +115,7 @@ export default function ReportForm({
   useEffect(() => () => {
     searchRequest.current?.abort();
     selectionRequest.current?.abort();
+    gpsRequest.current?.abort();
     gpsRevision.current++;
   }, []);
   const attempt = useRef<{ id:string; draft:string; photo:Blob } | null>(null);
@@ -166,8 +170,11 @@ export default function ReportForm({
   function invalidateSelection() {
     locationRevision.current++;
     selectionRequest.current?.abort();
+    gpsRequest.current?.abort();
     gpsRevision.current++;
     setLocating(false);
+    setGpsError('');
+    setLocationNote('');
     setReverseNote('');
     setPicked(false);
     setLocationConfirmed(false);
@@ -344,39 +351,45 @@ export default function ReportForm({
       setBusy(false);
     }
   }
-  function locate() {
+  async function locate() {
+    invalidateSelection();
+    setError('');
     if (!navigator.geolocation) {
-      setError("此瀏覽器不支援定位，請手動選點。");
+      setGpsError('此瀏覽器不支援定位，請使用搜尋地點或地圖選點。');
       return;
     }
-    invalidateSelection();
+    const request = new AbortController();
+    gpsRequest.current = request;
     const gpsVersion = gpsRevision.current;
     setLocating(true);
-    setError("");
-    setLocationNote("");
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        void (async()=>{
-          if (gpsRevision.current !== gpsVersion) return;
-          const location={lat:p.coords.latitude,lng:p.coords.longitude};
-          try {
-            const geography=await geographyAt(location,city);
-            if (gpsRevision.current !== gpsVersion) return;
-            setLocating(false);
-            if (!geography) {setError('目前位置不在 Road Tag 可回報範圍，請改用搜尋或地圖選點。');return;}
-            void selectLocation(location,undefined,'gps',geography);
-
-            setLocationNote(`定位誤差約 ${Math.round(p.coords.accuracy)} 公尺。請確認標記位於障礙現場，必要時點選地圖調整。`);
-          } catch {if(gpsRevision.current===gpsVersion){setLocating(false);setError('行政區資料暫時無法載入，請改用地圖選點。');}}
-        })();
-      },
-      () => {
-        if (gpsRevision.current !== gpsVersion) return;
-        setLocating(false);
-        setError("無法取得定位，仍可點選地圖或輸入座標。");
-      },
-      { timeout: 10000, enableHighAccuracy: true, maximumAge: 30000 },
-    );
+    // Includes polygon loading: even a stalled geography import must not leave the UI waiting forever.
+    const deadline = window.setTimeout(() => {
+      if (gpsRevision.current !== gpsVersion) return;
+      request.abort();
+      gpsRevision.current++;
+      setLocating(false);
+      setLocationNote('');
+      setGpsError('位置確認逾時。請重試，或使用搜尋地點／地圖選點；尚未選取你的目前位置。');
+    }, 30000);
+    try {
+      const {location, accuracy} = await currentPosition(navigator.geolocation, request.signal);
+      if (gpsRevision.current !== gpsVersion) return;
+      setLocationNote('已取得 GPS，正在確認行政區…');
+      let geography;
+      try { geography = await geographyAt(location,city); }
+      catch { throw new Error('已取得 GPS，但行政區資料無法載入。請重試，或使用搜尋地點／地圖選點。'); }
+      if (gpsRevision.current !== gpsVersion) return;
+      if (!geography) throw new Error('目前位置不在 Road Tag 可回報範圍，請使用搜尋地點或地圖選點。');
+      void selectLocation(location,undefined,'gps',geography);
+      setLocationNote(`定位誤差約 ${Math.round(accuracy)} 公尺。請確認標記位於障礙現場，必要時點選地圖調整。`);
+    } catch (error) {
+      if (gpsRevision.current !== gpsVersion) return;
+      setLocationNote('');
+      setGpsError(error instanceof Error ? error.message : '定位失敗，請使用搜尋地點或地圖選點。');
+    } finally {
+      window.clearTimeout(deadline);
+      if (gpsRevision.current === gpsVersion) setLocating(false);
+    }
   }
   const currentGuide =
     guidedStep !== null ? GUIDE_COPY[guidedStep] : undefined;
@@ -445,9 +458,11 @@ export default function ReportForm({
               {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
                 onQuery={value=>{invalidateSelection();setPicked(false);searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
                 onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}
-              <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={locate}>
+              <button type="button" className={`button secondary full${guidedStep === 1 ? " guide-target-active" : ""}`} disabled={locating} onClick={()=>void locate()}>
                 <CrosshairIcon size={20}/>{locating ? '正在取得位置…' : '使用目前位置'}
               </button>
+              {locating && <p role="status">正在取得並確認目前位置，最長約 30 秒；也可直接搜尋或點選地圖。</p>}
+              {gpsError && <p className="error" role="alert">{gpsError}</p>}
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
