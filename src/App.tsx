@@ -434,20 +434,12 @@ export default function App() {
           </button>
         )}
       </header>
-      {(!adminPage || session?.admin) && <div className="demo-banner">
+      {DEMO_MODE && (!adminPage || session?.admin) && <div className="demo-banner">
         <InfoIcon size={18} aria-hidden="true" />
         <p>
-          {DEMO_MODE ? (
-            <>
-              <strong>Demo 展示版</strong>
-              <span className="banner-divider">／</span>
-              所有案件均為測試資料，操作只保存在此瀏覽器，不會送交政府。
-            </>
-          ) : (
-            <>
-              社群通行紀錄 · 本平台尚未串接政府派工，請依現場狀況判斷通行安全。
-            </>
-          )}
+          <strong>Demo 展示版</strong>
+          <span className="banner-divider">／</span>
+          所有案件均為測試資料，操作只保存在此瀏覽器，不會送交政府。
         </p>
       </div>}
       <main id="main-content" tabIndex={-1}>
