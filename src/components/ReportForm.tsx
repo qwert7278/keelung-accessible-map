@@ -493,12 +493,10 @@ export default function ReportForm({
           {step === 2 && (
             <>
               <h3 tabIndex={-1}>現場是什麼狀況？</h3>
-              <p className="photo-guidance">
-                拍到障礙本身，也盡量拍到周圍通行空間。請避免刻意拍攝可辨識的人臉、車牌或其他不必要個資。
-              </p>
               <div className={guidedStep === 4 ? "guide-target-active guide-target-block" : undefined}>
                 <PhotoUploader
           onProcessingChange={onPhotoProcessing}
+                  compact
                   label="現場照片"
                   required
                   value={photo}

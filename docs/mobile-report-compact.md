@@ -59,3 +59,7 @@ Impeccable distill/craft-floor applied to this narrow refinement. Divider 或 us
 ## Attribution relocation follow-up
 
 Placeholder and map hint updated to owner-specified wording. Removed form-bottom attribution links and unused CSS; Geoapify/OpenStreetMap source links now live in the main public map site footer. Native map-tile attribution remains. Local DOM confirms no form footer attribution, no action-row links, and new copy. Lint/typecheck/build/SEO PASS. No deployment.
+
+## Compact photo step
+
+ReportForm opts into PhotoUploader compact mode; other uploaders retain existing layout. Empty decorative photo placeholder replaced by centered camera/gallery buttons within one upload area. Repeated photo-step prose removed; picker help remains screen-reader-only and final public-photo consent retained. Camera capture, picker cancellation, compression and removal logic unchanged. Local synthetic JPEG preview/removal verified; 390x844 body overflow 0, horizontal overflow false, both buttons 44px high. Image regression 24/24, lint/typecheck/build/SEO PASS. Real-device camera/gallery PENDING. No deployment.
