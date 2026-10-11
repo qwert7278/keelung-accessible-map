@@ -47,3 +47,7 @@ Removed the separate location-confirmation checkbox and state. A valid selected 
 ## Minimal search copy
 
 Removed redundant introductory/helper copy and per-candidate repeated instructions. Search placeholder explains partial place/road/business names; one short map-adjustment hint remains. Geoapify/OpenStreetMap attribution moved from search area to the form bottom; map attribution retained. Loading/error/no-result live status retained and aria-describedby updated to the existing status element. Browser keyboard ArrowDown/Enter selects candidate and enables Next. Lint/typecheck/build/SEO and diff check PASS. Local preview only.
+
+## Two location methods
+
+Visible duplicate search label removed using existing sr-only styling; accessible combobox name retained. A compact 或 divider separates search from current location when search is available. Verified local DOM and read-screen label; lint/typecheck/build/SEO PASS. Local only.

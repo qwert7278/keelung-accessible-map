@@ -14,7 +14,7 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
   function select(result:LocationResult){setOpen(false);setActive(-1);onSelect(result);input.current?.focus();}
   return <div className="location-search" onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setOpen(false);setActive(-1);}}}>
     <div className="location-search-row">
-      <label htmlFor={`${id}-input`}>搜尋地點
+      <label htmlFor={`${id}-input`}><span className="sr-only">搜尋地點</span>
         <input ref={input} id={`${id}-input`} role="combobox" aria-autocomplete="list"
           aria-expanded={expanded} aria-controls={`${id}-list`} aria-describedby={`${id}-status`}
           aria-activedescendant={expanded&&active>=0&&results[active]?`${id}-option-${active}`:undefined}
