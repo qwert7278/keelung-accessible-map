@@ -128,10 +128,6 @@ export default function ReportForm({
   const onPhotoProcessing = (value: boolean) => { photoProcessingRef.current = value; setPhotoProcessing(value); };
   const [locating, setLocating] = useState(false),
     [locationNote, setLocationNote] = useState("");
-  const [manualCoordinates, setManualCoordinates] = useState({
-    lat: false,
-    lng: false,
-  });
   const [step, setStep] = useState(1),
     [photo, setPhoto] = useState<Blob | null>(null),
     [error, setError] = useState(""),
@@ -213,7 +209,7 @@ export default function ReportForm({
     return () => { window.clearTimeout(timer); searchRequest.current?.abort(); };
   // Searching is nationwide; changing the selected city must not repeat the query.
   }, [locationQuery, capabilities.searchReady, step, search]);
-  async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'|'manual'='map', geography?:{city:City;district:string}) {
+  async function selectLocation(location:Location, candidate?:LocationResult, source:'map'|'search'|'gps'='map', geography?:{city:City;district:string}) {
     invalidateSelection();
     const request = new AbortController();
     selectionRequest.current = request;
@@ -245,7 +241,6 @@ export default function ReportForm({
     setCity(selectedCity);
     onLocated?.(geography,location);
     setDraft(d => ({...d,cityId:selectedCity.id,district:geography?.district || d.district,location,address:candidate && candidate.city.replace(/台/g,'臺')===selectedCity.name.replace(/台/g,'臺') && candidate.district===geography.district ? candidate.address : ''}));
-    setManualCoordinates({lat:false,lng:false});
     setPicked(true);
     setError('');
     if (source!=='map') {setCamera({focus:location,zoom:17});setCameraRevision(value => value+1);}
@@ -264,21 +259,11 @@ export default function ReportForm({
       if (!request.signal.aborted) setReverseNote('地址待確認；請核對地圖後繼續。');
     }
   }
-  function updateManualCoordinate(axis: "lat" | "lng", value: string) {
-    invalidateSelection();
-    const location = { ...draft.location, [axis]: value.trim() ? Number(value) : NaN };
-    const touched = { ...manualCoordinates, [axis]: true };
-    setManualCoordinates(touched);
-    update("location", location);
-    if (touched.lat && touched.lng && Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
-      void selectLocation(location,undefined,'manual');
-    }
-  }
   async function next() {
     const selectedRevision = locationRevision.current;
     const error = validateDraft({...draft,title:draft.title || defaultReportTitle(draft)});
     if (!picked) {
-      setError("請在地圖選點、使用定位，或輸入座標。");
+      setError("請搜尋地點、使用目前位置，或直接點選地圖。");
       return;
     }
     if (error) {
@@ -492,7 +477,7 @@ export default function ReportForm({
                 <strong>已選位置</strong>
                 <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && ' · 地址待確認'}</p>
                 <small className="selected-coordinates">緯度 {draft.location.lat.toFixed(5)} · 經度 {draft.location.lng.toFixed(5)}</small>
-                <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); setManualCoordinates({lat:false,lng:false}); }}>重新選擇</button>
+                <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); }}>重新選擇</button>
               </section>}
               {picked && <label className={`check-label${guidedStep === 2 ? ' guide-target-active' : ''}`}>
                 <input type="checkbox" checked={locationConfirmed} onChange={e=>{setLocationConfirmed(e.target.checked);if(e.target.checked && guidedStep===2)onGuidedStepChange?.(3);}}/>
@@ -505,32 +490,7 @@ export default function ReportForm({
                   {locationNote}
                 </p>
               )}
-              <details className="location-advanced"><summary>進階：手動輸入座標</summary><div className="form-grid">
-                <label>
-                  緯度
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={Number.isFinite(draft.location.lat) ? draft.location.lat : ""}
-                    onChange={(e) =>
-                      updateManualCoordinate("lat", e.target.value)
-                    }
-                  />
-                </label>
-                <label>
-                  經度
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={Number.isFinite(draft.location.lng) ? draft.location.lng : ""}
-                    onChange={(e) =>
-                      updateManualCoordinate("lng", e.target.value)
-                    }
-                  />
-                </label>
-              </div></details>
+
             </>
           )}
           {step === 2 && (

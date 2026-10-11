@@ -2472,7 +2472,6 @@ h1 { letter-spacing: 0; line-height: 1.4; }
   .report-modal .report-form label { margin: 8px 0; }
   .report-modal .location-intro,
   .report-modal .location-map-help,
-  .report-modal .location-advanced,
   .report-modal .selected-coordinates { display: none; }
   .report-modal .location-search-row { margin-top: 0; }
   .report-modal .location-search > p { font-size: 12px; line-height: 1.4; margin-block: 4px; }

@@ -4,7 +4,7 @@ Base: main `42705cadb3324c7430d5f9a5c93de0df031e6934` (includes GPS fix). Isolat
 
 ## Change
 
-Only the report dialog receives compact styles below 700px: viewport-bounded dialog, independently scrolling fieldset, fixed visible action row, shorter map/photo preview, compact selected address, hidden manual coordinates and redundant coordinate/district labels. Location confirmation, photo privacy guidance, obstruction category, access radios and final public-content consent remain visible. Close stays in the header; the duplicate footer cancel is hidden on mobile. Desktop retains manual coordinates.
+Only the report dialog receives compact styles below 700px: viewport-bounded dialog, independently scrolling fieldset, fixed visible action row, shorter map/photo preview, compact selected address, hidden manual coordinates and redundant coordinate/district labels. Location confirmation, photo privacy guidance, obstruction category, access radios and final public-content consent remain visible. Close stays in the header; the duplicate footer cancel is hidden on mobile. Manual coordinate entry is removed at every width per the follow-up request.
 
 Step changes reset both dialog and content scroll to zero and focus the current step heading without scrolling. Existing photo processing, GPS cancellation, district selection, repository, MCP/OAuth and backend behavior are unchanged.
 
@@ -14,7 +14,7 @@ Step changes reset both dialog and content scroll to zero and focus the current 
 - 320x569: necessary body scroll remains (observed step 3 overflow 161px), footer bottom 560px stays inside viewport. No content clipping to force a one-screen layout.
 - Step 2 -> step 3 -> step 2: content scrollTop 0; heading focus; existing photo retained. Public consent required before Submit enables. No submit clicked.
 - Keyboard Tab from description reaches previous-step control; camera/gallery, access choices and footer hit areas approximately 44px.
-- Desktop manual coordinate disclosure remains visible.
+- Follow-up: manual coordinate disclosure and its unused state/handler removed at every width; helper/ARIA text now describes search and map picking.
 - 24/24 focused tests PASS (geolocation, actual polygon selection, address formatting); lint PASS; typecheck/build/SEO check PASS.
 - Impeccable detector: one existing progress-width animation warning at styles.css:897; no new findings in changed layout.
 - Browser screenshot capture unavailable; geometry and actual UI actions recorded above, no fabricated screenshot evidence.
