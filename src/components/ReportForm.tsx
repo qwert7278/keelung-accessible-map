@@ -620,11 +620,6 @@ export default function ReportForm({
                 我已確認照片未包含可辨識的人臉、車牌或個人資訊，並同意
                 {DEMO_MODE ? "將測試回報保存在此瀏覽器" : "公開此回報與照片"}。
               </label>
-              <p className="muted">
-                {DEMO_MODE
-                  ? "這是 Demo，資料不會送交政府，也不會分享給其他使用者。"
-                  : "送出後可公開瀏覽。此平台目前不會將案件自動轉交政府。"}
-              </p>
             </>
           )}
           <div className="honeypot" aria-hidden="true">

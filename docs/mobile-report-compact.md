@@ -67,3 +67,7 @@ ReportForm opts into PhotoUploader compact mode; other uploaders retain existing
 ## Photo selection and progress refinement
 
 Compact picker buttons hide when a photo exists; remove restores them and defers focus until after render. Existing inputs remain mounted and single-file. Duplicate visible photo label moved to screen-reader-only; step heading carries required marker. One visible reminder states one photo and avoids faces/plates. Progress fill colors change from light to medium to dark green for steps 1/2/3. Local synthetic photo selects/hides buttons, removal restores, reselection works; step colors verified. Image regression 24/24; lint/typecheck/build/SEO PASS. No real upload or deployment.
+
+## Final review copy and gradient
+
+Removed local synthetic address suffix 請確認騎樓入口; actual address data is not globally rewritten. Removed redundant government/public-browsing paragraph; explicit photo/privacy/public consent remains required. Verified auto-title 基隆市仁愛區精一路19號附近 · 人行道被占用 in actual local form. Progress now renders a 7px light→medium→dark green gradient and step circles use corresponding colors. Title tests 2/2, lint/typecheck/build/SEO PASS; local confirmation screenshot-equivalent DOM reviewed without submission. No Production change.

@@ -2523,6 +2523,9 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 @media (max-width: 700px) { .report-modal .photo-picker-compact { min-height: 76px; padding: 10px 8px; gap: 8px; } }
 
 .report-modal .photo-picker-compact.photo-picker-selected { display: none; }
-.report-modal .report-step-progress[data-step="1"] > span { background: #a6c9bd; }
-.report-modal .report-step-progress[data-step="2"] > span { background: #548f7d; }
-.report-modal .report-step-progress[data-step="3"] > span { background: var(--green); }
+
+.report-modal .report-step-progress { height: 7px; }
+.report-modal .report-step-progress > span { background: linear-gradient(90deg, #a6c9bd 0%, #548f7d 50%, var(--green) 100%); }
+.report-modal .steps li.active:nth-child(1) span { background: #a6c9bd; color: var(--green-dark); }
+.report-modal .steps li.active:nth-child(2) span { background: #548f7d; color: #fff; }
+.report-modal .steps li.active:nth-child(3) span { background: var(--green); color: #fff; }
