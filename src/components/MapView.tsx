@@ -12,6 +12,7 @@ type Props = {
   city?: City;
   reports: Report[];
   onSelect: (id: string) => void;
+  activeReportId?: string | null;
   picking?: boolean;
   onPick?: (location: Location) => void;
   position?: Location;
@@ -84,21 +85,25 @@ export default function MapView(props: Props) {
       const stopWatchingTiles = watchMapTileHealth(map, tiles, setTileFailure);
       tiles.addTo(map);
       const layer = L.layerGroup().addTo(map);
-      let lastCamera = '';
+      let lastCamera = '', lastMarkers = '';
+      const reportMarkers = new Map<string, {button:HTMLButtonElement; marker:L.Marker}>();
       map.on("click", (e: L.LeafletMouseEvent) => {
         if (latest.current.picking)
           latest.current.onPick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
       });
       controller.current = {
         render(p) {
-          layer.clearLayers();
+          const markerKey = JSON.stringify([p.reports,p.position]);
+          if (markerKey !== lastMarkers) {
+          lastMarkers = markerKey;
+          layer.clearLayers(); reportMarkers.clear();
           p.reports.forEach((report) => {
             const button = markerElement(report);
             button.addEventListener("click", (e) => {
               e.stopPropagation();
-              p.onSelect(report.id);
+              latest.current.onSelect(report.id);
             });
-            L.marker([report.location.lat, report.location.lng], {
+            const marker = L.marker([report.location.lat, report.location.lng], {
               icon: L.divIcon({
                 html: button,
                 className: "marker-shell",
@@ -107,6 +112,8 @@ export default function MapView(props: Props) {
               }),
               keyboard: false,
             }).addTo(layer);
+            button.dataset.reportId = report.id;
+            reportMarkers.set(report.id,{button,marker});
           });
           if (p.position)
             L.circleMarker([p.position.lat, p.position.lng], {
@@ -116,6 +123,13 @@ export default function MapView(props: Props) {
               radius: 11,
               weight: 5,
             }).addTo(layer);
+          }
+          reportMarkers.forEach(({button,marker},id)=>{
+            const active=id===p.activeReportId;
+            button.classList.toggle('is-highlighted',active);
+            button.setAttribute('aria-pressed',String(active));
+            marker.setZIndexOffset(active?10000:0);
+          });
           if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
             const center: L.LatLngExpression = [p.focus.lat, p.focus.lng];
             map.setView(center, p.focusZoom ?? (lastCamera ? map.getZoom() : 16), { animate: false });

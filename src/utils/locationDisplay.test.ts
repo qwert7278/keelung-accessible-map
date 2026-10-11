@@ -18,3 +18,14 @@ describe('Taiwan address display',()=>{
  it('does not change the spelling of a business name',()=>expect(displayLocationAddress('台灣大哥大, 臺北市信義區吳興街4號, 臺灣','臺北市','信義區')).toBe('臺北市信義區吳興街4號 · 台灣大哥大'));
  it('does not mistake a shop name containing 路 for a street',()=>expect(displayLocationAddress('路易莎咖啡, 基隆市仁愛區愛三路49巷4號','基隆市','仁愛區')).toBe('基隆市仁愛區愛三路49巷4號 · 路易莎咖啡'));
 });
+
+describe('nationwide conservative address formatting',()=>{
+ it.each([
+ ['臺中市西區臺灣大道二段2號18樓, 403, Taiwan','臺中市','西區','臺中市西區臺灣大道二段2號18樓'],
+ ['6之1 台南路, 東區, 臺南市 701, Taiwan','臺南市','東區','臺南市東區台南路6之1號'],
+ ['高雄市三民區建工路12巷3弄4號之2, 807','高雄市','三民區','高雄市三民區建工路12巷3弄4號之2'],
+ ['花蓮縣花蓮市中山路, 970, 台灣','花蓮縣','花蓮市','花蓮縣花蓮市中山路'],
+ ['44 Zhong 2nd Rd, 200, Taiwan','基隆市','仁愛區','基隆市仁愛區44 Zhong 2nd Rd'],
+ ['華國商務飯店, 愛三路49巷4號, 仁愛區, 基隆市, Taiwan','基隆市','仁愛區','基隆市仁愛區愛三路49巷4號 · 華國商務飯店'],
+ ])('%s',(raw,city,district,expected)=>expect(displayLocationAddress(raw,city,district,false)).toBe(expected));
+});

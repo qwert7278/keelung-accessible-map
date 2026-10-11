@@ -418,7 +418,7 @@ export default function ReportPanel({
       {content}
     </ReportDetailShell>
     {showUpdateForm && <Modal title="補充最新狀況" className="report-update-modal" busy={busy} onClose={()=>setShowUpdateForm(false)}><div id="public-report-update" className="panel-content">{updateForm}</div></Modal>}
-    {secondary && <Modal className="report-secondary-modal" title={secondary==='photos' ? '現場照片' : secondary==='timeline' ? '現場紀錄' : '完整案件說明'} onClose={()=>setSecondary(null)}><div className="panel-content">{secondary==='photos' ? evidence : secondary==='timeline' ? <>{timeline}{metadata}</> : <><h3>{report.title}</h3><p>{report.district} · {report.address || '尚無地址'}</p><small>緯度 {report.location.lat.toFixed(5)} · 經度 {report.location.lng.toFixed(5)}</small><p>{report.description || '此案件尚無補充說明。'}</p>{metadata}</>}</div></Modal>}
+    {secondary && <Modal className="report-secondary-modal" title={secondary==='photos' ? '現場照片' : secondary==='timeline' ? '現場紀錄' : '完整案件說明'} onClose={()=>setSecondary(null)}><div className="panel-content">{secondary==='photos' ? evidence : secondary==='timeline' ? <>{timeline}{metadata}</> : <><h3>{report.title}</h3><p>{displayLocationAddress(report.address,CITIES.find(city=>city.id===report.cityId)?.name || '',report.district,false)}</p><small>緯度 {report.location.lat.toFixed(5)} · 經度 {report.location.lng.toFixed(5)}</small><p>{report.description || '此案件尚無補充說明。'}</p>{metadata}</>}</div></Modal>}
     </>
   );
 }

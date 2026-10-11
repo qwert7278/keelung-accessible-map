@@ -2549,3 +2549,16 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 .report-list-item .report-card-category { display: block; margin: 2px 0; font-size: 13px; }
 .report-detail-link { display: block; margin: 0 16px 4px auto; min-height: 44px; padding: 6px 8px; color: var(--green); background: transparent; border: 0; text-decoration: underline; text-underline-offset: 3px; }
 @media(max-width:700px) { .report-detail-link { display:none; } }
+
+/* Full public evidence; list thumbnails retain their cover crop. */
+.public-report-content .report-main-photo img,
+.public-report-content .evidence-grid img,
+.report-secondary-modal .evidence-grid img {
+  width: 100%; height: min(42dvh, 360px); object-fit: contain;
+  background: var(--surface-soft, #f1f6f3);
+}
+.report-photo-open { max-width: 100%; }
+.map-pin.is-highlighted {
+  scale: 1.25; outline: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .4);
+}
