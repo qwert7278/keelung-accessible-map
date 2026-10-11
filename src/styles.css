@@ -2526,6 +2526,3 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 
 .report-modal .report-step-progress { height: 7px; }
 .report-modal .report-step-progress > span { background: linear-gradient(90deg, #a6c9bd 0%, #548f7d 50%, var(--green) 100%); }
-.report-modal .steps li.active:nth-child(1) span { background: #a6c9bd; color: var(--green-dark); }
-.report-modal .steps li.active:nth-child(2) span { background: #548f7d; color: #fff; }
-.report-modal .steps li.active:nth-child(3) span { background: var(--green); color: #fff; }

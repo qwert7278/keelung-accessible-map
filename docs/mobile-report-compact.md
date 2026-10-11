@@ -71,3 +71,7 @@ Compact picker buttons hide when a photo exists; remove restores them and defers
 ## Final review copy and gradient
 
 Removed local synthetic address suffix 請確認騎樓入口; actual address data is not globally rewritten. Removed redundant government/public-browsing paragraph; explicit photo/privacy/public consent remains required. Verified auto-title 基隆市仁愛區精一路19號附近 · 人行道被占用 in actual local form. Progress now renders a 7px light→medium→dark green gradient and step circles use corresponding colors. Title tests 2/2, lint/typecheck/build/SEO PASS; local confirmation screenshot-equivalent DOM reviewed without submission. No Production change.
+
+## Gradient scope correction
+
+Removed step-circle per-position colors. All active step circles return to existing solid brand green with white text; only the progress bar retains the gradient. Local computed styles and diff check verified. CSS-only three-line removal; no runtime or backend change, no deployment.
