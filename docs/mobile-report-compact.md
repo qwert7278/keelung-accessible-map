@@ -85,3 +85,7 @@ Update-form preview: tests/report-update-preview.html uses an in-memory illustra
 ## Public supplement form polish
 
 Public update modal keeps only header divider/title, removes redundant form border/title; admin title remains unchanged. Public photo uploader uses compact centered picker with visible optional photo label; existing mandatory description and consent retained. Verified header count 1, form border 0px, center alignment, required textarea, and no-photo submit enabled only with description/consent. No submit performed. Lint/typecheck/build/SEO PASS. Local only.
+
+## Case detail and inline photo viewer
+
+Public report detail now uses centered Modal via optional shell flag; admin drawer unchanged. Photo opens an accessible in-page Modal and closes via existing X/Escape/focus restoration rather than external target=_blank. Original photo included in evidence view; public supplements remain separate original-report observations. Secondary evidence/timeline redundant headings and border removed; description top spacing tightened. Local fixture has clearly labeled SVG placeholder only, no real photo/data. Browser opened/closed original viewer, inspected evidence one header border and full description without writes. Lint/typecheck/build/SEO PASS; CSS image-sizing override prevents thumbnail rules constraining viewer. No Production changes.

@@ -2530,3 +2530,16 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 .report-update-modal .update-form { margin-top: 0; padding-top: 0; border-top: 0; }
 .report-update-modal .panel-content { padding-top: 16px; }
 .report-update-modal .photo-uploader > small { display: block; margin-block: 8px; font-size: 13px; color: var(--muted); }
+
+.report-photo-open { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.report-photo-open img { display: block; }
+.report-photo-enlarged { display: block; width: 100%; max-height: calc(100dvh - 150px); object-fit: contain; padding: 12px; }
+.report-secondary-modal .panel-content { padding-top: 16px; }
+.report-secondary-modal .evidence-section,
+.report-secondary-modal .timeline { margin-top: 0; padding-top: 0; border-top: 0; }
+.report-secondary-modal .evidence-section > h3,
+.report-secondary-modal .timeline > h3 { display: none; }
+.report-secondary-modal .evidence-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.report-secondary-modal .panel-content > h3 { margin-top: 0; }
+.report-photo-modal img.report-photo-enlarged { height: auto; max-height: calc(100dvh - 150px); object-fit: contain; }
+.report-secondary-modal .evidence-grid img { height: 180px; }
