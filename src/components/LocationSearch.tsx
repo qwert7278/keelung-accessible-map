@@ -16,9 +16,9 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
     <div className="location-search-row">
       <label htmlFor={`${id}-input`}>搜尋地點
         <input ref={input} id={`${id}-input`} role="combobox" aria-autocomplete="list"
-          aria-expanded={expanded} aria-controls={`${id}-list`} aria-describedby={`${id}-help ${id}-status`}
+          aria-expanded={expanded} aria-controls={`${id}-list`} aria-describedby={`${id}-status`}
           aria-activedescendant={expanded&&active>=0&&results[active]?`${id}-option-${active}`:undefined}
-          autoComplete="off" value={query} maxLength={120} placeholder="輸入路名、車站、大學或商家名稱"
+          autoComplete="off" value={query} maxLength={120} placeholder="輸入地點、路名或商家（部分名稱也可以）"
           onFocus={()=>setOpen(true)}
           onChange={event=>{setOpen(true);setActive(-1);onQuery(event.target.value);}}
           onKeyDown={event=>{
@@ -30,16 +30,13 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
       </label>
       <button className="button secondary" type="button" disabled={loading} onClick={()=>{setOpen(true);setActive(-1);onSearch();}}>搜尋</button>
     </div>
-    <p id={`${id}-help`} className="muted">輸入部分名稱也可以搜尋，選好地點後會自動帶入地址。</p>
     <p id={`${id}-status`} className="location-search-status muted" role="status" aria-live="polite" aria-atomic="true">{loading?'正在搜尋地址與地標…':note}</p>
     <ul ref={list} id={`${id}-list`} className="location-results" role="listbox" aria-label="搜尋候選位置" aria-busy={loading} hidden={!expanded||!results.length}>
       {results.map((result,index)=><li id={`${id}-option-${index}`} key={`${result.label}-${index}`} role="option"
         aria-selected={active===index} className={active===index?'is-active':''}
         onMouseDown={event=>event.preventDefault()} onClick={()=>{if(!loading)select(result);}}>
         <strong>{displayLocationAddress(result.address,result.city,result.district)}{(result.kind==='poi' || !result.address) && !result.address.includes(result.label) ? ` · ${result.label}` : ''}</strong>
-        <small>請確認地圖上的現場位置</small>
       </li>)}
     </ul>
-    <p className="muted">候選位置僅供參考 · <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / OpenStreetMap</p>
   </div>;
 }

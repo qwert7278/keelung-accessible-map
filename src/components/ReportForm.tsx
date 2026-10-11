@@ -195,7 +195,7 @@ export default function ReportForm({
       const results = await searchLocations(query, undefined, request.signal);
       if (request.signal.aborted) return;
       setCandidates(results);
-      setSearchNote(results.length ? '請選擇正確位置，再確認地圖標記。' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
+      setSearchNote(results.length ? '' : '找不到符合的位置，請改用完整名稱、目前位置或地圖選點。');
     } catch {
       if (!request.signal.aborted) { setCandidates([]); setSearchNote(LOCATION_SEARCH_UNAVAILABLE); }
     } finally {
@@ -449,7 +449,6 @@ export default function ReportForm({
           {step === 1 && (
             <>
               <h3 tabIndex={-1}>障礙在哪裡？</h3>
-              <p className="muted location-intro">{capabilities.searchReady ? '直接輸入街名、地址或地標，不用先選縣市；選取後會自動定位。' : `回報縣市：${city.name}。使用目前位置，或直接點地圖標記障礙。`}</p>
               {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
                 onQuery={value=>{invalidateSelection();setPicked(false);searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
                 onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}
@@ -458,7 +457,7 @@ export default function ReportForm({
               </button>
               {locating && <p role="status">正在取得並確認目前位置，最長約 30 秒；也可直接搜尋或點選地圖。</p>}
               {gpsError && <p className="error" role="alert">{gpsError}</p>}
-              <p className="muted location-map-help">點一下地圖即可微調位置，選好後按「下一步」。</p>
+              <p className="muted location-map-help">點選地圖調整位置，也可放大縮小。</p>
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
@@ -694,6 +693,7 @@ export default function ReportForm({
             取消本次回報
           </button>
         </footer>
+        {step === 1 && capabilities.searchReady && <p className="location-attribution"><a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
       </form>
     </Modal>
   );

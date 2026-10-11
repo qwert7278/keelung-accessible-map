@@ -43,3 +43,7 @@ Completion heading is now 感謝你的回報, with a concise message thanking re
 ## Location step simplification
 
 Removed the separate location-confirmation checkbox and state. A valid selected location enables Next; district polygon validation and stale-selection guards remain. Reset clears the picked location and disables Next. Guided copy now directs users to Next. Map adjustment guidance moved above the map and remains visible on mobile. Public photo consent is unchanged. Browser verified zero location checkboxes, Next → step 2, and reset → Next disabled. Focused tests 24/24, lint/typecheck/build/SEO and diff check PASS. No deployment.
+
+## Minimal search copy
+
+Removed redundant introductory/helper copy and per-candidate repeated instructions. Search placeholder explains partial place/road/business names; one short map-adjustment hint remains. Geoapify/OpenStreetMap attribution moved from search area to the form bottom; map attribution retained. Loading/error/no-result live status retained and aria-describedby updated to the existing status element. Browser keyboard ArrowDown/Enter selects candidate and enables Next. Lint/typecheck/build/SEO and diff check PASS. Local preview only.
