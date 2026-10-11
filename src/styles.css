@@ -2471,7 +2471,6 @@ h1 { letter-spacing: 0; line-height: 1.4; }
   .report-modal .report-form h3 { font-size: 18px; margin-bottom: 6px; }
   .report-modal .report-form label { margin: 8px 0; }
   .report-modal .location-intro,
-  .report-modal .location-map-help,
   .report-modal .selected-coordinates { display: none; }
   .report-modal .location-search-row { margin-top: 0; }
   .report-modal .location-search > p { font-size: 12px; line-height: 1.4; margin-block: 4px; }
@@ -2511,3 +2510,5 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 .report-complete-content > p { margin: 0 0 12px; }
 .report-complete-note { color: var(--muted); font-size: 14px; }
 .report-complete-modal .report-success { padding-top: 16px; }
+
+.report-modal .location-map-help { margin-block: 6px; font-size: 13px; }

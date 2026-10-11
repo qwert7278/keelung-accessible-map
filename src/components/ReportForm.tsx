@@ -42,7 +42,7 @@ const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   },
   2: {
     title: "確認障礙位置",
-    body: "核對地圖與已選位置，勾選位置確認後再繼續。",
+    body: "核對地圖與已選位置，按「下一步」繼續。",
   },
   3: {
     title: "前往現場資訊",
@@ -120,7 +120,7 @@ export default function ReportForm({
   }, []);
   const attempt = useRef<{ id:string; draft:string; photo:Blob } | null>(null);
   const [checkingLocation, setCheckingLocation] = useState(false);
-  const [locationConfirmed, setLocationConfirmed] = useState(false);
+
   const titleEdited = useRef(false);
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoProcessing, setPhotoProcessing] = useState(false);
@@ -173,7 +173,7 @@ export default function ReportForm({
     setLocationNote('');
     setReverseNote('');
     setPicked(false);
-    setLocationConfirmed(false);
+
     setConfirmed(false);
     setCheckingLocation(false);
     addressRevision.current++;
@@ -270,7 +270,7 @@ export default function ReportForm({
       return;
     }
     if (step === 1) {
-      if (!locationConfirmed) {setError("請先確認位置位於障礙現場。");return;}
+
       setCheckingLocation(true);
       try {
         const found = await districtAt(city.id,draft.district,draft.location);
@@ -278,7 +278,7 @@ export default function ReportForm({
         if (!found) { setError(`所選位置不在${city.name}的行政區範圍，請重新選點。`); return; }
         if (found !== draft.district) {
           update('district',found);
-          setLocationConfirmed(false);
+
           setError(`依所選位置已改為${found}，請確認後再按下一步。`);
           return;
         }
@@ -303,7 +303,7 @@ export default function ReportForm({
       if (!checkingLocation) await next();
       return;
     }
-    if (!photo || !confirmed || !picked || !locationConfirmed || honeypot || busy || photoProcessingRef.current) return;
+    if (!photo || !confirmed || !picked || honeypot || busy || photoProcessingRef.current) return;
     const validationError=validateDraft(draft);
     if(validationError){setError(validationError);return;}
     let last = 0;
@@ -458,6 +458,7 @@ export default function ReportForm({
               </button>
               {locating && <p role="status">正在取得並確認目前位置，最長約 30 秒；也可直接搜尋或點選地圖。</p>}
               {gpsError && <p className="error" role="alert">{gpsError}</p>}
+              <p className="muted location-map-help">點一下地圖即可微調位置，選好後按「下一步」。</p>
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
@@ -473,17 +474,13 @@ export default function ReportForm({
                   focusRevision={cameraRevision}
                 />
               </div>
-              {picked && <section className="selected-location" aria-label="已選位置">
+              {picked && <section className={`selected-location${guidedStep === 2 ? ' guide-target-active' : ''}`} aria-label="已選位置">
                 <strong>已選位置</strong>
                 <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && ' · 地址待確認'}</p>
                 <small className="selected-coordinates">緯度 {draft.location.lat.toFixed(5)} · 經度 {draft.location.lng.toFixed(5)}</small>
                 <button className="text-button" type="button" onClick={() => { invalidateSelection(); setPicked(false); update('address',''); setLocationNote(''); }}>重新選擇</button>
               </section>}
-              {picked && <label className={`check-label${guidedStep === 2 ? ' guide-target-active' : ''}`}>
-                <input type="checkbox" checked={locationConfirmed} onChange={e=>{setLocationConfirmed(e.target.checked);if(e.target.checked && guidedStep===2)onGuidedStepChange?.(3);}}/>
-                我確認地圖標記位於障礙現場
-              </label>}
-              <p className="muted location-map-help">點一下地圖即可微調障礙位置。</p>
+
               {reverseNote && <p className="muted" role="status">{reverseNote}</p>}
               {locationNote && (
                 <p className="muted" role="status">
@@ -678,7 +675,7 @@ export default function ReportForm({
                 ? " guide-target-active"
                 : ""
             }`}
-            disabled={busy || checkingLocation || photoProcessing || (step === 1 && (!picked || !locationConfirmed || locating)) || (step === 3 && !confirmed)}
+            disabled={busy || checkingLocation || photoProcessing || (step === 1 && (!picked || locating)) || (step === 3 && !confirmed)}
             type="submit"
           >
             {step === 3 ? (

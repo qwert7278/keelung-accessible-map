@@ -39,3 +39,7 @@ The fixture previously closed ReportForm without rendering a result; Production 
 ## Appreciation copy and spacing
 
 Completion heading is now 感謝你的回報, with a concise message thanking reports for helping wheelchair users and pedestrians travel with confidence. Production success panel retains its existing published-record status and actions. Local fixture explicitly labels simulated completion. Scoped completion styles reduce header-to-content gap; local DOM measured 16px. Local mock submit result verified; lint/typecheck/build/SEO PASS. No deployment or real report created.
+
+## Location step simplification
+
+Removed the separate location-confirmation checkbox and state. A valid selected location enables Next; district polygon validation and stale-selection guards remain. Reset clears the picked location and disables Next. Guided copy now directs users to Next. Map adjustment guidance moved above the map and remains visible on mobile. Public photo consent is unchanged. Browser verified zero location checkboxes, Next → step 2, and reset → Next disabled. Focused tests 24/24, lint/typecheck/build/SEO and diff check PASS. No deployment.
