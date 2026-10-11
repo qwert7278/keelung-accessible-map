@@ -13,7 +13,6 @@ import {
   ShieldCheckIcon,
   ThreadsLogoIcon,
   FacebookLogoIcon,
-  WheelchairIcon,
 } from "@phosphor-icons/react";
 import { BETA_FEEDBACK_EMAIL, CITIES, DEMO_MODE, canReportInCity } from "./config";
 import {
@@ -278,10 +277,6 @@ export default function App() {
     const name=CITIES.find(c=>c.id===r.cityId)?.name || city.name;
     return r.address.trim() ? displayLocationAddress(r.address,name,r.district,false) : nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || `${name}${r.district} · 地址待確認`;
   }
-  function focusReport(r:Report) {
-    gpsRevision.current++;
-    setFocusedReportId(r.id); setFocus(r.location); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(value=>value+1);
-  }
   const sorted = [...visible].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const pageCount = Math.max(1, Math.ceil(sorted.length / REPORT_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
@@ -331,11 +326,12 @@ export default function App() {
     if (!selected || !matchCity || !matchDistrict || matchLat === undefined || matchLng === undefined) return;
     const next = CITIES.find(c => c.id === matchCity);
     if (!next) return;
+    const changesGeography = next.id !== city.id || (district !== 'all' && district !== matchDistrict);
     if (next.id !== city.id) { setReports([]); setLoading(true); }
-    setCity(next); setDistrict(matchDistrict); setPage(1);
+    if (changesGeography) { setCity(next); setDistrict(matchDistrict); setPage(1); }
     setFocus({ lat:matchLat, lng:matchLng }); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(r => r + 1);
-    window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, matchDistrict, selected));
-  }, [selected, matchCity, matchDistrict, matchLat, matchLng]);
+    window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, changesGeography ? matchDistrict : district, selected));
+  }, [selected, matchCity, matchDistrict, matchLat, matchLng, city.id, district]);
   function focusLocation(geography:{city:typeof city;district:string}, location:Location) {
     manuallyChosen.current=true;
     if (geography.city.id!==city.id) {setReports([]);setLoading(true);}
@@ -439,20 +435,12 @@ export default function App() {
           </button>
         )}
       </header>
-      {(!adminPage || session?.admin) && <div className="demo-banner">
+      {DEMO_MODE && (!adminPage || session?.admin) && <div className="demo-banner">
         <InfoIcon size={18} aria-hidden="true" />
         <p>
-          {DEMO_MODE ? (
-            <>
-              <strong>Demo 展示版</strong>
-              <span className="banner-divider">／</span>
-              所有案件均為測試資料，操作只保存在此瀏覽器，不會送交政府。
-            </>
-          ) : (
-            <>
-              社群通行紀錄 · 本平台尚未串接政府派工，請依現場狀況判斷通行安全。
-            </>
-          )}
+          <strong>Demo 展示版</strong>
+          <span className="banner-divider">／</span>
+          所有案件均為測試資料，操作只保存在此瀏覽器，不會送交政府。
         </p>
       </div>}
       <main id="main-content" tabIndex={-1}>
@@ -562,6 +550,7 @@ export default function App() {
             <div className="sidebar-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
               {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}
             </div>
+            <div className="report-list-filters">
             <label className="search-field">
               <MagnifyingGlassIcon size={20} />
               <span className="sr-only">搜尋已回報地點</span>
@@ -587,6 +576,7 @@ export default function App() {
                   ))}
                 </select>
               </label>
+            </div>
             </div>
             <div className="status-filters" aria-label="案件狀態篩選">
               <button
@@ -647,34 +637,16 @@ export default function App() {
                     <button
                       className={`report-card ${(selected === r.id || focusedReportId === r.id) ? "selected" : ""}`}
                       key={r.id}
-                      onClick={() => window.matchMedia('(min-width: 701px)').matches ? focusReport(r) : choose(r.id)}
-                      aria-label={`定位回報：${reportAddress(r)}，${CATEGORIES[r.category]}`}
+                      onClick={() => choose(r.id)}
+                      aria-label={`查看回報：${reportAddress(r)}，${CATEGORIES[r.category]}，${STATUSES[r.status]}，${ACCESS[r.wheelchairAccess]}`}
                     >
-                      <ReportThumbnail report={r} />
                       <div className="report-card-content">
-                        <div className="card-top">
-                          <StatusBadge status={r.status} />
-                          <small>{r.district}</small>
-                        </div>
-                        <h3>
-                          {reportAddress(r)}
-                          <ArrowRightIcon size={18} />
-                        </h3>
-                        <p className="report-card-category">{CATEGORIES[r.category]}</p>
-                        <div className="card-bottom">
-                          <span>
-                            <WheelchairIcon size={16} />
-                            {ACCESS[r.wheelchairAccess]}
-                          </span>
-                          <small>
-                            {DEMO_MODE
-                              ? "測試資料"
-                              : new Date(r.createdAt).toLocaleDateString("zh-TW")}
-                          </small>
-                        </div>
+                        <h3>{reportAddress(r)}</h3>
+                        <p className="report-row-info"><StatusBadge status={r.status} /><span> · {CATEGORIES[r.category]}</span></p>
+                        <span className="sr-only">{ACCESS[r.wheelchairAccess]}</span>
                       </div>
+                      <ReportThumbnail report={r} />
                     </button>
-                    <button type="button" className="report-detail-link" onClick={()=>choose(r.id)} aria-label={`查看詳情：${reportAddress(r)}`}>查看詳情</button>
                   </div>
                   ))
               )}
