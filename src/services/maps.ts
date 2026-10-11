@@ -1,3 +1,4 @@
+import { reportMarkerLabel } from '../utils/reportMapList';
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
@@ -6,6 +7,7 @@ type Props = {
   city?: City;
   reports: Report[];
   onSelect: (id: string) => void;
+  activeReportId?: string | null;
   picking?: boolean;
   onPick?: (location: Location) => void;
   position?: Location;
@@ -40,12 +42,16 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
     mapTypeControl: false,
   });
   let markers: google.maps.marker.AdvancedMarkerElement[] = [],
-    lastCamera = '';
+    lastCamera = '', lastMarkers = '';
+  const reportMarkers = new Map<string,{content:HTMLButtonElement; marker:google.maps.marker.AdvancedMarkerElement}>();
   const click = map.addListener("click", (e: google.maps.MapMouseEvent) => {
     if (latest().picking && e.latLng) latest().onPick?.(e.latLng.toJSON());
   });
   return {
     render(p: Props) {
+      const markerKey=JSON.stringify([p.reports,p.position]);
+      if (markerKey!==lastMarkers) {
+      lastMarkers=markerKey; reportMarkers.clear();
       markers.forEach((m) => {
         m.map = null;
       });
@@ -61,17 +67,17 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
               : "!";
         content.setAttribute(
           "aria-label",
-          `${report.title}，${STATUSES[report.status]}`,
+          `${reportMarkerLabel(report)}，${STATUSES[report.status]}`,
         );
-        content.addEventListener("click", () => p.onSelect(report.id));
-        markers.push(
-          new google.maps.marker.AdvancedMarkerElement({
+        content.addEventListener("click", () => latest().onSelect(report.id));
+        const marker = new google.maps.marker.AdvancedMarkerElement({
             map,
             position: report.location,
             content,
-            title: report.title,
-          }),
-        );
+            title: reportMarkerLabel(report),
+          });
+        content.dataset.reportId=report.id;
+        markers.push(marker); reportMarkers.set(report.id,{content,marker});
       }
       if (p.position)
         markers.push(
@@ -81,6 +87,13 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
             title: "選定位置",
           }),
         );
+      }
+      reportMarkers.forEach(({content,marker},id)=>{
+        const active=id===p.activeReportId;
+        content.classList.toggle('is-highlighted',active);
+        content.setAttribute('aria-pressed',String(active));
+        marker.zIndex=active?10000:undefined;
+      });
       if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
         map.setCenter(p.focus);
         if (p.focusZoom !== undefined || !lastCamera) map.setZoom(p.focusZoom ?? 16);
