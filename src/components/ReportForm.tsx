@@ -458,7 +458,7 @@ export default function ReportForm({
               </button>
               {locating && <p role="status">正在取得並確認目前位置，最長約 30 秒；也可直接搜尋或點選地圖。</p>}
               {gpsError && <p className="error" role="alert">{gpsError}</p>}
-              <p className="muted location-map-help">拖動或縮放地圖，點一下選定位置。</p>
+              <p className="muted location-map-help">拖動或縮放地圖，點選對應的位置。</p>
               <div
                 className={`picker-map${guidedStep === 1 ? " guide-target-active guide-target-block" : ""}`}
               >
@@ -694,7 +694,6 @@ export default function ReportForm({
             取消本次回報
           </button>
         </footer>
-        {step === 1 && capabilities.searchReady && <p className="location-attribution"><a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Powered by Geoapify</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
       </form>
     </Modal>
   );

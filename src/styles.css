@@ -2512,7 +2512,6 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 .report-complete-modal .report-success { padding-top: 16px; }
 
 .report-modal .location-map-help { margin-block: 6px; font-size: 13px; }
-.report-modal .location-attribution { flex: none; margin: 0; padding: 0 0 8px; font-size: 11px; color: var(--muted); }
 .report-modal .location-method-divider { display: flex; align-items: center; gap: 12px; margin-block: 4px 8px; color: var(--green); font-size: 16px; font-weight: 600; line-height: 1.4; }
 .report-modal .location-method-divider::before,
 .report-modal .location-method-divider::after { content: ""; flex: 1; border-top: 1px solid var(--border); }

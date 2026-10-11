@@ -55,3 +55,7 @@ Visible duplicate search label removed using existing sr-only styling; accessibl
 ## Location method visual polish
 
 Impeccable distill/craft-floor applied to this narrow refinement. Divider 或 uses existing brand green, 16px and semibold, positioned closer to search by removing empty status height/margins. Partial-name hint stays in the placeholder; map hint clearly distinguishes dragging/zooming from clicking to set coordinates. Local DOM confirms 16px divider, empty status zero height, 390x844 dialog no horizontal overflow; viewport reset. Lint/typecheck/build/SEO PASS. No production change.
+
+## Attribution relocation follow-up
+
+Placeholder and map hint updated to owner-specified wording. Removed form-bottom attribution links and unused CSS; Geoapify/OpenStreetMap source links now live in the main public map site footer. Native map-tile attribution remains. Local DOM confirms no form footer attribution, no action-row links, and new copy. Lint/typecheck/build/SEO PASS. No deployment.
