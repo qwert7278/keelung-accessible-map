@@ -1,6 +1,6 @@
 // Local-only fixture: no build entry and no remote Auth, Storage, or report writes.
 import {createRoot} from 'react-dom/client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {CITIES} from '../src/config';
 import {demoRepository} from '../src/services/demo';
 import ReportForm from '../src/components/ReportForm';
@@ -20,5 +20,19 @@ window.fetch=async(input,init)=>{
     location:{lat:25.1262937+i*.00001,lng:121.741373},kind:'address',
   }))});
 };
-function QA(){const [open,setOpen]=useState(true);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={demoRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>setOpen(false)} onExisting={()=>{}}/>}</>;}
+function QA(){const [open,setOpen]=useState(true);
+useEffect(()=>{
+  if(!open)return;
+  const button=document.createElement('button');button.type='button';button.textContent='QA 合成照片';
+  button.style.cssText='position:fixed;right:4px;bottom:0;z-index:1100;font-size:10px';
+  button.onclick=async()=>{
+    const input=document.querySelector<HTMLInputElement>('.photo-uploader input[type=file]');if(!input)return;
+    const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;
+    const context=canvas.getContext('2d')!;context.fillStyle='#08787c';context.fillRect(0,0,640,480);
+    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,'image/jpeg'));if(!blob)return;
+    const transfer=new DataTransfer();transfer.items.add(new File([blob],'synthetic-mobile-qa.jpg',{type:'image/jpeg'}));
+    input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  document.querySelector('dialog')?.append(button);return()=>button.remove();
+},[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={demoRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>setOpen(false)} onExisting={()=>{}}/>}</>;}
 createRoot(document.getElementById('root')!).render(<QA/>);

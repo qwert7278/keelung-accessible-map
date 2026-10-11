@@ -7,6 +7,7 @@ export default function Modal({
   busy = false,
   wide = false,
   sheet = false,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
@@ -14,6 +15,7 @@ export default function Modal({
   busy?: boolean;
   wide?: boolean;
   sheet?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null),
     titleId = useId();
@@ -46,7 +48,7 @@ export default function Modal({
   return (
     <dialog
       ref={ref}
-      className={`modal${wide ? " modal-wide" : ""}${sheet ? " modal-sheet" : ""}`}
+      className={`modal${wide ? " modal-wide" : ""}${sheet ? " modal-sheet" : ""} ${className}`}
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();

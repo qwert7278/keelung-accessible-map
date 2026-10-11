@@ -99,6 +99,7 @@ export default function ReportForm({
   useEffect(()=>{const controller=new AbortController();void locationCapabilities(controller.signal).then(value=>{if(!controller.signal.aborted)setCapabilities(value);}).catch(()=>{});return ()=>controller.abort();},[]);
   const [camera,setCamera]=useState(()=>({...districtCamera(initialCity,initialDistrict)}));
   const photoProcessingRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const searchRequest = useRef<AbortController|null>(null);
   const selectionRequest = useRef<AbortController|null>(null);
   const addressRevision = useRef(0);
@@ -391,6 +392,15 @@ export default function ReportForm({
       if (gpsRevision.current === gpsVersion) setLocating(false);
     }
   }
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const form = formRef.current;
+      form?.closest('dialog')?.scrollTo({top:0, behavior:'instant'});
+      form?.querySelector('fieldset')?.scrollTo({top:0, behavior:'instant'});
+      form?.querySelector<HTMLElement>('h3')?.focus({preventScroll:true});
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [step]);
   const currentGuide =
     guidedStep !== null ? GUIDE_COPY[guidedStep] : undefined;
 
@@ -413,7 +423,7 @@ export default function ReportForm({
   }, [guidedStep, step]);
 
   return (
-    <Modal title="回報通行障礙" onClose={onClose} busy={busy} wide>
+    <Modal title="回報通行障礙" onClose={onClose} busy={busy} wide className="report-modal">
       <div className="report-step-status">
         <ol className="steps" aria-label="回報步驟">
           {["障礙在哪裡？", "現場是什麼狀況？", "確認後送出"].map((label, i) => (
@@ -449,12 +459,12 @@ export default function ReportForm({
           {currentGuide.body}
         </GuidedTourPrompt>
       )}
-      <form onSubmit={submit} className="report-form">
+      <form ref={formRef} onSubmit={submit} className="report-form" data-step={step}>
         <fieldset disabled={busy}>
           {step === 1 && (
             <>
-              <h3>障礙在哪裡？</h3>
-              <p className="muted">{capabilities.searchReady ? '直接輸入街名、地址或地標，不用先選縣市；選取後會自動定位。' : `回報縣市：${city.name}。使用目前位置，或直接點地圖標記障礙。`}</p>
+              <h3 tabIndex={-1}>障礙在哪裡？</h3>
+              <p className="muted location-intro">{capabilities.searchReady ? '直接輸入街名、地址或地標，不用先選縣市；選取後會自動定位。' : `回報縣市：${city.name}。使用目前位置，或直接點地圖標記障礙。`}</p>
               {capabilities.searchReady && <LocationSearch query={locationQuery} results={candidates} loading={searching} note={searchNote}
                 onQuery={value=>{invalidateSelection();setPicked(false);searchRequest.current?.abort();setSearching(false);setCandidates([]);setSearchNote('');setLocationQuery(value);}}
                 onSearch={()=>void search()} onSelect={candidate=>void selectLocation(candidate.location,candidate,'search')}/>}
@@ -488,7 +498,7 @@ export default function ReportForm({
                 <input type="checkbox" checked={locationConfirmed} onChange={e=>{setLocationConfirmed(e.target.checked);if(e.target.checked && guidedStep===2)onGuidedStepChange?.(3);}}/>
                 我確認地圖標記位於障礙現場
               </label>}
-              <p className="muted">點一下地圖即可微調障礙位置。</p>
+              <p className="muted location-map-help">點一下地圖即可微調障礙位置。</p>
               {reverseNote && <p className="muted" role="status">{reverseNote}</p>}
               {locationNote && (
                 <p className="muted" role="status">
@@ -525,7 +535,7 @@ export default function ReportForm({
           )}
           {step === 2 && (
             <>
-              <h3>現場是什麼狀況？</h3>
+              <h3 tabIndex={-1}>現場是什麼狀況？</h3>
               <p className="photo-guidance">
                 拍到障礙本身，也盡量拍到周圍通行空間。請避免刻意拍攝可辨識的人臉、車牌或其他不必要個資。
               </p>
@@ -600,7 +610,7 @@ export default function ReportForm({
               <label>
                 簡短說明（選填）
                 <textarea
-                  rows={3}
+                  rows={2}
                   maxLength={1000}
                   value={draft.description}
                   onChange={(e) => update("description", e.target.value)}
@@ -611,7 +621,7 @@ export default function ReportForm({
           )}
           {step === 3 && (
             <>
-              <h3>確認後送出</h3>
+              <h3 tabIndex={-1}>確認後送出</h3>
               {photo && photoPreview && <img className="report-review-photo" src={photoPreview} alt="即將公開的現場照片"/>}
               <label>回報標題
                 <input required maxLength={80} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
@@ -620,10 +630,10 @@ export default function ReportForm({
                 <MapPinIcon size={28} />
                 <p>{displayLocationAddress(draft.address,city.name,draft.district)}{!draft.address && " · 依地圖標記定位"}</p>
                 <p>
-                  {city.name} {draft.district} · {CATEGORIES[draft.category]}
+                  <span className="review-geography">{city.name} {draft.district} · </span>{CATEGORIES[draft.category]}
                 </p>
                 <strong>{ACCESS[draft.wheelchairAccess]}</strong>
-                <p>
+                <p className="review-coordinates">
                   {draft.location.lat.toFixed(5)},{" "}
                   {draft.location.lng.toFixed(5)}
                 </p>

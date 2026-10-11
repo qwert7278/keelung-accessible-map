@@ -2451,3 +2451,56 @@ h1 { letter-spacing: 0; line-height: 1.4; }
 
 .report-review-photo {display:block;width:100%;max-height:240px;object-fit:contain;border-radius:12px;background:var(--surface-soft);}
 .report-form .review-card {text-align:left;}
+
+/* Compact report only: the body can scroll when needed; actions never scroll away. */
+@media (max-width: 700px) {
+  .report-modal {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow: hidden;
+  }
+  .report-modal:not([open]) { display: none; }
+  .report-modal > .modal-header { position: static; flex-shrink: 0; padding: 8px 12px; }
+  .report-modal > .report-step-status { position: static; flex-shrink: 0; padding-bottom: 6px; }
+  .report-modal .steps { padding: 8px 12px 0; }
+  .report-modal .report-step-progress { margin: 6px 12px 0; }
+  .report-modal .report-form { display: flex; flex-direction: column; flex: 1; min-height: 0; padding: 0 12px; }
+  .report-modal .report-form > fieldset { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 2px; scroll-padding-block: 12px; }
+  .report-modal .report-form h3 { font-size: 18px; margin-bottom: 6px; }
+  .report-modal .report-form label { margin: 8px 0; }
+  .report-modal .location-intro,
+  .report-modal .location-map-help,
+  .report-modal .location-advanced,
+  .report-modal .selected-coordinates { display: none; }
+  .report-modal .location-search-row { margin-top: 0; }
+  .report-modal .location-search > p { font-size: 12px; line-height: 1.4; margin-block: 4px; }
+  .report-modal .location-search > p[id$="-help"] { display: none; }
+  .report-modal .picker-map { height: clamp(130px, 22dvh, 185px); margin: 8px 0; }
+  .report-modal .selected-location { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px; padding: 8px; margin-block: 6px; }
+  .report-modal .selected-location > strong { display: none; }
+  .report-modal .selected-location p { font-size: 13px; line-height: 1.4; }
+  .report-modal .selected-location .text-button { min-height: 44px; padding: 4px; }
+  .report-modal .photo-guidance { font-size: 12px; line-height: 1.4; margin-block: 4px 8px; }
+  .report-modal .photo-empty { min-height: 64px; gap: 4px; }
+  .report-modal .photo-empty > svg { display: none; }
+  .report-modal .photo-preview { max-height: 96px; }
+  .report-modal .photo-picker-actions { margin: 6px 0; gap: 8px; }
+  .report-modal .photo-picker-actions .button { flex: 1; padding-inline: 8px; }
+  .report-modal .photo-uploader small { display: block; font-size: 11px; line-height: 1.4; }
+  .report-modal .report-form .access-options { margin: 8px 0; gap: 6px; }
+  .report-modal .access-options label { min-height: 44px; padding: 6px 4px; gap: 3px; font-size: 12px; justify-content: center; }
+  .report-modal .access-options label > svg { display: none; }
+  .report-modal .report-form textarea { min-height: 64px; }
+  .report-modal .report-review-photo { max-height: 110px; }
+  .report-modal .review-card { padding: 10px; margin-block: 8px; }
+  .report-modal .review-card > svg,
+  .report-modal .review-geography,
+  .report-modal .review-coordinates { display: none; }
+  .report-modal .review-card p { margin-block: 4px; }
+  .report-modal .report-form .form-actions { position: static; flex-shrink: 0; margin-top: 0; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); flex-wrap: nowrap; align-items: center; }
+  .report-modal .report-form .report-cancel { display: none; }
+  .report-modal .form-actions > .button { min-height: 44px; padding: 8px 12px; }
+  .report-modal .report-form > .error { flex-shrink: 0; margin-block: 6px; }
+}
