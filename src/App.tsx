@@ -13,7 +13,6 @@ import {
   ShieldCheckIcon,
   ThreadsLogoIcon,
   FacebookLogoIcon,
-  WheelchairIcon,
 } from "@phosphor-icons/react";
 import { BETA_FEEDBACK_EMAIL, CITIES, DEMO_MODE, canReportInCity } from "./config";
 import {
@@ -277,10 +276,6 @@ export default function App() {
   function reportAddress(r:Report) {
     const name=CITIES.find(c=>c.id===r.cityId)?.name || city.name;
     return r.address.trim() ? displayLocationAddress(r.address,name,r.district,false) : nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || `${name}${r.district} · 地址待確認`;
-  }
-  function focusReport(r:Report) {
-    gpsRevision.current++;
-    setFocusedReportId(r.id); setFocus(r.location); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(value=>value+1);
   }
   const sorted = [...visible].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const pageCount = Math.max(1, Math.ceil(sorted.length / REPORT_PAGE_SIZE));
@@ -562,6 +557,7 @@ export default function App() {
             <div className="sidebar-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
               {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}
             </div>
+            <div className="report-list-filters">
             <label className="search-field">
               <MagnifyingGlassIcon size={20} />
               <span className="sr-only">搜尋已回報地點</span>
@@ -587,6 +583,7 @@ export default function App() {
                   ))}
                 </select>
               </label>
+            </div>
             </div>
             <div className="status-filters" aria-label="案件狀態篩選">
               <button
@@ -647,34 +644,16 @@ export default function App() {
                     <button
                       className={`report-card ${(selected === r.id || focusedReportId === r.id) ? "selected" : ""}`}
                       key={r.id}
-                      onClick={() => window.matchMedia('(min-width: 701px)').matches ? focusReport(r) : choose(r.id)}
-                      aria-label={`定位回報：${reportAddress(r)}，${CATEGORIES[r.category]}`}
+                      onClick={() => choose(r.id)}
+                      aria-label={`查看回報：${reportAddress(r)}，${CATEGORIES[r.category]}，${STATUSES[r.status]}，${ACCESS[r.wheelchairAccess]}`}
                     >
-                      <ReportThumbnail report={r} />
                       <div className="report-card-content">
-                        <div className="card-top">
-                          <StatusBadge status={r.status} />
-                          <small>{r.district}</small>
-                        </div>
-                        <h3>
-                          {reportAddress(r)}
-                          <ArrowRightIcon size={18} />
-                        </h3>
-                        <p className="report-card-category">{CATEGORIES[r.category]}</p>
-                        <div className="card-bottom">
-                          <span>
-                            <WheelchairIcon size={16} />
-                            {ACCESS[r.wheelchairAccess]}
-                          </span>
-                          <small>
-                            {DEMO_MODE
-                              ? "測試資料"
-                              : new Date(r.createdAt).toLocaleDateString("zh-TW")}
-                          </small>
-                        </div>
+                        <h3>{reportAddress(r)}</h3>
+                        <p className="report-row-info"><StatusBadge status={r.status} /><span> · {CATEGORIES[r.category]}</span></p>
+                        <span className="sr-only">{ACCESS[r.wheelchairAccess]}</span>
                       </div>
+                      <ReportThumbnail report={r} />
                     </button>
-                    <button type="button" className="report-detail-link" onClick={()=>choose(r.id)} aria-label={`查看詳情：${reportAddress(r)}`}>查看詳情</button>
                   </div>
                   ))
               )}
