@@ -18,7 +18,7 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
         <input ref={input} id={`${id}-input`} role="combobox" aria-autocomplete="list"
           aria-expanded={expanded} aria-controls={`${id}-list`} aria-describedby={`${id}-status`}
           aria-activedescendant={expanded&&active>=0&&results[active]?`${id}-option-${active}`:undefined}
-          autoComplete="off" value={query} maxLength={120} placeholder="輸入地點、路名或商家（部分名稱也可以）"
+          autoComplete="off" value={query} maxLength={120} placeholder="地址、地點或店家（部分名稱也可以）"
           onFocus={()=>setOpen(true)}
           onChange={event=>{setOpen(true);setActive(-1);onQuery(event.target.value);}}
           onKeyDown={event=>{
