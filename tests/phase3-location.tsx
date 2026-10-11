@@ -4,6 +4,7 @@ import {useEffect,useState} from 'react';
 import {CITIES} from '../src/config';
 import {demoRepository} from '../src/services/demo';
 import ReportForm from '../src/components/ReportForm';
+import Modal from '../src/components/Modal';
 import '../src/styles.css';
 import 'leaflet/dist/leaflet.css';
 const originalFetch=window.fetch.bind(window);
@@ -25,7 +26,7 @@ const qaRepository: typeof demoRepository={...demoRepository,create:async(draft,
   for(const progress of [0,25,60,100]){onProgress?.(progress);await new Promise(resolve=>setTimeout(resolve,800));}
   return 'local-ui-only-no-report-created';
 }};
-function QA(){const [open,setOpen]=useState(true);
+function QA(){const [open,setOpen]=useState(true);const [completed,setCompleted]=useState(false);
 useEffect(()=>{
   if(!open)return;
   const button=document.createElement('button');button.type='button';button.textContent='QA 合成照片';
@@ -39,5 +40,5 @@ useEffect(()=>{
     input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
   };
   document.querySelector('dialog')?.append(button);return()=>button.remove();
-},[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={qaRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>setOpen(false)} onExisting={()=>{}}/>}</>;}
+},[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={qaRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>{setOpen(false);setCompleted(true);}} onExisting={()=>{}}/>}{completed&&<Modal title="本地模擬送出完成" onClose={()=>setCompleted(false)}><div className="panel-content"><p>照片與表單流程已完成測試，沒有建立公開案件。</p><button className="primary" onClick={()=>setCompleted(false)}>完成</button></div></Modal>}</>;}
 createRoot(document.getElementById('root')!).render(<QA/>);

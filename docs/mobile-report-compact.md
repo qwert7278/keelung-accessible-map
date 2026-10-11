@@ -31,3 +31,7 @@ Local code review PASS: mobile selectors are scoped to report-modal; other dialo
 - Submit progress is announced in the disabled submit button; the separate upload status block is removed and progress resets on each attempt.
 - Local synthetic JPEG flow: title disclosure opens, unchecked consent blocks submit, checked consent permits submit; observed disabled `送出中… 0%`, then successful dialog close. QA repository simulates progress only and creates no report or backend upload. Preview reopened and left at step 3 with consent unchecked.
 - This follow-up lint, typecheck/build and SEO check PASS. Physical devices and real backend upload are not newly verified by this UI simulation.
+
+## Local submit result fix
+
+The fixture previously closed ReportForm without rendering a result; Production App already uses ReportSuccessPanel. Fixture now retains a simple completion dialog explicitly stating no public report was created. Verified synthetic photo → consent → submit → completion dialog and Done control in local browser. Runtime submission and Production are unchanged. Lint/typecheck/build/SEO PASS.
