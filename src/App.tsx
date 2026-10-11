@@ -48,7 +48,7 @@ import { useSuggestedCity } from './utils/useSuggestedCity';
 import { districtCamera } from './utils/mapCamera';
 import { displayLocationAddress } from './utils/locationDisplay';
 import { reverseLocation } from './services/locationApi';
-import { nearbyReportAddress, REPORT_PAGE_SIZE, REPORT_FOCUS_ZOOM } from './utils/reportMapList';
+import { findReportById, nearbyReportAddress, REPORT_PAGE_SIZE, REPORT_FOCUS_ZOOM } from './utils/reportMapList';
 const HOMEPAGE_URL = "/";
 
 export default function App() {
@@ -251,7 +251,7 @@ export default function App() {
     };
   }, [adminPage]);
 
-  const resolvedReport = reports.find(r => r.id === selected) || (linkedReport?.id === selected ? linkedReport : null);
+  const resolvedReport = findReportById(selected,reports,linkedReport);
   const scoped = useMemo(() => reports.filter(r =>
     (district === 'all' || r.district === district) &&
     (access === 'all' || r.wheelchairAccess === access)),
@@ -290,7 +290,7 @@ export default function App() {
   function choose(id: string) {
     gpsRevision.current++;
     setSelected(id); setFocusedReportId(id);
-    setFocus((reports.find((r) => r.id === id) || linkedReport)?.location); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(r => r + 1);
+    setFocus(findReportById(id,reports,linkedReport)?.location); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(r => r + 1);
     const url = new URL(window.location.href);
     if (reportIdFromSearch(url.search) !== id) {
       url.searchParams.set("report", id);
@@ -339,7 +339,7 @@ export default function App() {
   function focusLocation(geography:{city:typeof city;district:string}, location:Location) {
     manuallyChosen.current=true;
     if (geography.city.id!==city.id) {setReports([]);setLoading(true);}
-    setSelected(null);setLinkedReport(null);setCity(geography.city);setDistrict(geography.district);setPage(1);
+    setSelected(null);setFocusedReportId(null);setHoveredReportId(null);setKeyboardReportId(null);setLinkedReport(null);setCity(geography.city);setDistrict(geography.district);setPage(1);
     setFocus(location);setFocusZoom(17);setFocusRevision(r=>r+1);
     rememberGeography(geography.city.id,geography.district);
     window.history.replaceState({},'',geographyUrl(window.location.href,geography.city.id,geography.district));

@@ -14,3 +14,7 @@ export function reportMarkerLabel(report:Report) {
   const city=CITIES.find(city=>city.id===report.cityId)?.name || '';
   return displayLocationAddress(report.address,city,report.district,false)+' · '+CATEGORIES[report.category];
 }
+
+export function findReportById(id:string|null,reports:Report[],linked:Report|null):Report|undefined {
+  return reports.find(report=>report.id===id) || (linked?.id===id ? linked : undefined);
+}
