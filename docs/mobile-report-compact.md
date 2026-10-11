@@ -75,3 +75,9 @@ Removed local synthetic address suffix 請確認騎樓入口; actual address dat
 ## Gradient scope correction
 
 Removed step-circle per-position colors. All active step circles return to existing solid brand green with white text; only the progress bar retains the gradient. Local computed styles and diff check verified. CSS-only three-line removal; no runtime or backend change, no deployment.
+
+## Scoped code review and teaching alignment
+
+Reviewed location cancellation/revision checks, required photo/consent, compact picker isolation, modal scroll/focus, auto-title and form validation. Fixed stale HelpPanel coordinate-entry instructions and guided-tour file-picker wording; Next highlighting now covers the position confirmation guide. Fixed collapsed required title by opening details on invalid; browser cleared title, closed disclosure, submitted validation only, and confirmed automatic reopening. No new blocking runtime finding remains in this scoped self-review; not an independent PR approval. Focused regression 50/50, lint/typecheck/build/SEO PASS. Real device/backend acceptance unchanged and PENDING for this local UI branch.
+
+Update-form preview: tests/report-update-preview.html uses an in-memory illustrative report, updates returns empty, addUpdate explicitly rejects writes. Existing ReportPanel opens its public supplement form; fields/options/privacy gate inspected without submission. No Production data, photos or credentials accessed.

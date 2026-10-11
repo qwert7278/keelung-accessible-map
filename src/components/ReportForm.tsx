@@ -38,7 +38,7 @@ import type { LocationResult } from '../services/locationContract';
 const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   1: {
     title: "選擇障礙位置",
-    body: "點選閃動的地圖標記障礙位置，或按「使用目前位置」。不想開 GPS 也可以完成。",
+    body: "搜尋地址或地標、按「使用目前位置」，或直接點選地圖。",
   },
   2: {
     title: "確認障礙位置",
@@ -50,7 +50,7 @@ const GUIDE_COPY: Record<number, { title: string; body: string }> = {
   },
   4: {
     title: "上傳現場照片",
-    body: "按閃動區域內的「選擇檔案」，上傳一張能看見障礙本身與周圍通行空間的照片。",
+    body: "按「拍照」或「從相簿選擇」，上傳一張清楚的障礙照片，避免人臉或車牌。",
   },
   5: {
     title: "選擇輪椅通行程度",
@@ -587,7 +587,7 @@ export default function ReportForm({
               <details className="review-title-edit">
                 <summary>修改回報標題</summary>
                 <label>回報標題
-                  <input required maxLength={80} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
+                  <input required maxLength={80} onInvalid={e=>e.currentTarget.closest('details')?.setAttribute('open','')} value={draft.title} onChange={e=>{titleEdited.current=true;update('title',e.target.value);}}/>
                 </label>
               </details>
               {nearby && (
@@ -663,7 +663,7 @@ export default function ReportForm({
           )}
           <button
             className={`button primary${
-              (step === 1 && guidedStep === 3) ||
+              (step === 1 && (guidedStep === 2 || guidedStep === 3)) ||
               (step === 2 && guidedStep === 6) ||
               (step === 3 && guidedStep === 8)
                 ? " guide-target-active"
