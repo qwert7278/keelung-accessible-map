@@ -58,4 +58,3 @@ describe('permission recovery guidance',()=>{
   it('uses generic browser instructions for unknown browsers',()=>expect(gpsErrorMessage(1,'')).toContain('瀏覽器的網站權限'));
   it('does not assume only phones can have unavailable location',()=>expect(gpsErrorMessage(2,'Windows')).toContain('裝置定位服務'));
 });
-
