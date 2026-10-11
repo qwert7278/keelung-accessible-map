@@ -338,7 +338,14 @@ export default function ReportForm({
     }
   }
   async function locate() {
-    invalidateSelection();
+    // Cancel stale async work without discarding the user's last valid selection.
+    selectionRequest.current?.abort();
+    locationRevision.current++;
+    addressRevision.current++;
+    gpsRequest.current?.abort();
+    gpsRevision.current++;
+    setCheckingLocation(false);
+    setGpsError('');
     setError('');
     if (!navigator.geolocation) {
       setGpsError('此瀏覽器不支援定位，請使用搜尋地點或地圖選點。');

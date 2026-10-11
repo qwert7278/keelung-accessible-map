@@ -7,6 +7,15 @@ import ReportForm from '../src/components/ReportForm';
 import Modal from '../src/components/Modal';
 import '../src/styles.css';
 import 'leaflet/dist/leaflet.css';
+let qaGPSMode='denied';
+Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition:(success:PositionCallback,failure:PositionErrorCallback)=>{
+  const mode=qaGPSMode;
+  setTimeout(()=>{
+    if(mode==='hold') return;
+    if(mode==='success') success({coords:{latitude:25.1262937,longitude:121.741373,accuracy:20}} as GeolocationPosition);
+    else failure({code:mode==='timeout'?3:1} as GeolocationPositionError);
+  },mode==='success'?1200:100);
+}}});
 const originalFetch=window.fetch.bind(window);
 window.fetch=async(input,init)=>{
   const url=new URL(String(input),location.origin);
@@ -39,6 +48,9 @@ useEffect(()=>{
     const transfer=new DataTransfer();transfer.items.add(new File([blob],'synthetic-mobile-qa.jpg',{type:'image/jpeg'}));
     input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
   };
-  document.querySelector('dialog')?.append(button);return()=>button.remove();
+  const modes=document.createElement('select');modes.setAttribute('aria-label','模擬定位結果');modes.style.cssText='position:fixed;left:4px;bottom:0;z-index:1100';
+  for(const [value,text] of [['denied','權限拒絕'],['timeout','逾時'],['success','成功（延遲）'],['hold','等待／取消']]) {const option=document.createElement('option');option.value=value;option.textContent=text;modes.append(option);}
+  modes.onchange=()=>{qaGPSMode=modes.value;};
+  document.querySelector('dialog')?.append(button,modes);return()=>{button.remove();modes.remove();};
 },[open]);return <><h1>Phase 3 本地 UX QA</h1><p>固定候選資料；「空」測試無結果、「失敗」測試錯誤、「慢」測試競態。</p><button onClick={()=>setOpen(true)}>開啟表單</button>{open&&<ReportForm repository={qaRepository} city={CITIES[0]} initialDistrict="仁愛區" reports={[]} onClose={()=>setOpen(false)} onCreated={()=>{setOpen(false);setCompleted(true);}} onExisting={()=>{}}/>}{completed&&<Modal title="感謝你的回報" className="report-complete-modal" onClose={()=>setCompleted(false)}><div className="report-complete-content"><p>每一次回報，都讓城市多一份理解，讓輪椅使用者與每一位行人更安心通行。</p><p className="report-complete-note">本地模擬完成，未建立公開案件。</p><button className="button primary" onClick={()=>setCompleted(false)}>完成</button></div></Modal>}</>;}
 createRoot(document.getElementById('root')!).render(<QA/>);
