@@ -43,3 +43,11 @@ PASS: 390px and 320px responsive layouts have no horizontal overflow or text/thu
 - Mobile screenshot capture was unavailable; responsive DOM geometry was verified.
 - Preview CI and Vercel must be checked on the PR before release.
 - Production remains unchanged. Rollback/current baseline: 5bc5ee825dd08f768701efcf9bc0f917d8e127e3.
+
+## Final review — 2026-10-11
+
+The official notice banner remains removed. Equivalent disclosure is visible from the map's “如何使用與常見問題”: “不是政府 1999 或派工系統，也不保證路線安全。” The “請留意” explanation also states that the platform has not connected to 1999 or government dispatch. No banner height is restored.
+
+Fixed independent reviewer P2: opening an already-visible report now preserves the current page and district filter. Geography and pagination reset only when the selected report is outside the currently selected geography. Real local browser regression: page two → Enter on report 30號 → close stays at records 11–12; repeat from “所有行政區” preserves both records 11–12 and the all-district filter. The selected marker remains matched by report.id. FAQ disclosure verified in the real UI.
+
+40/40 affected tests, lint, typecheck, build and SEO check PASS after the fix. Current CI/Preview must pass on the updated head before merge. Production rollback remains 5bc5ee825dd08f768701efcf9bc0f917d8e127e3.

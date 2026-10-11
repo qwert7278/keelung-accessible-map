@@ -326,11 +326,12 @@ export default function App() {
     if (!selected || !matchCity || !matchDistrict || matchLat === undefined || matchLng === undefined) return;
     const next = CITIES.find(c => c.id === matchCity);
     if (!next) return;
+    const changesGeography = next.id !== city.id || (district !== 'all' && district !== matchDistrict);
     if (next.id !== city.id) { setReports([]); setLoading(true); }
-    setCity(next); setDistrict(matchDistrict); setPage(1);
+    if (changesGeography) { setCity(next); setDistrict(matchDistrict); setPage(1); }
     setFocus({ lat:matchLat, lng:matchLng }); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(r => r + 1);
-    window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, matchDistrict, selected));
-  }, [selected, matchCity, matchDistrict, matchLat, matchLng]);
+    window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, changesGeography ? matchDistrict : district, selected));
+  }, [selected, matchCity, matchDistrict, matchLat, matchLng, city.id, district]);
   function focusLocation(geography:{city:typeof city;district:string}, location:Location) {
     manuallyChosen.current=true;
     if (geography.city.id!==city.id) {setReports([]);setLoading(true);}
