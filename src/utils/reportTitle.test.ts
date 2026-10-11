@@ -19,5 +19,6 @@ describe('automatic report title',()=>{
 describe('existing public titles',()=>{
  const report:Report={...draft,id:'title-test',title:'44 忠二路, 仁愛區, 基隆市 200001, Taiwan · 路面不平／破損',address:'44 忠二路, 仁愛區, 基隆市 200001, Taiwan',status:'open',beforeImageUrl:'',afterImageUrl:null,createdAt:'',updatedAt:'',officialSource:false,schemaVersion:1};
  it('normalizes a legacy generated title without changing saved data',()=>{expect(displayReportTitle(report)).toBe('基隆市仁愛區忠二路44號 · 路面不平／破損');expect(report.title).toContain('Taiwan');});
+ it('preserves an edited title even when it mentions a marked position',()=>expect(displayReportTitle({...report,title:'騎樓已標記位置入口 · 路面不平／破損'})).toBe('騎樓已標記位置入口 · 路面不平／破損'));
  it('preserves a custom landmark title',()=>expect(displayReportTitle({...report,title:'騎樓入口請慢行'})).toBe('騎樓入口請慢行'));
 });

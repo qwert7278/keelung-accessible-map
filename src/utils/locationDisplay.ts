@@ -22,7 +22,9 @@ export function displayLocationAddress(address:string,city:string,district:strin
     part=part.replace(/^(\d+(?:[-之]\d+)?(?:號(?:之\d+)?)?)\s+(.+(?:路|街|巷|弄))$/,(_,house:string,road:string)=>road+(/號/.test(house)?house:house+'號'));
     // Keep English street names readable; do not invent a Chinese translation.
     const englishRoad=/\b(?:road|rd\.?|street|st\.?|avenue|ave\.?|lane|ln\.?|alley)\b/i.test(part);
-    const target=/(?:路|街|大道)(?:[一二三四五六七八九十百\d]+段)?(?:\d|[一二三四五六七八九十百]+[巷弄號]|$)|(?:巷|弄)\d/.test(part)||englishRoad?roads:names;
+    const isRoad=/(?:路|街|大道)(?:[一二三四五六七八九十百\d]+段)?(?:\d|[一二三四五六七八九十百]+[巷弄號]|$)|(?:巷|弄)\d/.test(part);
+    if (isRoad && areas[1] && part.startsWith(areas[1])) part=part.slice(areas[1].length).trimStart();
+    const target=isRoad||englishRoad?roads:names;
     if(!target.includes(part)) target.push(part);
   }
   const street=roads.join('');

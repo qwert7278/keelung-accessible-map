@@ -29,3 +29,5 @@ describe('nationwide conservative address formatting',()=>{
  ['華國商務飯店, 愛三路49巷4號, 仁愛區, 基隆市, Taiwan','基隆市','仁愛區','基隆市仁愛區愛三路49巷4號 · 華國商務飯店'],
  ])('%s',(raw,city,district,expected)=>expect(displayLocationAddress(raw,city,district,false)).toBe(expected));
 });
+
+it('does not duplicate a district-only street prefix',()=>expect(displayLocationAddress('仁愛區忠二路44號','基隆市','仁愛區',false)).toBe('基隆市仁愛區忠二路44號'));

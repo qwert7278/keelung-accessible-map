@@ -13,7 +13,8 @@ export function defaultReportTitle(draft:ReportDraft):string {
 export function displayReportTitle(report:Report):string {
   const category=CATEGORIES[report.category];
   const prefix=report.title.endsWith(category) ? report.title.slice(0,-category.length).replace(/\s*[·・]\s*$/,'') : report.title;
-  if (report.address.trim() && prefix.trim()===report.address.trim() || report.title.endsWith(category) && prefix.includes('已標記位置')) {
+  const city=CITIES.find(city=>city.id===report.cityId)?.name || '';
+  if (report.address.trim() && prefix.trim()===report.address.trim() || report.title.endsWith(category) && prefix===`${city}${report.district}已標記位置`) {
     return defaultReportTitle({...report,title:''});
   }
   return report.title;
