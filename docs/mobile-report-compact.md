@@ -63,3 +63,7 @@ Placeholder and map hint updated to owner-specified wording. Removed form-bottom
 ## Compact photo step
 
 ReportForm opts into PhotoUploader compact mode; other uploaders retain existing layout. Empty decorative photo placeholder replaced by centered camera/gallery buttons within one upload area. Repeated photo-step prose removed; picker help remains screen-reader-only and final public-photo consent retained. Camera capture, picker cancellation, compression and removal logic unchanged. Local synthetic JPEG preview/removal verified; 390x844 body overflow 0, horizontal overflow false, both buttons 44px high. Image regression 24/24, lint/typecheck/build/SEO PASS. Real-device camera/gallery PENDING. No deployment.
+
+## Photo selection and progress refinement
+
+Compact picker buttons hide when a photo exists; remove restores them and defers focus until after render. Existing inputs remain mounted and single-file. Duplicate visible photo label moved to screen-reader-only; step heading carries required marker. One visible reminder states one photo and avoids faces/plates. Progress fill colors change from light to medium to dark green for steps 1/2/3. Local synthetic photo selects/hides buttons, removal restores, reselection works; step colors verified. Image regression 24/24; lint/typecheck/build/SEO PASS. No real upload or deployment.

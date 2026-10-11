@@ -424,6 +424,7 @@ export default function ReportForm({
         </ol>
         <div
           className="report-step-progress"
+          data-step={step}
           role="progressbar"
           aria-label="回報進度"
           aria-valuemin={1}
@@ -492,7 +493,7 @@ export default function ReportForm({
           )}
           {step === 2 && (
             <>
-              <h3 tabIndex={-1}>現場是什麼狀況？</h3>
+              <h3 tabIndex={-1}>現場是什麼狀況？（必填）</h3>
               <div className={guidedStep === 4 ? "guide-target-active guide-target-block" : undefined}>
                 <PhotoUploader
           onProcessingChange={onPhotoProcessing}
