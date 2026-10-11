@@ -1,3 +1,4 @@
+import { reportMarkerLabel } from '../utils/reportMapList';
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -29,8 +30,8 @@ function markerElement(report: Report) {
       : report.status === "in_progress"
         ? "…"
         : "!";
-  el.setAttribute("aria-label", `${report.title}，${STATUSES[report.status]}`);
-  el.title = `${report.title} · ${STATUSES[report.status]}`;
+  el.setAttribute("aria-label", `${reportMarkerLabel(report)}，${STATUSES[report.status]}`);
+  el.title = `${reportMarkerLabel(report)} · ${STATUSES[report.status]}`;
   return el;
 }
 export default function MapView(props: Props) {

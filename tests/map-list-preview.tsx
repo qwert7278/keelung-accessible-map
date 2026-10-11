@@ -1,0 +1,12 @@
+import {createRoot} from 'react-dom/client';
+import {set} from 'idb-keyval';
+import App from '../src/App';
+import '../src/styles.css';
+import type {Report} from '../src/types';
+if (import.meta.env.VITE_DEMO_MODE !== 'true') throw new Error('This fixture requires an isolated demo server.');
+const reports:Report[]=Array.from({length:12},(_,i)=>({id:`list-qa-${i}`,cityId:'TW-KEE',district:'仁愛區',title:'本地 QA 通行紀錄',address:i===0?'':`${19+i}號 精一路, 仁愛區, 基隆市 200001, 臺灣`,description:'僅本地虛構資料，不會建立公開案件。',category:'uneven_surface',location:{lat:25.1283+i*0.0001,lng:121.7419+i*0.0001},status:'open',wheelchairAccess:'difficult',createdAt:new Date(Date.UTC(2026,9,11,12-i)).toISOString(),updatedAt:new Date().toISOString(),beforeImageUrl:'',afterImageUrl:null,officialSource:false,schemaVersion:1}));
+await set('accessible-map-demo-v1',{version:1,reports,updates:{}});
+const originalFetch=window.fetch;
+window.fetch=(input,init)=>String(input).startsWith('/api/location/reverse?') ? Promise.resolve(new Response(JSON.stringify({city:'基隆市',district:'仁愛區',address:'19號 精一路, 仁愛區, 基隆市 200001, 臺灣'}),{headers:{'Content-Type':'application/json'}})) : originalFetch(input,init);
+window.history.replaceState({},'',window.location.pathname+'?city=TW-KEE&district='+encodeURIComponent('仁愛區'));
+createRoot(document.getElementById('root')!).render(<App/>);

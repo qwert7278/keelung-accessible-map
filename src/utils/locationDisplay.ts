@@ -1,12 +1,12 @@
 /** Display only; coordinates and provider data remain unchanged. */
-export function displayLocationAddress(address:string,city:string,district:string) {
+export function displayLocationAddress(address:string,city:string,district:string, includePostcode = true) {
   const areas=[city.replace(/^台/,'臺'),district];
   const roads:string[]=[],names:string[]=[],postcodes:string[]=[];
   const postal=/^\d{3}(?:\d{2,3}|-\d{2,3})?$/;
   for(let part of address.split(/[,，]/).map(value=>value.trim()).filter(Boolean)) {
-    if(/^(台灣|臺灣|Taiwan)$/i.test(part)) continue;
+    if(/^(台灣|臺灣|台湾|Taiwan)$/i.test(part)) continue;
     // Postal prefixes must be separated from the address, not a road/house number.
-    const prefix=part.match(/^(\d{3}(?:\d{2,3}|-\d{2,3})?)\s+(?=[臺台].+[市縣])/);
+    const prefix=part.match(/^(\d{3}(?:\d{2,3}|-\d{2,3})?)\s+(?=[^\s]+[市縣])/);
     if(prefix) {postcodes.push(prefix[1]);part=part.slice(prefix[0].length);}
     const local=part.replace(/^台(?=.+[市縣])/,'臺');
     if(areas.includes(local)) continue;
@@ -26,5 +26,5 @@ export function displayLocationAddress(address:string,city:string,district:strin
   const street=roads.join('');
   const landmark=names.join(' · ');
   const postcode=[...new Set(postcodes)].join(' ');
-  return areas.join('')+street+(landmark?(street?' · ':'')+landmark:'')+(postcode?' '+postcode:'');
+  return areas.join('')+street+(landmark?(street?' · ':'')+landmark:'')+(includePostcode && postcode?' '+postcode:'');
 }

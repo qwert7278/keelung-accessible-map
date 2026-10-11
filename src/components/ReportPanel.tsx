@@ -1,3 +1,4 @@
+import { displayLocationAddress } from '../utils/locationDisplay';
 import Modal from './Modal';
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -17,7 +18,7 @@ import {
   type ReportUpdate,
   type Status,
 } from "../types";
-import { DEMO_MODE, PUBLIC_SITE_URL } from "../config";
+import { CITIES, DEMO_MODE, PUBLIC_SITE_URL } from "../config";
 import { readableError } from "../utils/validation";
 import ReportDetailShell from "./ReportDetailShell";
 import PhotoUploader from "./PhotoUploader";
@@ -368,9 +369,7 @@ export default function ReportPanel({
         </div>
         <p className="location-line">
           <MapPinIcon size={18} />
-          {!embedded && <span>{report.district} · </span>}
-          {report.address ||
-            `${report.district} · ${report.location.lat.toFixed(5)}, ${report.location.lng.toFixed(5)}`}
+          {displayLocationAddress(report.address,CITIES.find(city=>city.id===report.cityId)?.name || '',report.district,false)}{!report.address && ' · 地址待確認'}
         </p>
         {!embedded && <div className="report-main-photo"><Photo src={report.beforeImageUrl} label="原始回報照片" /></div>}
         {embedded && reportActions}

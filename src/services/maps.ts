@@ -1,3 +1,4 @@
+import { reportMarkerLabel } from '../utils/reportMapList';
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
@@ -61,7 +62,7 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
               : "!";
         content.setAttribute(
           "aria-label",
-          `${report.title}，${STATUSES[report.status]}`,
+          `${reportMarkerLabel(report)}，${STATUSES[report.status]}`,
         );
         content.addEventListener("click", () => p.onSelect(report.id));
         markers.push(
@@ -69,7 +70,7 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
             map,
             position: report.location,
             content,
-            title: report.title,
+            title: reportMarkerLabel(report),
           }),
         );
       }

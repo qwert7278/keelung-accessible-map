@@ -1,6 +1,10 @@
 import {describe,it,expect} from 'vitest';
 import {displayLocationAddress} from './locationDisplay';
 describe('Taiwan address display',()=>{
+ it('hides postcodes without stripping street or doorplate numbers',()=>expect(displayLocationAddress('62 忠四路, 仁愛區, 基隆市 20042, 臺灣','基隆市','仁愛區',false)).toBe('基隆市仁愛區忠四路62號'));
+ it('keeps lane/alley/floor while hiding postal prefix',()=>expect(displayLocationAddress('200001 基隆市仁愛區愛三路49巷2弄4之1號3樓','基隆市','仁愛區',false)).toBe('基隆市仁愛區愛三路49巷2弄4之1號3樓'));
+ it('removes alternate country spelling',()=>expect(displayLocationAddress('11號 南榮路, 仁愛區, 基隆市 20048, 台湾','基隆市','仁愛區',false)).toBe('基隆市仁愛區南榮路11號'));
+
  it('orders locality road and house and removes country/duplicate locality',()=>expect(displayLocationAddress('4 吳興街, 信義區, 臺北市 110501, 臺灣','臺北市','信義區')).toBe('臺北市信義區吳興街4號 110501'));
  it('keeps alley numbers and postal information',()=>expect(displayLocationAddress('愛三路49巷4號, 仁愛區, 基隆市, 200-01, Taiwan','基隆市','仁愛區')).toBe('基隆市仁愛區愛三路49巷4號 200-01'));
  it('preserves an already ordered address',()=>expect(displayLocationAddress('基隆市仁愛區愛三路49巷4號','基隆市','仁愛區')).toBe('基隆市仁愛區愛三路49巷4號'));

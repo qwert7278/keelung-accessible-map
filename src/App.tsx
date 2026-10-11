@@ -45,6 +45,9 @@ import { initialGeography, rememberGeography, shouldSuggestCity, geographyUrl } 
 import { readConsent, CONSENT_EVENT } from './utils/consent';
 import { useSuggestedCity } from './utils/useSuggestedCity';
 import { districtCamera } from './utils/mapCamera';
+import { displayLocationAddress } from './utils/locationDisplay';
+import { reverseLocation } from './services/locationApi';
+import { nearbyReportAddress, REPORT_PAGE_SIZE, REPORT_FOCUS_ZOOM } from './utils/reportMapList';
 const HOMEPAGE_URL = "/";
 
 export default function App() {
@@ -75,6 +78,8 @@ export default function App() {
   const [createdGeography, setCreatedGeography] = useState({ cityId:city.id, district });
   const [focusZoom, setFocusZoom] = useState(districtCamera(city, district).zoom);
   const [focusRevision, setFocusRevision] = useState(0);
+  const [focusedReportId,setFocusedReportId] = useState<string|null>(null);
+  const [nearbyAddresses,setNearbyAddresses] = useState<Record<string,string>>({});
   const [page, setPage] = useState(1);
   const [feedPages,setFeedPages] = useState(1);
   const [hasMore,setHasMore] = useState(false);
@@ -252,15 +257,37 @@ export default function App() {
     const rows = scoped.filter(r => filter === 'all' || r.status === filter);
     return resolvedReport && !rows.some(r => r.id === resolvedReport.id) ? [resolvedReport, ...rows] : rows;
   }, [scoped, filter, resolvedReport]);
+  const addressTarget = resolvedReport || reports.find(r=>r.id===focusedReportId);
+  const addressKey = addressTarget ? `${addressTarget.id}:${addressTarget.location.lat}:${addressTarget.location.lng}` : '';
+  const targetCity = addressTarget?.cityId, targetDistrict = addressTarget?.district;
+  const targetLat = addressTarget?.location.lat, targetLng = addressTarget?.location.lng;
+  const targetAddress = addressTarget?.address;
+  const cachedAddress = nearbyAddresses[addressKey];
+  useEffect(()=>{
+    if (!addressKey || targetAddress?.trim() || cachedAddress !== undefined || targetLat === undefined || targetLng === undefined) return;
+    const request = new AbortController();
+    void reverseLocation({lat:targetLat,lng:targetLng},request.signal).then(result=>{
+      if (!request.signal.aborted) setNearbyAddresses(previous=>({...previous,[addressKey]:nearbyReportAddress(result,targetCity || '',targetDistrict || '')}));
+    }).catch(()=>{ /* Keep the selected marker and explicit unknown address on failure. */ });
+    return ()=>request.abort();
+  },[addressKey,targetAddress,cachedAddress,targetCity,targetDistrict,targetLat,targetLng]);
+  function reportAddress(r:Report) {
+    const name=CITIES.find(c=>c.id===r.cityId)?.name || city.name;
+    return r.address.trim() ? displayLocationAddress(r.address,name,r.district,false) : nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || `${name}${r.district} · 地址待確認`;
+  }
+  function focusReport(r:Report) {
+    gpsRevision.current++;
+    setFocusedReportId(r.id); setFocus(r.location); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(value=>value+1);
+  }
   const sorted = [...visible].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const pageCount = Math.max(1, Math.ceil(sorted.length / 5));
+  const pageCount = Math.max(1, Math.ceil(sorted.length / REPORT_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const pageReports = sorted.slice((currentPage - 1) * 5, currentPage * 5);
-  const report = resolvedReport;
+  const pageReports = sorted.slice((currentPage - 1) * REPORT_PAGE_SIZE, currentPage * REPORT_PAGE_SIZE);
+  const report = resolvedReport ? (adminPage ? resolvedReport : {...resolvedReport,address:resolvedReport.address || nearbyAddresses[`${resolvedReport.id}:${resolvedReport.location.lat}:${resolvedReport.location.lng}`] || '',title:reportAddress(resolvedReport)+' · '+CATEGORIES[resolvedReport.category]}) : null;
   function choose(id: string) {
     gpsRevision.current++;
     setSelected(id);
-    setFocus(reports.find((r) => r.id === id)?.location); setFocusZoom(16); setFocusRevision(r => r + 1);
+    setFocus((reports.find((r) => r.id === id) || linkedReport)?.location); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(r => r + 1);
     const url = new URL(window.location.href);
     if (reportIdFromSearch(url.search) !== id) {
       url.searchParams.set("report", id);
@@ -303,7 +330,7 @@ export default function App() {
     if (!next) return;
     if (next.id !== city.id) { setReports([]); setLoading(true); }
     setCity(next); setDistrict(matchDistrict); setPage(1);
-    setFocus({ lat:matchLat, lng:matchLng }); setFocusZoom(16); setFocusRevision(r => r + 1);
+    setFocus({ lat:matchLat, lng:matchLng }); setFocusZoom(REPORT_FOCUS_ZOOM); setFocusRevision(r => r + 1);
     window.history.replaceState({}, '', geographyUrl(window.location.href, next.id, matchDistrict, selected));
   }, [selected, matchCity, matchDistrict, matchLat, matchLng]);
   function focusLocation(geography:{city:typeof city;district:string}, location:Location) {
@@ -611,11 +638,12 @@ export default function App() {
                 </div>
               ) : (
                 pageReports.map((r) => (
+                  <div className="report-list-item" key={r.id}>
                     <button
-                      className={`report-card ${selected === r.id ? "selected" : ""}`}
+                      className={`report-card ${(selected === r.id || focusedReportId === r.id) ? "selected" : ""}`}
                       key={r.id}
-                      onClick={() => choose(r.id)}
-                      aria-label={`查看回報：${r.title}，${r.district}，${CATEGORIES[r.category]}`}
+                      onClick={() => window.matchMedia('(min-width: 701px)').matches ? focusReport(r) : choose(r.id)}
+                      aria-label={`定位回報：${reportAddress(r)}，${CATEGORIES[r.category]}`}
                     >
                       <ReportThumbnail report={r} />
                       <div className="report-card-content">
@@ -624,10 +652,10 @@ export default function App() {
                           <small>{r.district}</small>
                         </div>
                         <h3>
-                          {r.title}
+                          {reportAddress(r)}
                           <ArrowRightIcon size={18} />
                         </h3>
-                        <p>{CATEGORIES[r.category]}</p>
+                        <p className="report-card-category">{CATEGORIES[r.category]}</p>
                         <div className="card-bottom">
                           <span>
                             <WheelchairIcon size={16} />
@@ -641,11 +669,13 @@ export default function App() {
                         </div>
                       </div>
                     </button>
+                    <button type="button" className="report-detail-link" onClick={()=>choose(r.id)} aria-label={`查看詳情：${reportAddress(r)}`}>查看詳情</button>
+                  </div>
                   ))
               )}
             </div>
             <div className="list-pagination" aria-label="案件分頁">
-              <span>第 {visible.length ? (currentPage - 1) * 5 + 1 : 0}–{Math.min(currentPage * 5, visible.length)} 筆／已載入 {visible.length} 筆{hasMore ? "（還有更多）" : ""}</span>
+              <span>第 {visible.length ? (currentPage - 1) * REPORT_PAGE_SIZE + 1 : 0}–{Math.min(currentPage * REPORT_PAGE_SIZE, visible.length)} 筆／已載入 {visible.length} 筆{hasMore ? "（還有更多）" : ""}</span>
               <button onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1} aria-label="上一頁案件">上一頁</button>
               <button onClick={() => {if(currentPage===pageCount && hasMore) {setFeedPages(n=>n+1);setLoading(true);} setPage(currentPage+1);}} disabled={loading || (currentPage === pageCount && !hasMore)} aria-label="下一頁案件">下一頁</button>
             </div>
@@ -660,7 +690,7 @@ export default function App() {
             <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}</div></div>
             <div className="map-stage">
-            <MapView key={city.id} city={city} reports={visible} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
+            <MapView key={city.id} city={city} reports={visible.map(r=>({...r,address:r.address || nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || ''}))} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
             <div className="map-caption">
               <span className="live-dot" />
               {city.name} · {district === 'all' ? '所有行政區' : district}
