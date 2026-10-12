@@ -11,7 +11,8 @@
 - 已 fetch 並核對 `origin/main`：`44654f097522b7dff366bd18b516c7d91462cfc2`。
 - 最終功能／測試 commit：`015c4a7c13a8ef5f3461d5cff40ffebbd3f2e3b7`。本報告後續 commit 只更新交付證據；PR head 以 GitHub 為準。
 - Branch：`codex/roadtag-p2a-01`；獨立 app-managed worktree：`C:/Users/qwert/.codex/worktrees/roadtag-phase2a-01/Road Recall system`。
-- PR / CI / Preview：待建立後回填。
+- [Draft PR #23](https://github.com/qwert7278/keelung-accessible-map/pull/23)。已驗證的 PR head：`c41d9ba53cbd776b0f57dce46386887f3a95a266`；本次回填只改文件。
+- Preview：`https://keelung-accessible-95kir47mx-masons-projects-2c78a251.vercel.app`，`dpl_9ZCEeW5HmQwuTehWW4k1Wjb9bgCQ`，READY，與已驗證 head 相同。由既有 Git integration 自動建立，沒有正式部署。
 - 唯讀核對目前 Production：`dpl_BTVWYHVmVY2Kuacg5oZTNX3DFkws`，`READY`，SHA 與上述 main 相同。這是既有部署，不是本次部署。
 
 ## 已完成的功能與檔案
@@ -49,7 +50,8 @@
 | `npm audit --omit=dev` | PASS：0 Production vulnerabilities |
 | 完整依賴 audit | 既有 2 個 high dev dependency findings：`@modelcontextprotocol/client`、`source-map-js`；本次沒有新增或升級依賴。P2B 真實 client harness 應採修補版本 |
 | `git diff --check` | PASS |
-| GitHub CI | PENDING，PR 建立後回填 |
+| GitHub CI | PASS，以上已驗證 head 的 push / PR Quality check 均 success：[PR run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38228688829) |
+| 真實 hosted default-off | PASS：Vercel authenticated fetch 的 GET `/api/mcp-public` 回傳 503 / SERVICE_UNAVAILABLE / Cache-Control:no-store；未認證 probe 是 Vercel protection 401，不能當成 app 結果 |
 | Preview + real public staging data | PENDING，見阻擋問題 |
 | Gemini / Claude / Manus / ChatGPT / Codex / Python 真實 client | PENDING，屬 P2B-01，不冒稱相容性已驗收 |
 
@@ -68,7 +70,7 @@
 
 ## Code Review Findings
 
-完成作者本地審查，未發現本次三工具邊界或私密欄位授權缺陷。**尚無獨立 reviewer PASS**；外部 review / PR CI 狀態另列，不能視為已核准。
+完成作者本地審查，未發現本次三工具邊界或私密欄位授權缺陷。GitHub PR reviews / inline comments 查詢目前為空，**尚無獨立 reviewer PASS**；CI success 不能視為 Code Review 核准。
 
 修正並再驗證：測試需要解析合法 2025 SSE response；新的 adapter unsupported methods 移除 unused parameters；CI 增加 emitted route probe。
 
@@ -87,7 +89,7 @@ MCP_PUBLIC_READ_SUPABASE_PUBLISHABLE_KEY=<staging-publishable-key>
 
 核對 staging project 與 branch-specific Preview 配置後，才將 flag 設為 true 做真實唯讀呼叫。需要 address/POI 時使用既有 server-only Geoapify 設定；本報告不載入或輸出該 key。
 
-Vercel connector 可讀 project / deployment；讀 project env metadata 回應 **403 forbidden**。本機沒有 Vercel CLI fallback；現有可讀 local env 僅網站設定，沒有 public staging MCP 配置。本次未變更 Vercel env 或 Production，不以 mock 宣稱真實 staging PASS。
+Vercel connector 可讀 project / deployment；讀 project env metadata 回應 **403 forbidden**。本機沒有 Vercel CLI fallback；現有可讀 local env 僅網站設定，沒有 public staging MCP 配置。本次未變更 Vercel env 或 Production。透過既有 Vercel authenticated fetch 成功確認 Preview route 的 default-off 503，但沒有 staged 三工具真實呼叫，不以此或 mock 宣稱真實 staging PASS。
 
 ## 回滾與下一步
 
