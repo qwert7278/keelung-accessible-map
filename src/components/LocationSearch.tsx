@@ -28,7 +28,7 @@ export default function LocationSearch({query,results,loading,note,onQuery,onSea
             else if(event.key==='Enter'){event.preventDefault();if(expanded&&!loading&&active>=0&&results[active])select(results[active]);else{setOpen(true);setActive(-1);onSearch();}}
           }}/>
       </label>
-      <button className="button secondary" type="button" disabled={loading} onClick={()=>{setOpen(true);setActive(-1);onSearch();}}>搜尋</button>
+      <button className="button secondary" type="button" disabled={loading} onClick={()=>{input.current?.focus();setOpen(true);setActive(-1);onSearch();}}>搜尋</button>
     </div>
     <p id={`${id}-status`} className="location-search-status muted" role="status" aria-live="polite" aria-atomic="true">{loading?'正在搜尋地址與地標…':note}</p>
     <ul ref={list} id={`${id}-list`} className="location-results" role="listbox" aria-label="搜尋候選位置" aria-busy={loading} hidden={!expanded||!results.length}>
