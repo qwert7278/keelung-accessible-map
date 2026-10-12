@@ -78,5 +78,6 @@ try{
  }finally{globalThis.fetch=realFetch;process.env=env;}
  assert(!JSON.stringify(events).includes(gate)&&!JSON.stringify(events).includes('SECRET')&&!JSON.stringify(events).includes('203.0.113')&&!JSON.stringify(events).includes('PRIVATE_QUERY_MARKER'));
  assert(events.some(e=>e.outcome==='RATE_LIMITED')&&events.some(e=>e.outcome==='TIMEOUT'));
+ await local.db.exec('delete from private.mcp_public_control');assert.equal((await call('request')).code,'SERVICE_UNAVAILABLE');
  console.log('PASS P2A-02 isolated SQL quotas, leases, gate/kill switch, fail-closed HTTP, privacy, timeout. No hosted contention or provider billing claim.');
 }finally{await local.db.close();}

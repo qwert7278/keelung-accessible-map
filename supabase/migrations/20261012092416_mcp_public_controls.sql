@@ -47,11 +47,11 @@ begin
  if stored is null or stored<>encode(sha256(convert_to(p_gate,'UTF8')),'hex') then return jsonb_build_object('allowed',false,'code','SERVICE_UNAVAILABLE');end if;
  -- One locked policy row serializes all workers' count/check/increment and leases.
  select * into c from private.mcp_public_control where singleton for update;
- if not c.enabled or c.gate_hash<>encode(sha256(convert_to(p_gate,'UTF8')),'hex') then return jsonb_build_object('allowed',false,'code','SERVICE_UNAVAILABLE');end if;
+ if not found or c.enabled is not true or c.gate_hash is distinct from encode(sha256(convert_to(p_gate,'UTF8')),'hex') then return jsonb_build_object('allowed',false,'code','SERVICE_UNAVAILABLE');end if;
  stamp:=floor(extract(epoch from clock_timestamp()))::bigint;
  delete from private.mcp_public_leases where expires_at<=clock_timestamp();
  delete from private.mcp_public_counters where window_start<stamp-172800;
- if p_kind='geocode' and not exists(select 1 from private.mcp_public_leases where id=p_lease and risk=p_risk) then return jsonb_build_object('allowed',false,'code','SERVICE_UNAVAILABLE');end if;
+ if p_kind='geocode' and not exists(select 1 from private.mcp_public_leases where id=p_lease and risk=p_risk and expires_at>clock_timestamp()) then return jsonb_build_object('allowed',false,'code','SERVICE_UNAVAILABLE');end if;
  if p_kind='request' and ((select count(*) from private.mcp_public_leases where risk=p_risk)>=c.concurrent_ip or (select count(*) from private.mcp_public_leases)>=c.concurrent_global) then return jsonb_build_object('allowed',false,'code','RATE_LIMITED','retry_after',30);end if;
  starts:=array[(stamp/60)*60,(stamp/60)*60,(stamp/86400)*86400,(stamp/86400)*86400];
  scopes:=array[p_risk,'global',p_risk,'global'];
