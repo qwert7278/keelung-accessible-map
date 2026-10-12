@@ -1,7 +1,7 @@
 import { validLocation, type LocationPoint, type LocationResult, type ReverseLocationResult } from '../../src/services/locationContract.js';
 
 export type LocationProvider = {
-  search(query:string, cityId?:string):Promise<LocationResult[]>;
+  search(query:string, cityId?:string, signal?:AbortSignal):Promise<LocationResult[]>;
   reverse(point:LocationPoint):Promise<ReverseLocationResult|null>;
 };
 const cityNames:Record<string,string> = {

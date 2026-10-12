@@ -49,7 +49,7 @@ export function mcpEndpoint(service:RoadTagService,settings:Settings){
  };
 }
 
-export async function readBounded(request:Request,max:number){
+export async function readBounded(request:Pick<Request,'body'>,max:number){
  const reader=request.body?.getReader();if(!reader)return new Uint8Array();const chunks:Uint8Array[]=[];let size=0;
  try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>max)throw new Error('INVALID_INPUT');chunks.push(value);}}finally{await reader.cancel();}
  return Buffer.concat(chunks);

@@ -2,13 +2,14 @@ import {RoadError,type Backend,type PublicRow} from './contracts.js';
 
 // Anonymous Data API access: no service key, actor session, OAuth or write RPC.
 export class PublicSupabaseBackend implements Backend {
- constructor(private url:string,private publishable:string){
+ constructor(private url:string,private publishable:string,private signal?:AbortSignal){
   const parsed=new URL(url);
   if(parsed.protocol!=='https:'||!parsed.hostname.endsWith('.supabase.co')||parsed.origin!==url||!publishable.startsWith('sb_publishable_'))throw new RoadError('SERVICE_UNAVAILABLE');
  }
+ withSignal(signal:AbortSignal){return new PublicSupabaseBackend(this.url,this.publishable,signal);}
  private async read(view:string,q:URLSearchParams):Promise<PublicRow[]>{
   try{
-   const response=await fetch(this.url+'/rest/v1/'+view+'?'+q,{headers:{apikey:this.publishable},signal:AbortSignal.timeout(15000),redirect:'error',cache:'no-store'});
+   const response=await fetch(this.url+'/rest/v1/'+view+'?'+q,{headers:{apikey:this.publishable},signal:AbortSignal.any([AbortSignal.timeout(15000),...(this.signal?[this.signal]:[])]),redirect:'error',cache:'no-store'});
    if(!response.ok)throw new RoadError('SERVICE_UNAVAILABLE');
    const rows:unknown=await response.json();if(!Array.isArray(rows))throw new RoadError('SERVICE_UNAVAILABLE');return rows;
   }catch{throw new RoadError('SERVICE_UNAVAILABLE');}

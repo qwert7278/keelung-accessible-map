@@ -7,7 +7,8 @@ import {limitLocationActor} from '../location/safety.js';
 export const hash=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');
 export class RoadTagService {
  constructor(public backend:Backend,public origin:string,private photoSecret:string){}
- async call(name:ToolName,raw:unknown,principal:Principal):Promise<PublicRow>{
+ async call(name:ToolName,raw:unknown,principal:Principal,signal?:AbortSignal):Promise<PublicRow>{
+  signal?.throwIfAborted();
   if((name==='create_report'||name==='add_observation')&&!principal.write)throw new RoadError('FORBIDDEN');
   if((name==='create_report'||name==='add_observation')&&(raw as PublicRow)?.confirmed!==true)throw new RoadError('CONFIRMATION_REQUIRED');
   if(name==='create_report'&&!(raw as PublicRow)?.photo_token)throw new RoadError('PHOTO_REQUIRED');
@@ -20,7 +21,7 @@ export class RoadTagService {
     if(input.query.length<2)throw new RoadError('INVALID_INPUT');
     if(limitLocationActor(principal.id))throw new RoadError('RATE_LIMITED');
     try {
-     const matches=await geoapifyProvider.search(input.query,input.city_hint?.replace(/台/g,'臺')==='基隆市'||input.city_hint==='TW-KEE'?'TW-KEE':undefined);
+     const matches=await geoapifyProvider.search(input.query,input.city_hint?.replace(/台/g,'臺')==='基隆市'||input.city_hint==='TW-KEE'?'TW-KEE':undefined,signal);
      const found=matches.flatMap(m=>candidates(m.location.lat,m.location.lng).map(region=>({...region,lat:m.location.lat,lng:m.location.lng,label:m.label,address:m.address,kind:m.kind,precision:m.precision,confidence:m.confidence,needs_confirmation:true,source:m.source}))).slice(0,5);
      return {status:found.length===0?'not_found':found.length===1?'candidate':'ambiguous',needs_confirmation:true,candidates:found,message:found.length?'候選地址或地標僅供參考，請確認實際障礙位置後再查詢附近案件。':'找不到可靠候選，請補充門牌、店名或地標，或使用地圖選點。'};
     } catch {throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');}
@@ -34,7 +35,7 @@ export class RoadTagService {
    const filters:Record<string,string>={south:String(Math.max(-90,i.lat-dy)),north:String(Math.min(90,i.lat+dy)),west:String(Math.max(-180,i.lng-dx)),east:String(Math.min(180,i.lng+dx))};
    if(i.category)filters.category=i.category;if(!i.include_resolved)filters.exclude_status='resolved';
    const rows:PublicRow[]=[];let complete=false;
-   for(let offset=0;offset<5000;offset+=500){const page=await this.backend.feed(filters,offset,500);rows.push(...page);if(page.length<500){complete=true;break;}}
+   for(let offset=0;offset<5000;offset+=500){signal?.throwIfAborted();const page=await this.backend.feed(filters,offset,500);rows.push(...page);if(page.length<500){complete=true;break;}}
    if(!complete)return {reports:[],truncated:true,requires_refinement:true};
    const reports=rows.map(r=>({...this.publicReport(r),distance_m:distance(i.lat,i.lng,Number(r.lat),Number(r.lng))} as PublicRow&{distance_m:number})).filter(r=>r.distance_m<=i.radius_m)
     .sort((a,b)=>a.distance_m-b.distance_m||String(b.updated_at).localeCompare(String(a.updated_at))||String(a.id).localeCompare(String(b.id))).slice(0,i.limit);
