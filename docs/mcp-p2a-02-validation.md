@@ -13,7 +13,8 @@
 - 本次 Branch：`codex/roadtag-p2a-02`；獨立 worktree：`C:/Users/qwert/.codex/worktrees/roadtag-p2a-02/Road Recall system`。
 - 最終工程／測試 SHA：`f2c1fba396645e04a8aed0640a89c3922bd9b7af`。後續報告 commit 只回填證據；最終 PR head 以 GitHub 為準。
 - 新 PR 以 `codex/roadtag-p2a-01` 為 base，避免把上一任務混入本次 diff；合併順序必須先 #23，再由 owner 審查本 PR 並重設 base，不能自行合併。
-- PR / CI / Preview：建立後回填。
+- [P2A-02 Draft PR #24](https://github.com/qwert7278/keelung-accessible-map/pull/24)，已驗證 head：`f566e32a662337909d2553e2b6280c1f643439e2`。本次回填僅改文件。
+- 已驗證 Preview：`https://keelung-accessible-ofz22spbc-masons-projects-2c78a251.vercel.app`；Deployment `dpl_6AAVdtmm8d6wt6jyXwLBnU7QoTuR`，READY，target=null（Preview），SHA 為上述已驗證 head。因相依 PR 沒有自動 Preview，使用既有 project 的 Git source 建立，沒有改 env / aliases / Production。
 - 既有 Production：`dpl_BTVWYHVmVY2Kuacg5oZTNX3DFkws`，READY，SHA `44654f0…`。這是唯讀核對，不是本次部署。
 
 ## 實作與檔案
@@ -75,13 +76,14 @@ Windows / Node 24.11.1、MCP server/client 2.1.0、TypeScript 6.0.3、Vitest 5.0
 | `npm run build` | PASS；既有 HEIC bundle warning |
 | `npx tsx tests/mcp-read-transport.ts` | PASS：原五工具 discovery/schema、雙協定三個 read calls、匿名 OAuth denied；不是重跑 Phase 1 |
 | `npm audit --omit=dev --audit-level=high` | PASS：0 Production vulnerabilities；保留先前已記錄的 dev dependency warnings |
-| GitHub CI / Preview default-off | 建立 PR 後回填 |
+| GitHub CI | PASS：已驗證 head 的 [PR Quality run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38231698461) 與 [push run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38231690181) 均 success |
+| Hosted Preview default-off | PASS：Vercel authenticated GET `/api/mcp-public` 回傳 503 / SERVICE_UNAVAILABLE / Cache-Control:no-store；不代表已啟用 limiter 或 staging 三工具驗收 |
 | Hosted migration / 真實 staging quota / 多連線 SQL contention / Geoapify plan budget | PENDING，未執行或未取得證據；不能把 PGlite Promise.all 當成 hosted 多連線競態 |
 | Gemini / Claude / Manus / ChatGPT / Codex / Python 真實 clients | PENDING，P2B-01 範圍 |
 
 ### Code Review Findings
 
-作者本地 review 已完成；**沒有獨立 reviewer PASS**。
+作者本地 review 已完成；GitHub reviews / inline comments 查詢目前為空，**沒有獨立 reviewer PASS**。CI success 不是 reviewer approval。
 
 已修正並驗證：SSE headers 回傳不代表 tool 完成；需完整 body/deadline 才釋放 lease。policy 在 gate check 與 locked read 間遺失時，要明確 fail closed，不能讓 SQL NULL 判斷繼續；geocode lease 也檢查當下 expiry。control secret 改為 credential header，避免出現在 RPC body query arguments。
 
