@@ -4,7 +4,7 @@ import {RoadTagService} from '../roadtag/service.js';
 import {RoadError,schemas,type Principal} from '../roadtag/contracts.js';
 import {PublicSupabaseBackend} from '../roadtag/public-supabase.js';
 import {observePublic,publicRisk,PublicControlClient,type PublicControls,type PublicEvent} from './public-controls.js';
-export type PublicSettings={enabled:boolean;origin:string;controls?:PublicControls;riskSecret?:string;trustVercel?:boolean;timeoutMs?:number;observe?:(event:PublicEvent)=>void};
+export type PublicSettings={enabled:boolean;origin:string;controls?:PublicControls;riskSecret?:string;trustVercel?:boolean;timeoutMs?:number;waitUntil?:(task:Promise<void>)=>void;observe?:(event:PublicEvent)=>void};
 export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings){
  return async(request:Request):Promise<Response>=>{
   const started=Date.now(),headers={'Cache-Control':'no-store'};
@@ -50,7 +50,11 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
   };
   let timer:ReturnType<typeof setTimeout>|undefined;
   const deadline=new Promise<Response>(resolve=>{timer=setTimeout(()=>{abort.abort();resolve(fail(503,'SERVICE_UNAVAILABLE'));},Math.min(25000,Math.max(1,settings.timeoutMs||25000)));});
-  try{const response=await Promise.race([work(),deadline]);emit('request',signal.aborted?'TIMEOUT':response.status===429?'RATE_LIMITED':response.status>=500?'SERVICE_UNAVAILABLE':response.status>=400?'ERROR':'OK',started,response.status);return response;}
+  const task=work();
+  // Serverless hosts may suspend execution as soon as the deadline responds.
+  // Retain the same task so finally can release an existing or late admission.
+  settings.waitUntil?.(task.then(()=>undefined));
+  try{const response=await Promise.race([task,deadline]);emit('request',signal.aborted?'TIMEOUT':response.status===429?'RATE_LIMITED':response.status>=500?'SERVICE_UNAVAILABLE':response.status>=400?'ERROR':'OK',started,response.status);return response;}
   finally{clearTimeout(timer);}
  };
 }

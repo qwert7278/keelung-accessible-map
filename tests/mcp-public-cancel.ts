@@ -15,11 +15,11 @@ await assert.rejects(readBounded({body:new ReadableStream({start(c){c.enqueue(ne
 const origin='https://test.example',headers={'Content-Type':'application/json',Accept:'application/json, text/event-stream'};
 const request=(name:string,args:unknown,signal?:AbortSignal)=>new Request(origin+'/api/mcp-public',{method:'POST',headers,signal,body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});
 const service=new RoadTagService(new PublicSupabaseBackend('https://wpravdqviylkcpsioybu.supabase.co','sb_publishable_fixture'),origin,'');
-let reads=0,releases=0,costs=0;
-const late=publicMcpEndpoint(service,{enabled:true,origin,riskSecret:'fixture'.repeat(8),timeoutMs:10,observe:()=>{},controls:{acquire:async(_risk,kind)=>{if(kind==='geocode')costs++;await new Promise(r=>setTimeout(r,30));return {allowed:true,lease:randomUUID()};},release:async()=>{releases++;}}});
+let reads=0,releases=0,costs=0;const background:Promise<void>[]=[];
+const late=publicMcpEndpoint(service,{enabled:true,origin,riskSecret:'fixture'.repeat(8),timeoutMs:10,waitUntil:task=>background.push(task),observe:()=>{},controls:{acquire:async(_risk,kind)=>{if(kind==='geocode')costs++;await new Promise(r=>setTimeout(r,30));return {allowed:true,lease:randomUUID()};},release:async()=>{releases++;}}});
 const realFetch=globalThis.fetch;
 globalThis.fetch=async()=>{reads++;throw Error('Unexpected call after admission cancellation');};
-try{assert.equal((await late(request('get_report',{report_id:randomUUID()}))).status,503);await new Promise(r=>setTimeout(r,40));assert.equal(reads,0);assert.equal(costs,0);assert.equal(releases,1);}finally{globalThis.fetch=realFetch;}
+try{assert.equal((await late(request('get_report',{report_id:randomUUID()}))).status,503);assert.equal(background.length,1,'Host must retain cleanup after returning the deadline response');await Promise.all(background);assert.equal(reads,0);assert.equal(costs,0);assert.equal(releases,1);}finally{globalThis.fetch=realFetch;}
 
 const saved={...process.env};let providerCalls=0,providerAborted=0;
 globalThis.fetch=async(input,init)=>{

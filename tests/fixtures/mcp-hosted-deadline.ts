@@ -1,5 +1,6 @@
 // Acceptance fixture only. The temporary API entry point must be removed after QA.
 import {timingSafeEqual} from 'node:crypto';
+import {waitUntil} from '@vercel/functions';
 import {publicEnvironment,publicMcpEndpoint} from '../../server/mcp/public.js';
 import {PublicSupabaseBackend} from '../../server/roadtag/public-supabase.js';
 import {RoadTagService} from '../../server/roadtag/service.js';
@@ -25,5 +26,5 @@ export async function hostedFaultFixture(request:Request){
  if(!hostedFixtureAuthorized(request))return new Response(null,{status:404,headers});
  const config=publicEnvironment();if(!config)return Response.json({error:{code:'SERVICE_UNAVAILABLE'}},{status:503,headers});
  const backend=new StalledReadBackend(process.env.MCP_PUBLIC_READ_SUPABASE_URL!,process.env.MCP_PUBLIC_READ_SUPABASE_PUBLISHABLE_KEY!);
- return publicMcpEndpoint(new RoadTagService(backend,origin,''),config.settings)(request);
+ return publicMcpEndpoint(new RoadTagService(backend,origin,''),{...config.settings,waitUntil})(request);
 }
