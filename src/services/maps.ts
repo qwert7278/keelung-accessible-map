@@ -3,9 +3,12 @@ import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
 import { cameraKey, cityOverviewBounds } from "../utils/mapCamera";
+import { userMapMovement } from '../utils/userMapMovement';
 type Props = {
   city?: City;
   cityOverview?: boolean;
+  onBrowseStart?: () => void;
+  onBrowseEnd?: (center: Location, zoom: number) => void;
   cityRegions?: Awaited<ReturnType<typeof import('../utils/districtBoundary').districtRegions>>;
   reports: Report[];
   onSelect: (id: string) => void;
@@ -48,6 +51,16 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
   const reportMarkers = new Map<string,{content:HTMLButtonElement; marker:google.maps.marker.AdvancedMarkerElement}>();
   let lastRegions: Props['cityRegions'], lastOverview = false;
   map.data.setStyle({strokeColor:'#08787c', strokeWeight:2, fillOpacity:0.025, clickable:false});
+  const browsing = userMapMovement(()=>{const center=map.getCenter(),zoom=map.getZoom();if(center && zoom!==undefined)latest().onBrowseEnd?.(center.toJSON(),zoom);},()=>latest().onBrowseStart?.());
+  const drag = map.addListener('dragstart',()=>browsing.start());
+  const idle = map.addListener('idle',()=>{
+    const center=map.getCenter(),zoom=map.getZoom();
+    if(center && zoom!==undefined) browsing.end(center.toJSON(),zoom);
+  });
+  const keyBrowse=(event:KeyboardEvent)=>{
+    if(event.target instanceof HTMLElement && event.target.getAttribute('role')==='region' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)) {const center=map.getCenter(),zoom=map.getZoom();if(center && zoom!==undefined){browsing.start();browsing.end(center.toJSON(),zoom);}}
+  };
+  node.addEventListener('keydown',keyBrowse);
   const click = map.addListener("click", (e: google.maps.MapMouseEvent) => {
     if (latest().picking && e.latLng) latest().onPick?.(e.latLng.toJSON());
   });
@@ -106,14 +119,15 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
       const overviewBounds = cityOverviewBounds(p.city || CITY, p.cityRegions || [], p.reports);
       const nextCamera = p.cityOverview ? `city:${(p.city || CITY).id}:${JSON.stringify(overviewBounds)}:${p.focusRevision || 0}` : cameraKey(p.focus, p.focusZoom, p.focusRevision);
       if (p.cityOverview && nextCamera !== lastCamera) {
-        map.fitBounds(overviewBounds,24); lastCamera = nextCamera;
+        browsing.cancel(); map.fitBounds(overviewBounds,24); lastCamera = nextCamera;
       } else if (!p.cityOverview && p.focus && nextCamera !== lastCamera) {
-        map.setCenter(p.focus);
+        browsing.cancel(); map.setCenter(p.focus);
         if (p.focusZoom !== undefined || !lastCamera) map.setZoom(p.focusZoom ?? 16);
         lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);
       }
     },
     destroy() {
+      browsing.cancel(); drag.remove(); idle.remove(); node.removeEventListener('keydown',keyBrowse);
       click.remove();
       markers.forEach((m) => {
         m.map = null;

@@ -1,0 +1,11 @@
+import {createRoot} from 'react-dom/client';
+import {set} from 'idb-keyval';
+import App from '../src/App';
+import '../src/styles.css';
+import type {Report} from '../src/types';
+if(import.meta.env.VITE_DEMO_MODE!=='true')throw new Error('Isolated demo only.');
+const groups=[{district:'仁愛區',lat:25.1283,lng:121.7419,count:2},{district:'中正區',lat:25.142927,lng:121.76447,count:3},{district:'中山區',lat:25.148282,lng:121.735216,count:1}];
+const reports:Report[]=groups.flatMap(group=>Array.from({length:group.count},(_,i)=>({id:`browse-qa-${group.district}-${i}`,cityId:'TW-KEE',district:group.district,title:`${group.district}本地 QA ${i}`,address:`基隆市${group.district}`,description:'本地虛構測試資料，不會建立 Production 案件。',category:'uneven_surface',location:{lat:group.lat+i*0.0001,lng:group.lng+i*0.0001},status:'open',wheelchairAccess:'difficult',createdAt:'2026-10-13T00:00:00Z',updatedAt:'2026-10-13T00:00:00Z',beforeImageUrl:null,afterImageUrl:null,officialSource:false,schemaVersion:1})));
+await set('accessible-map-demo-v1',{version:1,reports,updates:{}});
+window.history.replaceState({},'',window.location.pathname+'?city=TW-KEE&district='+encodeURIComponent('仁愛區'));
+createRoot(document.getElementById('root')!).render(<App/>);

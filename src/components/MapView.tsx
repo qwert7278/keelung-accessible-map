@@ -9,9 +9,12 @@ import { STATUSES, type Location, type Report } from "../types";
 import { districtRegions } from '../utils/districtBoundary';
 import { cameraKey, cityOverviewBounds } from "../utils/mapCamera";
 import { watchMapTileHealth } from "../utils/mapTileHealth";
+import { userMapMovement } from '../utils/userMapMovement';
 type Props = {
   city?: City;
   cityOverview?: boolean;
+  onBrowseStart?: () => void;
+  onBrowseEnd?: (center: Location, zoom: number) => void;
   cityRegions?: Awaited<ReturnType<typeof districtRegions>>;
   reports: Report[];
   onSelect: (id: string) => void;
@@ -98,6 +101,13 @@ export default function MapView(props: Props) {
       );
       const stopWatchingTiles = watchMapTileHealth(map, tiles, setTileFailure);
       tiles.addTo(map);
+      const browsing = userMapMovement(() => latest.current.onBrowseEnd?.(map.getCenter(),map.getZoom()), () => latest.current.onBrowseStart?.());
+      map.on('dragstart', () => browsing.start());
+      map.on('moveend', () => browsing.end(map.getCenter(),map.getZoom()));
+      const keyBrowse = (event:KeyboardEvent) => {
+        if (event.target === node.current && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)) {browsing.start();browsing.end(map.getCenter(),map.getZoom());}
+      };
+      node.current.addEventListener('keydown',keyBrowse);
       const layer = L.layerGroup().addTo(map);
       const boundaryLayer = L.layerGroup().addTo(map);
       let lastRegions: Props['cityRegions'], lastOverview = false;
@@ -158,16 +168,17 @@ export default function MapView(props: Props) {
           const nextCamera = p.cityOverview ? `city:${(p.city || CITY).id}:${JSON.stringify(overviewBounds)}:${p.focusRevision || 0}` : cameraKey(p.focus, p.focusZoom, p.focusRevision);
           if (p.cityOverview && nextCamera !== lastCamera) {
             const b = overviewBounds;
-            map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[24,24], animate:false});
+            browsing.cancel(); map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[24,24], animate:false});
             lastCamera = nextCamera;
           } else if (!p.cityOverview && p.focus && nextCamera !== lastCamera) {
             const center: L.LatLngExpression = [p.focus.lat, p.focus.lng];
-            map.setView(center, p.focusZoom ?? (lastCamera ? map.getZoom() : 16), { animate: false });
+            browsing.cancel(); map.setView(center, p.focusZoom ?? (lastCamera ? map.getZoom() : 16), { animate: false });
             lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);
           }
           node.current?.classList.toggle("picking", !!p.picking);
         },
         destroy() {
+          browsing.cancel(); node.current?.removeEventListener('keydown',keyBrowse);
           stopWatchingTiles();
           map.remove();
         },
@@ -180,7 +191,7 @@ export default function MapView(props: Props) {
         map.invalidateSize();
         if (latest.current.cityOverview) {
           const b = cityOverviewBounds(latest.current.city || CITY, latest.current.cityRegions || [], latest.current.reports);
-          map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[24,24], animate:false});
+          browsing.cancel(); map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[24,24], animate:false});
         }
       });
       observer.observe(node.current);
