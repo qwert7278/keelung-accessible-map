@@ -22,8 +22,8 @@ function HomeMap() {
     if (!suggestedCity || manuallyChosen.current || !shouldSuggestCity()) return;
     const next = CITIES.find(c => c.id === suggestedCity);
     if (!next) return;
-    if (next.id !== city.id) { setCity(next); setDistrict('all'); setReports([]); setLoading(true); setError(''); }
-    rememberGeography(next.id, 'all');
+    if (next.id !== city.id) { setCity(next); setDistrict(next.defaultDistrict); setReports([]); setLoading(true); setError(''); }
+    rememberGeography(next.id, next.defaultDistrict);
     setSuggestionNote(`依網路連線推估為${next.name}；可隨時切換。`);
   }, [suggestedCity]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -52,7 +52,7 @@ function HomeMap() {
       manuallyChosen.current = true; setSuggestionNote('');
       const next = CITIES.find(c => c.id === id)!;
       if (next.id === city.id) { rememberGeography(city.id, district); return; }
-      setReports([]); setLoading(true); setError(''); setCity(next); setDistrict('all'); rememberGeography(next.id, 'all');
+      setReports([]); setLoading(true); setError(''); setCity(next); setDistrict(next.defaultDistrict); rememberGeography(next.id, next.defaultDistrict);
     }} onDistrict={value => { manuallyChosen.current = true; setSuggestionNote(''); setDistrict(value); rememberGeography(city.id, value); }} />
     <div className="home-live-map">
       <MapView key={city.id} city={city} cityOverview={district === 'all'} reports={visible} focus={camera.focus} focusZoom={camera.zoom}

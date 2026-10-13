@@ -153,9 +153,9 @@ export default function App() {
     if (!next || next.id === city.id) return;
     setPage(1); closeReport(); setCreating(false); setCreatedReportId(null); setGuideStep(null);
     setReports([]); setLoading(true); setError(''); setSearch(''); setAccess('all'); setFilter('all');
-    setCity(next); setDistrict('all'); setFocus(next.center); setFocusZoom(next.zoom); setFocusRevision(r => r + 1); setLinkedReport(null); setLoadError('');
-    rememberGeography(next.id, 'all');
-    window.history.pushState({}, '', geographyUrl(window.location.href, next.id, 'all'));
+    setCity(next); setDistrict(next.defaultDistrict); setFocus(next.center); setFocusZoom(next.zoom); setFocusRevision(r => r + 1); setLinkedReport(null); setLoadError('');
+    rememberGeography(next.id, next.defaultDistrict);
+    window.history.pushState({}, '', geographyUrl(window.location.href, next.id, next.defaultDistrict));
   }
   function changeDistrict(value: string) {
     setPage(1); setDistrict(value); closeReport();
