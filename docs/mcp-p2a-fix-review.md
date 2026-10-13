@@ -1,5 +1,7 @@
 # Road Tag｜P2A-FIX 獨立審查與修正
 
+2026-10-13 Hosted續查：`5f200b9fa00ce961e79992fba7dabd59d9d98815`的官方Vercel `waitUntil`修復未發現阻擋性findings。Deadline25,456ms503／27,388ms恢復；client abort2.121s／27,421ms恢復，只支持TTL前釋放與bounded cleanup，不代表立即cancel或真實provider timeout。reviewer要求移除臨時API；70830b6已刪入口，最終Preview404見Hosted報告。初次Hosted lease未釋放已修正，無未解決P0/P1/P2。
+
 2026-10-13。來源：`ROAD_TAG_AI_AGENT_NEXT_EXECUTION_PLAN_2026-10-13.md` Section 2。
 基底：#24 `430c5232ee15e064b7ca145bdcd3d453e7f5275d`，stacked on #23 `d946dad562470578bff5ba218e91d7ea3fc1b3e8`。只更新 #24，保留两份未提交報告。最終 head／CI 見 PR metadata；本文件不宣稱 Hosted GO。
 

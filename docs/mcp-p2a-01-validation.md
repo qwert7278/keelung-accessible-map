@@ -2,9 +2,9 @@
 
 日期：2026-10-12（Asia/Taipei）。Phase 2A / Task `P2A-01`。
 
-**最新結論：Phase 2A Final Hosted Acceptance NO-GO。P2A-02 已實作，但 hosted gate 未通過；不進入 P2B-01、不合併、不部署、不公開發布。**
+**最新結論（2026-10-13）：Phase 2A Final Hosted Acceptance GO。真實Preview三唯讀工具、地址與座標、負向寫入及隔離PASS。Preview/Staging已停用，等待owner確認；未開始P2B-01、合併、Production部署或公开發布。**
 
-2026-10-13 更新：P2A-FIX與獨立review已完成；核准後Staging migration與控制面配額／TTL／权限實測取得證據，且復原關閉。整合三工具仍待Vercel env權限（list/write 403）。唯一最新整合證據來源為 PR #24 的 `docs/mcp-phase2a-hosted-acceptance.md`；下方10-12的「未套用」為歷史snapshot。
+2026-10-13更新：官方CLI owner登入解決env寫入，真實SDK Hosted驗收完成。唯一最新整合證據來源為PR #24的`docs/mcp-phase2a-hosted-acceptance.md`；下方10-12的SHA／PENDING／未套用均為歷史snapshot。各平台client仍屬P2B-01，未用SDK結果代替。
 
 ## 規格、版本與範圍
 

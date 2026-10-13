@@ -1,56 +1,75 @@
 # Road Tag｜Phase 2A Hosted Acceptance
 
-2026-10-13（Asia/Taipei）。**PARTIAL：P2A-FIX 已完成；Staging 控制面實測 PASS；整合 MCP Hosted GO 尚未達成。**
+2026-10-13（Asia/Taipei），Task `P2A-HOSTED`。**Phase 2A GO；可由 owner 確認後開始 P2B-01，不表示正式上線或各平台 client 已驗收。**
 
-## Target / 授權 / 版本
+## 授權、版本與環境
 
-- 使用者已明確核准 Staging migration、Secret、新增 quota state 暫時調整／復原、指定 Preview env / redeploy 及最多 10 次 Geoapify（須先核對方案）。沒有 Production、cases/Storage/OAuth、merge 或公開發布授權。
-- 既有 PR #24：`codex/roadtag-p2a-02`，P2A-FIX SHA `dc31397493edf01fa2ac6dc4f1335d5ca5380c04`；base 仍 #23 branch。
-- 該 SHA 最新 push / PR CI PASS：[PR run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38349049838)。Preview `dpl_HvHUqME37now8xB7zYJJjeQ5ZQxh` READY、target=null、SHA 一致；`https://keelung-accessible-dcujddlqz-masons-projects-2c78a251.vercel.app`。
-- 唯一 DB target：`roadtag-mcp-staging` / `wpravdqviylkcpsioybu`。真實 Supabase HTTPS Data API，使用匿名 publishable key + 獨立 temporary quota capability，沒有 service key。
-- Migration `mcp_public_controls` 成功；Supabase MCP 記錄 version `20261013050238`，原待套用檔案 `20261012092416_mcp_public_controls.sql` 已按實際版本重新命名。SQL bytes 不變，SHA-256 `7f6afd4d2e946ef00bf2bd98172904eefd10251eb736fcadb41e260988ab3b10`；沒有重跑或修改 migration history。
-- 最終 migration 路徑：`supabase/migrations/20261013050238_mcp_public_controls.sql`。
+- 主要規格：`ROAD_TAG_AI_AGENT_NEXT_EXECUTION_PLAN_2026-10-13.md`。沒有重做 Phase 1、五工具、UI、OAuth 或公開寫入。
+- [Draft #23](https://github.com/qwert7278/keelung-accessible-map/pull/23)：`codex/roadtag-p2a-01` / `d946dad562470578bff5ba218e91d7ea3fc1b3e8`，未修改／合併。
+- [Draft #24](https://github.com/qwert7278/keelung-accessible-map/pull/24)：`codex/roadtag-p2a-02`，仍 stacked on #23。最終報告 head / CI / Preview 以交付時讀回 PR metadata 為準，不在文件寫自我參照 SHA。
+- 真實三工具、地址與 quota denial 的功能 SHA：`5f200b9fa00ce961e79992fba7dabd59d9d98815`；`dpl_8JNNixGAsENSKWsgsEWP8dJytE2k` / `https://keelung-accessible-obob2myvf-masons-projects-2c78a251.vercel.app` READY，branch / SHA一致。
+- 移除臨時API、缺失Secret：`70830b6b6dd380cfa22fe7dff0e589b53064e89e`；`dpl_FzUBPAz6muAGG1YL6kEendvCimhW` READY。Quality push / PR CI PASS：[run](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38389779785)。最終停用部署在交付時再次核對。
+- 唯一DB：Staging `wpravdqviylkcpsioybu`。Migration `20261013050238_mcp_public_controls.sql` 已套用，本輪沒有 DDL / migration。
+- owner 核准指定branch Preview env/redeploy、Staging新quota state暫調/復原、15分鐘指定alias access（測後撤銷）、免費隔離Geoapify key及最多10次provider calls（測後撤銷）。沒有Production、cases/photos/OAuth、merge、Registry或P2B授權。
 
-## 實際測試結果
+Connector env API 原先403；owner正常登入官方CLI後branch env寫入成功。五個設定只有target=preview / gitBranch=`codex/roadtag-p2a-02`：`MCP_PUBLIC_READ_ENABLED`、`MCP_PUBLIC_READ_ORIGIN`、`MCP_PUBLIC_READ_SUPABASE_URL`、`MCP_PUBLIC_READ_SUPABASE_PUBLISHABLE_KEY`、`MCP_PUBLIC_CONTROL_SECRET`。其他分支／預設Preview／Production未覆寫。沒有借用其他人或Production/Alpha憑證，沒有關閉Deployment Protection。
 
-輸入只含新 quota 專用的 random risk、有效 lease 或錯誤 test gate；沒有真實 IP／Secret／lease ID 出现在本報告。`request` / `geocode` 表示 quota RPC bucket，不是 MCP tools call 或 Geoapify provider request。所有 deny response 是 RPC JSON，不冒稱已測 MCP HTTP 429。
+SDK只向獨立核對的exact origin傳送短效保護cookie：`https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app`；禁止redirect/跨origin forwarding，HTTPS各用獨立socket。CLI redeploy明確`--target preview`。API target=preview回400、staging被自動審查拒絕後未執行，改採明確Preview CLI。
 
-| Hosted probe | 結果／實際 target |
+## 真實 MCP E2E
+
+官方SDK client2.1.0、Streamable HTTP、protocol2025-11-25；真實Preview+Staging，沒有使用Production案件。
+
+| 驗收 | 結果 |
 |---|---|
-| Schema / owner | PASS：兩 public wrapper owner=postgres / SECURITY INVOKER；兩 quota helper owner=postgres / SECURITY DEFINER |
-| Effective / future privileges | PASS：anon private USAGE=false、quota CREATE=false、quota USAGE=true；private callable functions=0、quota callable helpers=2、postgres future global PUBLIC EXECUTE=false |
-| DB kill switch | PASS：enabled=false 時匿名真實 RPC 0 admitted / 1 SERVICE_UNAVAILABLE |
-| Concurrency | PASS（REST 層）：8 個同時入場請求、agent:false 的獨立 HTTPS sockets，cap=2 時 admitted=2 / denied=6 RATE_LIMITED；包含 release 共 10 條 HTTPS connections。**沒有捕捉每次 RPC 的 backend PID，不聲稱完成獨立 PG connection-ID 證明或 MCP workers 的 E2E** |
-| Request IP minute | PASS：暫設 cap=1，4 次真實請求結果 admitted=1 / denied=3 RATE_LIMITED |
-| Request IP day | PASS：暫設 day cap=1、minute=60，4 次 admitted=1 / denied=3 RATE_LIMITED |
-| Geocode IP minute | PASS：有效 request lease + minute cap=1，4 次 quota 預留 admitted=1 / denied=3 RATE_LIMITED |
-| Geocode IP day | PASS：有效 lease + day cap=1、minute=5，4 次 admitted=1 / denied=3 RATE_LIMITED |
-| Wrong control credential | PASS：0 admitted / 1 SERVICE_UNAVAILABLE；沒有內容或 credential 洩漏 |
-| Lease release / idempotency | PASS：真實 release 後不占名額；再次 release 不造成 RPC error；quota 不退款 |
-| 真實 30 秒 TTL | PASS：hold 1 lease，SQL 見 active=1 / 剩餘25秒；global cap=1 後續4次均 denied。等實際TTL（沒有手改expires_at），再4次均 admitted/released，自動清理過期lease |
-| Private columns | PASS：匿名 reports select created_by/admin_note 回 HTTP401 / 42501，無資料 |
-| Private / helper schema non-exposure | PASS：Accept-Profile private / mcp_public_quota 都回 HTTP406 / PGRST106 |
-| Vercel env metadata / write | BLOCKED：list / create project-env 都403 forbidden；建立的目標只有指定branch的false flag，沒有成功變更任何env |
-| 真實 MCP initialize / tools/list / 三工具 | PENDING：Preview env 不能配置；不以 REST quota RPC 代替 SDK 驗收 |
-| MCP HTTP429 / Retry-After、deadline / finite SSE complete / abort / worker lease | PENDING（hosted）：本地 focused PASS 保留，整合Preview尚未能啟用 |
-| Geoapify provider / 全帳號費用 | PENDING：歷史圖顯示每日3000 credits、177 used；費用硬限制沒有確證。**本次 provider calls=0**，不使用 Production key |
+| initialize / tools/list | PASS：恰好resolve_location、search_nearby_reports、get_report |
+| resolve_location座標 | PASS：既有公開Staging report座標，不呼叫provider |
+| resolve_location地址 | PASS：基隆車站／基隆市，免費隔離Geoapify key，structuredContent成功；1次有效geocode預留 |
+| search_nearby_reports | PASS：500m / include_resolved、公開projection |
+| get_report | PASS：既有公開Staging report+observations，未建假案件 |
+| create_report / add_observation | PASS：discovery無此工具，呼叫被拒絕 |
+| 私密欄位 / invalid ID | PASS：無created_by/admin_note/image_path/photo_token/credentialHash；invalid UUID為isError |
+| 有限SSE | PASS：HTTP200/text-event-stream、完整成功event，1,772ms結束；SQL leases=0 |
+| 原五工具 | PASS：既有focused read-transport regression與Quality CI；未重跑Closed Alpha寫入驗收或修改其endpoint/OAuth/descriptors |
 
-只取得控制面的部分 hosted 證據，不把「具備寫入新 quota state」當公開 MCP 已上線；也不把 REST concurrency 當不同平台或獨立 PostgreSQL sessions 的證據。
+ChatGPT、Claude、Gemini、Codex、Manus的實際client仍 **PENDING，屬P2B-01，本輪未執行**。SDK結果不代替平台相容性驗收。
 
-## 復原與 Secret 清理
+## Hosted Safety
 
-起始：enabled=false / gate未配置 / counters=0 / leases=0。暫時 gate 安全隨機生成，DB只存hash，用 TLS header呼叫；未配置到Vercel（403）。本地Secret僅在已批准的臨時檔／記憶體，未印到chat/log/Git。
+| 驗收 | 結果／實際範圍 |
+|---|---|
+| request minute | PASS：測試cap=1，8獨立HTTPS：1 HTTP200 / 7 HTTP429，Retry-After18–20s |
+| request day | PASS：新增QA counter模擬global day已滿5000，真實tools/list429、Retry-After46067s；沒有打5000次流量。先前真實RPC day cap1亦PASS |
+| geocode denial | PASS：首個地址成功後，把新增QA global day counter填至200；第二個地址call HTTP200/isError/RATE_LIMITED，成本預留拒絕，不進入provider。這是tool-level denial，非HTTP429 |
+| concurrency | PASS：IP/global cap1、24獨立sockets：2成功、22 HTTP429/Retry-After30。成功可先後重用名額，不宣稱同時2 active；測後leases0 |
+| PostgreSQL sessions | PASS：僅鎖新增quota control row；24 Hosted請求競態，捕捉10個獨立PostgREST backend PIDs等待Lock（794295–794302、794305、794306）；請求fail closed503，leases0 |
+| DB kill switch | PASS：ordinary MCP在enabled=false回503/SERVICE_UNAVAILABLE |
+| wrong gate | PASS：Staging hash可逆暫調，ordinary MCP503、counters0/leases0，隨後復原；沒有輸出hash/Secret |
+| missing Secret | PASS：移除指定branch Secret後部署70830b6；flag仍true、DB gate有效時503、不增counter/lease，隨後停用flag/DB |
+| 權限隔離 | PASS：anon private USAGE=false、private callable0/quota helpers2；匿名管理欄位讀取401/42501，private/quota Accept-Profile406/PGRST106 |
+| TTL / release | PASS：先前實際30秒TTL、release idempotency、跨RPCclients共享counter；deadline另有TTL前釋放證據 |
 
-最後真實 SQL讀回：**enabled=false、gate_configured=false、counters=0、leases=0**；所有policy數字恢復原baseline（60/600/600/5000、5/20/40/200、4/16）。臨時憑證檔已刪除、測試 credential variables 已清空。没有新建案件、圖片或OAuth資料。
+Supabase一次requestState過期使預備操作失敗；核對實際成功狀態後重做，沒有把該失敗當產品PASS。日額度denial使用已核准的新QA counter，不修改業務資料或實際發送大量流量。
 
-初次控制面 batch 設定失敗時，finally 已關閉／復原；後續採分項profile成功完成上述測試。不是未完成的安全恢復，沒有略過fail-closed處理。
+### Hosted finding與修復
 
-## 唯一最小下一個操作
+實测deadline約25.6秒回503，但worker回應後可能暫停，pending finally release未完成、lease留存。`5f200b9`加入官方`@vercel/functions`3.9.11 `waitUntil`，保留同一work promise至既有finally完成；沒有重跑工具／重扣quota／改Alpha。最小回歸先RED（未註冊background job），修復後PASS。Public focused tests、lint、build（含tsc）、Quality CI、production依賴audit0皆PASS。[Vercel waitUntil](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package)。
 
-**恢復正常 Vercel 連線對 `keelung-accessible-map` 的 branch-specific Preview environment 管理權限，或由 owner 在 Dashboard 設定。** 本機沒有已登入 Vercel CLI；沒有重試相同403、繞權限或要求貼Secret。
+短暫QA route以exact branch/origin+獨立Secret gate保護，單一feed覆寫為可取消stalled read，走原handler+真實Staging quotas：
 
-核准仍有效，不需再核准同一Staging操作；权限恢復後重新生成獨立gate、核對當下Preview origin / SHA並安全配置。只在短測試窗口啟用，完成同一場整合MCP harness、HTTP429／SSE／kill switch和真正backend session證據後復原兩個開關。
+- Deadline：25,456ms503；5秒busy429；27,388ms ordinary tools/list恢復200，早於30秒TTL，支持實際release。SQL確認global cap1，窗口內無其他QA call或清counter/lease。
+- Client abort2.121秒；1秒busy429；27,421ms恢復200。**只證明bounded cleanup，未證明2秒時Vercel request.signal立即傳播。**
+- 此為合成stalled read的Hosted證據，未強制真實Geoapify timeout。slow-body實驗被Vercel緩衝，已排除，不能當handler deadline證據。
+- 臨時`api/mcp-hosted-acceptance.ts`已在70830b6刪除，最終Preview404；fixture只留tests，不是部署API。
 
-HMAC gate、publishable key與Geoapify key都經安全env機制處理，不放README／聊天。Geoapify帳號方案／overage限制仍須在provider test前核對；本報告的quota值不是帳號支出上限。
+## Geoapify費用與清理
 
-下一Task仍為 **P2A-HOSTED 剩餘整合驗收**，不是P2B-01、合併、Production或Registry發布。獨立審查與focused工程證據見 `docs/mcp-p2a-fix-review.md`。
+帳號畫面確認無有效付費訂閱；新`Road Tag MCP Staging`免費專案每日3,000 credits，測前requests0/credits0。沒有升級、付款或使用正式Road Tag project key。本次僅 **1個成功provider地址呼叫**，低於核准10次；第二個地址呼叫被DB quota拒絕，seeded-denial前Staging geocode day counter讀回1。
+
+帳號統計仍0：UI明示獨立聚合，有更新延遲，**不以0冒稱無provider用量，也未聲稱帳單即時核對到1**。3,000是soft quota，不是付費硬限制；本服務另強制global geocode/day200。方案核對與有限呼叫授權符合成本驗收；帳號聚合不是即時oracle。[Geoapify pricing](https://www.geoapify.com/pricing/)。測後key撤銷，UI顯示No API keys yet；Preview兩個provider overrides移除。
+
+真實SQL最終：**enabled=false / gate_configured=false / counters=0 / leases=0**；政策恢復60/600/600/5000、5/20/40/200、4/16。Preview flag=false、control Secret移除；交付前最終head部署READY，認證probe503、臨時API404。短效alias access撤銷、本機臨時credential/hash檔刪除；正常CLI owner登入不轉存／輸出Token。
+
+Production最新唯讀核對`df3d605026133038104c51a1f0488fb7ab5ab7bd` / `dpl_Ar67B93Rf9LTUVRyG2KsAAHxG3Vt` READY。舊snapshot後main的#25–27是其他UI工作，沒有MCP/server/migration差異；未把舊44654f0當成最新正式SHA。本輪未merge、部署Production、建立案件／照片／OAuth或放寬寫入權限，主工作目錄dirty修改未覆蓋。
+
+獨立review見`docs/mcp-p2a-fix-review.md`：無未解決P0/P1/P2。沒有需owner補做的環境操作。**建議下一個Task P2B-01，本輪停止等待確認。** #23/#24仍Draft，未來合併前要按當下main檢查stack/base與CI；不是本輪合併授權。
