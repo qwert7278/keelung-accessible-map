@@ -2,7 +2,7 @@
 
 日期：2026-10-12（Asia/Taipei）。Phase 2A / Task `P2A-01`。
 
-**結論：本地實作 PASS；完整階段驗收 NO-GO / hosted evidence PENDING。停止於本任務，不進入 P2A-02，不合併、不正式部署、不公開發布。**
+**最新結論：Phase 2A Final Hosted Acceptance NO-GO。P2A-02 已實作，但 hosted gate 未通過；不進入 P2B-01、不合併、不部署、不公開發布。**
 
 ## 規格、版本與範圍
 
@@ -70,7 +70,7 @@
 
 ## Code Review Findings
 
-完成作者本地審查，未發現本次三工具邊界或私密欄位授權缺陷。GitHub PR reviews / inline comments 查詢目前為空，**尚無獨立 reviewer PASS**；CI success 不能視為 Code Review 核准。
+2026-10-13 整合獨立 review 已完成，#23 的三工具與公開投影沒有新增阻擋 finding；#24 的 Staging / helper 授權缺陷已在 P2A-FIX 修正。見 PR #24 的 `docs/mcp-p2a-fix-review.md`。沒有 GitHub reviewer approval 或 Hosted GO，不能把 CI 當成核准。
 
 修正並再驗證：測試需要解析合法 2025 SSE response；新的 adapter unsupported methods 移除 unused parameters；CI 增加 emitted route probe。
 
@@ -103,3 +103,23 @@ Vercel connector 可讀 project / deployment；讀 project env metadata 回應 *
 
 - [MCP 最新 transports](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports) 與 [2025 Streamable HTTP 相容規格](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)。使用已鎖定 SDK handler 處理 JSON-RPC / media / protocol / stateless 行為。
 - [Supabase RLS / security_invoker views](https://supabase.com/docs/guides/database/postgres/row-level-security)；[changelog](https://supabase.com/changelog.md) 已讀取，未引入 Supabase API／schema 新功能。
+
+## Phase 2A Final Hosted Acceptance（2026-10-12）
+
+**NO-GO；本次僅唯讀核對。不能進入 P2B-01。** 本節為最新驗收狀態，前文早期 snapshot 保留為歷史證據。
+
+- PR #23 head `d946dad562470578bff5ba218e91d7ea3fc1b3e8`，Draft / OPEN，最新 CI success。
+- 最新 Preview `dpl_DJ1kbH5J1ruK8o9ntjZbiFzD3SMA`，READY，SHA 與上述 PR head 相同；URL：`https://keelung-accessible-r4h4z3wi6-masons-projects-2c78a251.vercel.app`。
+- 以既有 Vercel authenticated fetch 實測 GET `/api/mcp-public`：503 / SERVICE_UNAVAILABLE / Cache-Control:no-store。這只證明 default-off，不是 initialize / tools/list / tools/call PASS。
+- 已批准 Staging 依據：`docs/mcp-phase1b-oauth-gate.md`，`roadtag-mcp-staging` / `wpravdqviylkcpsioybu`。
+- 對該 Staging 的唯讀 SQL 已確認：P2A-02 三個控制表與兩個 public RPC 不存在，migration `20261012092416` 沒有紀錄。
+- Vercel branch-specific env metadata（不解密）仍 403；本機無已配置 Vercel CLI。未讀出任何 env value、gate hash 或 Secret。
+- 兩個 PR 的 GitHub reviews 為空；獨立 Code Review PENDING。Geoapify 帳號實際額度／費用限制 PENDING，未以 SQL 政策數字代替供應商帳號證據。
+- 真實 MCP 三工具、quota、獨立連線 concurrency、deadline/SSE/lease release、DB kill switch、hosted 私密欄位隔離全部 PENDING。沒有建立 Production 或 Staging 假案件，沒有更動 Closed Alpha。
+- 本次只更新本地 validation 文件；未 commit / push、未新部署、未套用 migration、未改 env、未合併或啟用 public MCP。現有 CI/Preview 針對上述遠端 head，不涵蓋這些尚未提交的文件文字。
+
+共通授權範圍與最少 owner 操作需求記錄於 PR #24 worktree 的 P2A-02 驗證報告「Phase 2A Final Hosted Acceptance」段落。下一步是補齊 Phase 2A gate，不是執行 P2B-01。
+
+## P2A-FIX 整合更新（2026-10-13）
+
+按新執行計畫保留上述未提交補验收內容並整理至 #24。#23 程式與 branch 不改，#24 仍 stacked on #23。新增修正／獨立 review / HTTPS harness 證據在 #24 的 P2A-02 validation 與 P2A-FIX review；本報告的 2026-10-12 Hosted NO-GO 表為歷史 snapshot，尚未完成的 hosted 測試沒有改成 PASS。

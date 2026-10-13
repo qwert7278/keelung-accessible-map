@@ -21,6 +21,7 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
   let lease:string|undefined;
   const work=async()=>{
    try{
+    signal.throwIfAborted();
     const admitted=await controls.acquire(risk,'request');
     if(admitted.allowed&&admitted.lease)lease=admitted.lease;
     signal.throwIfAborted();
@@ -41,7 +42,7 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
     const response=await handler.fetch(new Request(request,{signal}));
     // Hold the lease until tool/SSE completion, not merely until headers arrive.
     // No server subscriptions are offered. Bound even an unexpected response body.
-    const body=response.body?await readBounded(response,524288):null;
+    const body=response.body?await readBounded(response,524288,signal):null;
     signal.throwIfAborted();response.headers.set('Cache-Control','no-store');
     return new Response(body,{status:response.status,headers:response.headers});
    }catch{return fail(503,'SERVICE_UNAVAILABLE');}
@@ -59,7 +60,8 @@ export function publicEnvironment(){
   if(process.env.MCP_PUBLIC_READ_ENABLED!=='true'||process.env.VERCEL_ENV==='production')return null;
   const originUrl=new URL(process.env.MCP_PUBLIC_READ_ORIGIN||''),url=new URL(process.env.MCP_PUBLIC_READ_SUPABASE_URL||'');
   if(originUrl.protocol!=='https:'&&!['localhost','127.0.0.1'].includes(originUrl.hostname))return null;
-  if(originUrl.username||originUrl.password||url.username||url.password||url.hostname==='ifcicahnrpkwjcxmnmug.supabase.co')return null;
+  if(originUrl.username||originUrl.password||originUrl.pathname!=='/'||originUrl.search||originUrl.hash)return null;
+  if(url.origin!=='https://wpravdqviylkcpsioybu.supabase.co'||url.username||url.password||url.pathname!=='/'||url.search||url.hash)return null;
   const key=process.env.MCP_PUBLIC_READ_SUPABASE_PUBLISHABLE_KEY,gate=process.env.MCP_PUBLIC_CONTROL_SECRET;
   if(!key||!gate||gate.length<32||gate.length>128||gate===process.env.MCP_PHOTO_SECRET||gate===process.env.UPLOAD_GATE_SECRET)return null;
   return {settings:{enabled:true,origin:originUrl.origin,controls:new PublicControlClient(url.origin,key,gate),riskSecret:gate,trustVercel:process.env.VERCEL==='1'},service:new RoadTagService(new PublicSupabaseBackend(url.origin,key),originUrl.origin,'')};

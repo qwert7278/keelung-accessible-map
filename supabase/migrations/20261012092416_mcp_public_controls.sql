@@ -1,4 +1,11 @@
 -- P2A-02: additive, default-off. No report, OAuth or Storage policy changes.
+-- Helpers have their own non-exposed schema; anon never gains private USAGE.
+create schema mcp_public_quota;
+revoke all on schema mcp_public_quota from public,anon,authenticated;
+-- A schema-only REVOKE cannot remove PostgreSQL's global PUBLIC EXECUTE default.
+-- This affects future postgres-owned functions only; existing ACLs stay intact.
+alter default privileges for role postgres revoke execute on functions from public,anon,authenticated;
+alter default privileges for role postgres in schema private,mcp_public_quota revoke execute on functions from public,anon,authenticated;
 create table private.mcp_public_control (
  singleton boolean primary key default true check(singleton),
  enabled boolean not null default false,
@@ -36,7 +43,7 @@ revoke all on private.mcp_public_control,private.mcp_public_counters,private.mcp
 
 -- Narrow gate capability: can only reserve/release quota. Cannot read reports,
 -- change policy/credentials, upload, or impersonate a principal. Caller sees no hash.
-create function private.mcp_public_acquire(p_gate text,p_risk text,p_kind text,p_lease uuid default null)
+create function mcp_public_quota.mcp_public_acquire(p_gate text,p_risk text,p_kind text,p_lease uuid default null)
 returns jsonb language plpgsql security definer set search_path='' set statement_timeout='2s' set lock_timeout='1s' as $$
 declare c private.mcp_public_control; stored text; stamp bigint; starts bigint[]; scopes text[];
  caps integer[]; periods integer[]:=array[60,60,86400,86400]; n integer; used_count integer; lease_id uuid;
@@ -67,7 +74,7 @@ begin
  if p_kind='request' then insert into private.mcp_public_leases(risk,expires_at) values(p_risk,clock_timestamp()+interval '30 seconds') returning id into lease_id;end if;
  return jsonb_build_object('allowed',true,'lease',lease_id);
 end $$;
-create function private.mcp_public_release(p_gate text,p_risk text,p_lease uuid)
+create function mcp_public_quota.mcp_public_release(p_gate text,p_risk text,p_lease uuid)
 returns void language plpgsql security definer set search_path='' set statement_timeout='2s' set lock_timeout='1s' as $$
 begin
  if p_gate is null or length(p_gate)<32 or length(p_gate)>128 then return;end if;
@@ -75,14 +82,14 @@ begin
   delete from private.mcp_public_leases where id=p_lease and risk=p_risk;
  end if;
 end $$;
-revoke all on function private.mcp_public_acquire(text,text,text,uuid),private.mcp_public_release(text,text,uuid) from public,anon,authenticated;
--- Public wrappers are SECURITY INVOKER; definer code stays in the private schema.
-grant usage on schema private to anon;
-grant execute on function private.mcp_public_acquire(text,text,text,uuid),private.mcp_public_release(text,text,uuid) to anon;
+revoke all on function mcp_public_quota.mcp_public_acquire(text,text,text,uuid),mcp_public_quota.mcp_public_release(text,text,uuid) from public,anon,authenticated;
+-- Static invoker wrappers call only the two quota helpers. No generic definer jump.
+grant usage on schema mcp_public_quota to anon;
+grant execute on function mcp_public_quota.mcp_public_acquire(text,text,text,uuid),mcp_public_quota.mcp_public_release(text,text,uuid) to anon;
 -- Keep the capability in a credential header, never an RPC/body query argument.
 create function public.mcp_public_acquire(p_risk text,p_kind text,p_lease uuid default null)
-returns jsonb language sql security invoker set search_path='' as $$select private.mcp_public_acquire(nullif(current_setting('request.headers',true),'')::jsonb->>'x-roadtag-control-key',p_risk,p_kind,p_lease)$$;
+returns jsonb language sql security invoker set search_path='' as $$select mcp_public_quota.mcp_public_acquire(nullif(current_setting('request.headers',true),'')::jsonb->>'x-roadtag-control-key',p_risk,p_kind,p_lease)$$;
 create function public.mcp_public_release(p_risk text,p_lease uuid)
-returns void language sql security invoker set search_path='' as $$select private.mcp_public_release(nullif(current_setting('request.headers',true),'')::jsonb->>'x-roadtag-control-key',p_risk,p_lease)$$;
+returns void language sql security invoker set search_path='' as $$select mcp_public_quota.mcp_public_release(nullif(current_setting('request.headers',true),'')::jsonb->>'x-roadtag-control-key',p_risk,p_lease)$$;
 revoke all on function public.mcp_public_acquire(text,text,uuid),public.mcp_public_release(text,uuid) from public,anon,authenticated;
 grant execute on function public.mcp_public_acquire(text,text,uuid),public.mcp_public_release(text,uuid) to anon;

@@ -1,8 +1,29 @@
 # Road Tag｜P2A-02 流量、成本、觀測與停用控制
 
 2026-10-12（Asia/Taipei）；Phase 2A / Task `P2A-02`。
+修改 hosted migration 或設定。已停止；Production、Closed Alpha 均未更動。
 
-**本地工程驗證 PASS；完整 Preview/staging 驗收 NO-GO / PENDING。沒有套用 hosted migration、合併、Production 部署、公開發布或啟用寫入。停止於本任務。**
+
+已編輯 3 個檔案
++79
+-7
+docs/mcp-p2a-01-validation.md
+docs/
+mcp-p2a-01-validation.md
++18
+-1
+docs/mcp-p2a-01-validation.md
+docs/
+mcp-p2a-01-validation.md
++18
+-1
+docs/mcp-p2a-02-validation.md
+docs/
+mcp-p2a-02-validation.md
++43
+-5
+下午6:06
+**最新結論：Phase 2A Final Hosted Acceptance NO-GO。已確認 Staging migration 未套用、Preview default-off 與 env metadata 403；hosted gate 未通過，不進入 P2B-01、不合併、不部署。**
 
 ## 範圍與版本
 
@@ -52,8 +73,8 @@
 ## 安全與觀測
 
 - Limiter 使用同 staging publishable key + **新的 quota-only capability header** `x-roadtag-control-key`，沒有 service-role key 或 Alpha credentials。credential 不放 RPC body、回應、Git 或本地事件。
-- DB 僅存 SHA-256 gate hash。兩個 private SECURITY DEFINER helpers 只能更動新 counters / leases；public wrappers 為 SECURITY INVOKER，private tables RLS 開啟且對 anon/authenticated revoke all。
-- 新增 anon 的 private schema USAGE 是 wrapper 呼叫所需，沒有表授權。已查 catalog：anon 在 private 僅能執行兩個新的 quota helpers，原 private helper 都仍不可呼叫；75 項既有 permission tests PASS。
+- DB 僅存 SHA-256 gate hash。P2A-FIX 將兩個 quota SECURITY DEFINER helpers 放在獨立 `mcp_public_quota` schema，只能更動新 counters / leases；public wrappers 保持靜態 SECURITY INVOKER，private tables RLS 與既有 ACL 不變。
+- P2A-FIX 不再授予 anon `private` USAGE；anon 只在 quota schema 有 USAGE / 兩 helper EXECUTE，沒有 CREATE。postgres-owned future functions 全域預設 EXECUTE 撤銷（schema-only revoke 無法取消 PostgreSQL 全域預設），未來 public RPC 必須顯式 grant；既有函式 ACL 不變。負向測試涵蓋未來函式／表及任意 PUBLIC grant，75 項 SQL 回歸 PASS。
 - Only when `VERCEL=1`，使用平台覆寫的 `x-forwarded-for`；非 Vercel 或 missing / invalid IP 共用 unknown bucket，不採信 x-real-ip 或任意 proxy hostname。不支援未核對的 Trusted Proxy 假設。
 - 儲存的是按 UTC 日輪替的 HMAC network hash，不是原 IP；不以 client 可捏造的 actor/client ID 分桶。NAT 可能共用額度；不同 key rotation 可能改變 network bucket，但 global quota 不重置。
 - active admission 時清理過期 lease 與超過 48 小時的 counter window；**idle / disabled 時不是背景自動清理**，operator 需要定期清理，不宣稱硬性 48 小時刪除保證。
@@ -83,7 +104,7 @@ Windows / Node 24.11.1、MCP server/client 2.1.0、TypeScript 6.0.3、Vitest 5.0
 
 ### Code Review Findings
 
-作者本地 review 已完成；GitHub reviews / inline comments 查詢目前為空，**沒有獨立 reviewer PASS**。CI success 不是 reviewer approval。
+2026-10-13 已取得使用者授權的獨立子 agent 唯讀 review，兩輪精準審查並修正證實的 P2 問題，見 [P2A-FIX review](mcp-p2a-fix-review.md)。GitHub 沒有 reviewer approval，不把子 agent 的本地 review 或 CI 當成 GitHub 核准／Hosted GO。
 
 已修正並驗證：SSE headers 回傳不代表 tool 完成；需完整 body/deadline 才釋放 lease。policy 在 gate check 與 locked read 間遺失時，要明確 fail closed，不能讓 SQL NULL 判斷繼續；geocode lease 也檢查當下 expiry。control secret 改為 credential header，避免出現在 RPC body query arguments。
 
@@ -124,3 +145,68 @@ delete from private.mcp_public_counters
 下一個建議 Task ID 是 `P2B-01`，但先補齐 P2A-01 / P2A-02 hosted Preview、安全及獨立 review gate，由 owner 確認後才開始。本次不自動進入下一項。
 
 官方依據（本次已查核）：[Supabase API grants / functions](https://supabase.com/docs/guides/api/securing-your-api)、[Vercel request headers / proxy trust](https://vercel.com/docs/headers/request-headers)。保留已鎖定 SDK 的 Streamable HTTP / 2025 compatibility semantics，不杜撰平台 auth 或 billing 能力。
+
+## Phase 2A Final Hosted Acceptance（2026-10-12）
+
+**NO-GO；未取得 hosted provisioning / test-state mutation 授權，停止。不得進入 P2B-01。**
+
+### 最新版本與唯讀證據
+
+| 項目 | 本次結果 |
+|---|---|
+| PR #23 | Draft / OPEN；head `d946dad562470578bff5ba218e91d7ea3fc1b3e8`；最新 push / PR CI success |
+| PR #24 | Draft / OPEN；head `430c5232ee15e064b7ca145bdcd3d453e7f5275d`；最新 [PR CI success](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38232356182) |
+| 整合 Preview | `dpl_5v6RJWLaKDmCbk1MKU4t9RHu8PHj`，READY，target=null（Preview），SHA 與 #24 head 一致；`https://keelung-accessible-fnics644i-masons-projects-2c78a251.vercel.app` |
+| #23 Preview | `dpl_DJ1kbH5J1ruK8o9ntjZbiFzD3SMA`，READY，SHA 與 #23 head 一致 |
+| 兩個 Preview GET /api/mcp-public | PASS（default-off only）：Vercel authenticated fetch 各為 503 / SERVICE_UNAVAILABLE / Cache-Control:no-store |
+| 批准的 Supabase Staging | `roadtag-mcp-staging` / `wpravdqviylkcpsioybu`；依據 `docs/mcp-phase1b-oauth-gate.md` |
+| Staging migration / objects | 唯讀 transaction 查核：三個 private control / counters / leases 表與兩個 public RPC 全部不存在；`supabase_migrations.schema_migrations` 沒有 version `20261012092416` |
+| branch-specific Preview env metadata | BLOCKED：Vercel API 403 forbidden；不解密，未取得 value；本機無已配置 Vercel CLI fallback |
+| 獨立 Code Review | PENDING：兩個 PR 的 reviews 為空；本次沒有獨立 reviewer 結果，不能把作者 review 或 CI 當成獨立審查 |
+| Geoapify account quota / costs | PENDING：未取得實際帳號 plan、daily credits / usage、overage、hard spending restriction 證據；程式政策值不是供應商帳號證據 |
+| initialize / list / 三工具、request / geocode quota、獨立連線 concurrency | PENDING：schema / configuration 不完整，未嘗試以 disabled endpoint 冒稱 MCP PASS |
+| deadline / SSE completion / lease release、DB kill switch、hosted data privacy negative probes | PENDING：需要已配置整合 Preview 與 controlled staging state 才能執行 |
+
+本次沒有跑重複本地測試：只更新 Markdown，先前 local PASS 保留為 local evidence。沒有 migrate、改 policy / counters / lease、改 env、建立案件、呼叫付費 geocode、讀出 secret、改動 Closed Alpha 或開始 P2B-01。
+
+### 最少的使用者操作／授權
+
+1. **一個限縮的授權**：允許只在 `wpravdqviylkcpsioybu` 套用現有 `20261012092416_mcp_public_controls.sql`；配置新 quota-only gate hash；驗收時暫時調整這三個新表的 quota / lease / enabled 狀態，測試後復原並保持 endpoint 關閉。允許只為 `codex/roadtag-p2a-02` 的 Vercel Preview 配置既有 runbook 變數並 Preview redeploy。不含 Production、既有報告、Storage、OAuth、公開 MCP、合併或 P2B-01。完成具體 migration / config 審核後才執行。
+2. **Vercel 操作權限**：授權文字不能解除目前 API 403。可提供具備該 project Preview env 權限的既有 Vercel 連線；若無法提供，由 owner 在 Dashboard 依本報告的 Preview provisioning runbook 手動設定。不要把 control secret / publishable key / Geoapify key 貼到聊天。設定必須是 branch-specific；不要更動全 Preview 或 Production。
+3. **Geoapify 帳號證據與獨立 reviewer**：由 owner 提供不含 key 的實際 plan / credits / usage / overage / auto top-up 或 spending-cap 摘要，或授權唯讀帳號 Dashboard 存取；另指定獨立 reviewer，或明確授權由另一個 agent 唯讀 review #23 + #24。目前只有作者審查，尚不符合獨立 review criterion。
+
+可複製的限縮授權（沒有 secret）：
+
+> 授權只在 Road Tag Staging `wpravdqviylkcpsioybu` 套用 `20261012092416_mcp_public_controls.sql`，配置／暫時調整新 public quota control state 以完成驗收並復原；只改 `codex/roadtag-p2a-02` 的 Vercel Preview env 並 Preview redeploy。授權另一個 agent 對 PR #23/#24 做唯讀獨立 Code Review。禁止 Production、既有案件／照片／OAuth 修改、公開 MCP、merge 及 P2B-01；驗收後停用並回報。
+
+上面的範本尚未被 owner 提交，**不是已取得的授權**。Staging gate key 必須新生成並經安全 env / SQL 通道配置，DB 只存 hash；不要複製 Alpha 的密鑰。若進行 hosted quota / kill-switch 驗收，會更動非正式的新 quota state，因此也包含在必要授權內。
+
+2026-10-12 的 validation 更新曾只留本地；2026-10-13 按新執行計畫保留並整理到 #24 的 P2A-FIX 提交。上表 SHA / CI 是當時 snapshot；最新 P2A-FIX 狀態見下文。Hosted mutation 尚未授權，Preview 必須維持 default-off。
+
+## P2A-FIX / P2A-HOSTED 準備（2026-10-13）
+
+P2A-FIX 已修正 exact Staging host、private schema 授權／future EXECUTE、有限 body cancellation 與先取消再 admission；另備妥 HTTPS SDK harness，精確 pin 最新核准的 Preview origin，保護 protection credential 不外送。
+
+`npm run test:mcp-public` 的各 focused suites、75 DB checks、原五工具 transport regression、lint/typecheck/build 已執行。獨立 review findings 與最終狀態見 `docs/mcp-p2a-fix-review.md`。沒有重跑 Phase 1 閉环或無關 UI 工作。
+
+今天的 Staging 唯讀 preflight：`quota_migration_applied=false`、`controls_exist=false`、`helper_schema_exists=false`、`anon_private_usage=false`；因此可以在尚未套用的 migration 中修正 helper 邊界，未改 hosted schema。Vercel branch env metadata 仍 403。Geoapify 截圖顯示每日 3,000 credits / 歷史 177 used，這不是費用硬限制已確認。
+
+下一個任務是 P2A-HOSTED。需要 owner 一次核准：**只在 `wpravdqviylkcpsioybu` 套用已 review 的 migration、生成與安全配置獨立 control secret / DB hash、調整新 quota state 做驗收並復原；只改 `codex/roadtag-p2a-02` Preview env，受控開啟後關閉並 Preview redeploy；經確認的 Geoapify staging credentials／有限 geocode calls。** 不含 Production、既有案件／Storage／OAuth、merge 或公開發布。Vercel 403 必須由正常有權限連線／Dashboard 處理，核准文字本身不能解除 403。
+
+最小 HTTPS 工具 harness 已備妥（尚未對 hosted 執行）：
+
+```powershell
+# 必須先取得上述 owner 核准，且從最新 Vercel metadata 核對 Preview SHA/origin。
+$env:MCP_HOSTED_TEST_AUTHORIZED='true' # 僅意圖護欄，不是同意證明
+$env:MCP_HOSTED_APPROVED_PREVIEW_ORIGIN='<metadata核准的exact-origin>'
+$env:MCP_HOSTED_PREVIEW_URL=$env:MCP_HOSTED_APPROVED_PREVIEW_ORIGIN+'/api/mcp-public'
+$env:MCP_HOSTED_EXPECTED_SHA='<metadata核對的40字元SHA>'
+$env:MCP_HOSTED_REPORT_ID='<現有staging-public-report-UUID>'
+# Geoapify 預算核准後才設 MCP_HOSTED_ALLOW_GEOCODE=true。
+# 如需 Vercel protection，使用已有授權的安全 env，不把值貼至終端／聊天。
+npx tsx scripts/mcp-public-hosted.ts
+```
+
+`expected_sha` 只是宣告預期，部署 SHA 必須另外從 authenticated metadata 驗證。harness 的 SDK / input / private-field / write denial 是真實 HTTPS 工具測試入口，**不是已測 PASS**。quota 429 / 多 PostgreSQL 連線 / kill switch 應在 owner 核准後針對新增控制表測一次並復原，所有記錄只寫 sanitized 結果；最後 DB enabled=false、Preview flag=false。`mcp_public_quota` 不得列入 exposed schemas，並核對真實函式 owner/default ACL。
+
+若管理後台未來實作封存，必須同一 release 覆蓋 report_feed 的 UUID/nearby、更新 feed、照片撤下與快取；本次不加入不存在的 archive 欄位或新增 CRUD。
