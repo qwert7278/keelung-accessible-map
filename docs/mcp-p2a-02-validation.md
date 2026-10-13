@@ -1,28 +1,6 @@
 # Road Tag｜P2A-02 流量、成本、觀測與停用控制
 
 2026-10-12（Asia/Taipei）；Phase 2A / Task `P2A-02`。
-修改 hosted migration 或設定。已停止；Production、Closed Alpha 均未更動。
-
-
-已編輯 3 個檔案
-+79
--7
-docs/mcp-p2a-01-validation.md
-docs/
-mcp-p2a-01-validation.md
-+18
--1
-docs/mcp-p2a-01-validation.md
-docs/
-mcp-p2a-01-validation.md
-+18
--1
-docs/mcp-p2a-02-validation.md
-docs/
-mcp-p2a-02-validation.md
-+43
--5
-下午6:06
 **最新結論（2026-10-13）：P2A-FIX 完成，Staging migration 已依核准套用、控制面真實測試 PASS 並復原。整合 MCP Hosted GO 尚未達成：Vercel env list/write 403。最新證據見 `docs/mcp-phase2a-hosted-acceptance.md`；不進入 P2B-01、不合併或部署 Production。**
 
 ## 範圍與版本
