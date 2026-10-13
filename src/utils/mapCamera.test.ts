@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CITIES } from '../config';
-import { cameraKey, districtCamera } from './mapCamera';
+import { cameraKey, districtCamera, cityOverviewBounds } from './mapCamera';
 import { revisionGate } from './revisionGate';
 import { geographyUrl } from './geography';
 
@@ -32,4 +32,12 @@ describe('district camera and asynchronous revisions', () => {
     const url = geographyUrl('https://roadtag.org/map?city=TW-KEE&district=仁愛區&report=old', 'TW-KEE', 'all');
     expect(url.searchParams.get('district')).toBe('all'); expect(url.searchParams.has('report')).toBe(false);
   });
+});
+
+describe('city overview bounds',()=>{
+ const polygon=(west:number,south:number,east:number,north:number)=>[[[west,south],[east,south],[east,north],[west,north],[west,south]]];
+ const regions=[{cityId:'TW-KEE',district:'test',bounds:[0,0,10,10],point:[0,0],polygons:[polygon(121.7,25.1,121.8,25.2),polygon(122,25.6,122.001,25.601)]}];
+ it('does not let a small unreported offshore component shrink the city',()=>expect(cityOverviewBounds(CITIES[0],regions)).toEqual({west:121.7,east:121.8,south:25.1,north:25.2}));
+ it('includes offshore reports even when their component is small',()=>expect(cityOverviewBounds(CITIES[0],regions,[{location:{lat:25.6,lng:122}}]).north).toBe(25.6));
+ it('keeps the city fallback while outlines are unavailable',()=>expect(cityOverviewBounds(CITIES[0],[])).toBe(CITIES[0].bounds));
 });

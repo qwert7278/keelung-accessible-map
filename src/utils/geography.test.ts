@@ -17,8 +17,15 @@ describe('全台地圖範圍', () => {
     }
   });
   it('切換城市時不沿用其他城市的行政區', () => {
-    expect(initialGeography('?city=TW-TPE&district=仁愛區').district).toBe('中山區');
-    expect(initialGeography('?city=TW-KEE').district).toBe('仁愛區');
+    expect(initialGeography('?city=TW-TPE&district=仁愛區').district).toBe('all');
+    expect(initialGeography('?city=TW-KEE').district).toBe('all');
+  });
+  it('所有縣市的新入口預設顯示全部行政區', () => {
+    expect(initialGeography('').district).toBe('all');
+    for (const city of CITIES) expect(initialGeography('?city='+city.id).district).toBe('all');
+  });
+  it('明確的所有行政區連結保持全部範圍', () => {
+    expect(initialGeography('?city=TW-TPE&district=all').district).toBe('all');
   });
   it('首頁案件連結保留城市、行政區與案件', () => {
     const link = mapLink('TW-TPE', '中山區', 'test-report');
