@@ -2,9 +2,11 @@ import { reportMarkerLabel } from '../utils/reportMapList';
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
-import { cameraKey } from "../utils/mapCamera";
+import { cameraKey, cityOverviewBounds } from "../utils/mapCamera";
 type Props = {
   city?: City;
+  cityOverview?: boolean;
+  cityRegions?: Awaited<ReturnType<typeof import('../utils/districtBoundary').districtRegions>>;
   reports: Report[];
   onSelect: (id: string) => void;
   activeReportId?: string | null;
@@ -44,11 +46,18 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
   let markers: google.maps.marker.AdvancedMarkerElement[] = [],
     lastCamera = '', lastMarkers = '';
   const reportMarkers = new Map<string,{content:HTMLButtonElement; marker:google.maps.marker.AdvancedMarkerElement}>();
+  let lastRegions: Props['cityRegions'], lastOverview = false;
+  map.data.setStyle({strokeColor:'#08787c', strokeWeight:2, fillOpacity:0.025, clickable:false});
   const click = map.addListener("click", (e: google.maps.MapMouseEvent) => {
     if (latest().picking && e.latLng) latest().onPick?.(e.latLng.toJSON());
   });
   return {
     render(p: Props) {
+      if (lastRegions !== p.cityRegions || lastOverview !== !!p.cityOverview) {
+        map.data.forEach(feature => map.data.remove(feature));
+        lastRegions = p.cityRegions; lastOverview = !!p.cityOverview;
+        if (p.cityOverview) map.data.addGeoJson({type:'FeatureCollection',features:(p.cityRegions || []).map(region => ({type:'Feature',properties:{},geometry:{type:'MultiPolygon',coordinates:region.polygons}}))});
+      }
       const markerKey=JSON.stringify([p.reports,p.position]);
       if (markerKey!==lastMarkers) {
       lastMarkers=markerKey; reportMarkers.clear();
@@ -94,7 +103,11 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
         content.setAttribute('aria-pressed',String(active));
         marker.zIndex=active?10000:undefined;
       });
-      if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
+      const overviewBounds = cityOverviewBounds(p.city || CITY, p.cityRegions || [], p.reports);
+      const nextCamera = p.cityOverview ? `city:${(p.city || CITY).id}:${JSON.stringify(overviewBounds)}:${p.focusRevision || 0}` : cameraKey(p.focus, p.focusZoom, p.focusRevision);
+      if (p.cityOverview && nextCamera !== lastCamera) {
+        map.fitBounds(overviewBounds,24); lastCamera = nextCamera;
+      } else if (!p.cityOverview && p.focus && nextCamera !== lastCamera) {
         map.setCenter(p.focus);
         if (p.focusZoom !== undefined || !lastCamera) map.setZoom(p.focusZoom ?? 16);
         lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);

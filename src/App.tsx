@@ -667,7 +667,7 @@ export default function App() {
             <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}</div></div>
             <div className="map-stage">
-            <MapView key={city.id} city={city} activeReportId={pageReports.some(r=>r.id===(hoveredReportId || keyboardReportId)) ? hoveredReportId || keyboardReportId : selected || focusedReportId} reports={visible.map(r=>({...r,address:r.address || nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || ''}))} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
+            <MapView key={city.id} city={city} cityOverview={district === 'all' && !selected && !focusedReportId} activeReportId={pageReports.some(r=>r.id===(hoveredReportId || keyboardReportId)) ? hoveredReportId || keyboardReportId : selected || focusedReportId} reports={visible.map(r=>({...r,address:r.address || nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || ''}))} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
             <div className="map-caption">
               <span className="live-dot" />
               {city.name} · {district === 'all' ? '所有行政區' : district}

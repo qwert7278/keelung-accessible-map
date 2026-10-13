@@ -55,7 +55,7 @@ function HomeMap() {
       setReports([]); setLoading(true); setError(''); setCity(next); setDistrict(next.defaultDistrict); rememberGeography(next.id, next.defaultDistrict);
     }} onDistrict={value => { manuallyChosen.current = true; setSuggestionNote(''); setDistrict(value); rememberGeography(city.id, value); }} />
     <div className="home-live-map">
-      <MapView key={city.id} city={city} reports={visible} focus={camera.focus} focusZoom={camera.zoom}
+      <MapView key={city.id} city={city} cityOverview={district === 'all'} reports={visible} focus={camera.focus} focusZoom={camera.zoom}
         onSelect={id => window.location.assign(mapLink(city.id, district, id))} />
     </div>
     <div className="home-map-summary" aria-live="polite">

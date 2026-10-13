@@ -6,10 +6,13 @@ import "./MapView.css";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
 
-import { cameraKey } from "../utils/mapCamera";
+import { districtRegions } from '../utils/districtBoundary';
+import { cameraKey, cityOverviewBounds } from "../utils/mapCamera";
 import { watchMapTileHealth } from "../utils/mapTileHealth";
 type Props = {
   city?: City;
+  cityOverview?: boolean;
+  cityRegions?: Awaited<ReturnType<typeof districtRegions>>;
   reports: Report[];
   onSelect: (id: string) => void;
   activeReportId?: string | null;
@@ -41,7 +44,18 @@ export default function MapView(props: Props) {
     controller = useRef<Controller | null>(null);
   const [notice, setNotice] = useState("");
   const [tileFailure, setTileFailure] = useState(false);
-  latest.current = props;
+  const [regions, setRegions] = useState<Awaited<ReturnType<typeof districtRegions>>>([]);
+  const viewProps = {...props, cityRegions: regions};
+  latest.current = viewProps;
+  const cityId = (props.city || CITY).id;
+  useEffect(() => {
+    let active = true;
+    setRegions([]);
+    if (props.cityOverview) void districtRegions(cityId).then(rows => {
+      if (active) setRegions(rows);
+    }).catch(() => { /* Bounds remain usable if the optional outline cannot load. */ });
+    return () => { active = false; };
+  }, [cityId, props.cityOverview]);
   useEffect(() => {
     let disposed = false;
     async function start() {
@@ -85,6 +99,8 @@ export default function MapView(props: Props) {
       const stopWatchingTiles = watchMapTileHealth(map, tiles, setTileFailure);
       tiles.addTo(map);
       const layer = L.layerGroup().addTo(map);
+      const boundaryLayer = L.layerGroup().addTo(map);
+      let lastRegions: Props['cityRegions'], lastOverview = false;
       let lastCamera = '', lastMarkers = '';
       const reportMarkers = new Map<string, {button:HTMLButtonElement; marker:L.Marker}>();
       map.on("click", (e: L.LeafletMouseEvent) => {
@@ -93,6 +109,14 @@ export default function MapView(props: Props) {
       });
       controller.current = {
         render(p) {
+          if (lastRegions !== p.cityRegions || lastOverview !== !!p.cityOverview) {
+            boundaryLayer.clearLayers();
+            lastRegions = p.cityRegions; lastOverview = !!p.cityOverview;
+            if (p.cityOverview) for (const region of p.cityRegions || []) {
+              L.polygon(region.polygons.map(polygon => polygon.map(ring => ring.map(([lng,lat]) => [lat,lng] as L.LatLngTuple))),
+                {color:'#08787c', weight:2, fillOpacity:0.025, interactive:false}).addTo(boundaryLayer);
+            }
+          }
           const markerKey = JSON.stringify([p.reports,p.position]);
           if (markerKey !== lastMarkers) {
           lastMarkers = markerKey;
@@ -130,7 +154,13 @@ export default function MapView(props: Props) {
             button.setAttribute('aria-pressed',String(active));
             marker.setZIndexOffset(active?10000:0);
           });
-          if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
+          const overviewBounds = cityOverviewBounds(p.city || CITY, p.cityRegions || [], p.reports);
+          const nextCamera = p.cityOverview ? `city:${(p.city || CITY).id}:${JSON.stringify(overviewBounds)}:${p.focusRevision || 0}` : cameraKey(p.focus, p.focusZoom, p.focusRevision);
+          if (p.cityOverview && nextCamera !== lastCamera) {
+            const b = overviewBounds;
+            map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[24,24], animate:false});
+            lastCamera = nextCamera;
+          } else if (!p.cityOverview && p.focus && nextCamera !== lastCamera) {
             const center: L.LatLngExpression = [p.focus.lat, p.focus.lng];
             map.setView(center, p.focusZoom ?? (lastCamera ? map.getZoom() : 16), { animate: false });
             lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);
@@ -146,7 +176,13 @@ export default function MapView(props: Props) {
         },
       };
       controller.current.render(latest.current);
-      const observer = new ResizeObserver(() => map.invalidateSize());
+      const observer = new ResizeObserver(() => {
+        map.invalidateSize();
+        if (latest.current.cityOverview) {
+          const b = cityOverviewBounds(latest.current.city || CITY, latest.current.cityRegions || [], latest.current.reports);
+          map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[24,24], animate:false});
+        }
+      });
       observer.observe(node.current);
       const destroy = controller.current.destroy;
       controller.current.destroy = () => {
@@ -162,8 +198,8 @@ export default function MapView(props: Props) {
     };
   }, []);
   useEffect(() => {
-    controller.current?.render(props);
-  }, [props]);
+    controller.current?.render(viewProps);
+  }, [props, regions]);
   return (
     <div className="map-frame">
       <div

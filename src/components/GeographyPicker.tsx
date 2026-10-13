@@ -7,8 +7,8 @@ export default function GeographyPicker({ city, district, onCity, onDistrict }: 
       {CITIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
     </select></label>
     <label>行政區<select aria-label="行政區" value={district} onChange={e => onDistrict(e.target.value)}>
-      {city.districts.map(d => <option key={d}>{d}</option>)}
       <option value="all">所有行政區</option>
+      {city.districts.map(d => <option key={d}>{d}</option>)}
     </select></label>
   </div>;
 }
