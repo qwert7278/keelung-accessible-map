@@ -25,7 +25,7 @@
 | 最新 GitHub CI | 推送後讀回，以 PR head 為準 |
 | Staging / hosted quota / independent PostgreSQL connections / provider account caps | PENDING，需要 owner scoped authorization |
 
-Migration 在 Staging 尚未套用（2026-10-13 唯讀確認），因此修正現有待套用檔案；未修改 migration history。Hosted 套用前再核對 owner=postgres、兩個 schema 的 effective/default ACL、新 schema 不被 Data API expose。現有 API/工具／私密 OAuth／UI 無改動。
+修正時 Staging 尚未套用，因此修改待套用 migration。owner 核准後成功套用，MCP記錄 version `20261013050238`；檔名已對齊，SQL不變，沒有修改history或重跑。真實owner=postgres、anon private USAGE=false、future PUBLIC EXECUTE=false、private callable=0/quota helpers=2、新schema不exposed均已驗證；quota/TTL控制面及復原證據見 `docs/mcp-phase2a-hosted-acceptance.md`。整合MCP仍待Vercel env權限，既有API/私密OAuth/UI無改動。
 
 回滾：Preview public flag=false、DB enabled=false；migration 未套用前無 hosted rollback。套用後優先關閉並保留 additive schema，避免刪除資料。Production switch 留待 P2B-02，禁止在本輪放寬 allowlist。
 

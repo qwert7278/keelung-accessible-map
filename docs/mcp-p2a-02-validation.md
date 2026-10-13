@@ -23,7 +23,7 @@ mcp-p2a-02-validation.md
 +43
 -5
 下午6:06
-**最新結論：Phase 2A Final Hosted Acceptance NO-GO。已確認 Staging migration 未套用、Preview default-off 與 env metadata 403；hosted gate 未通過，不進入 P2B-01、不合併、不部署。**
+**最新結論（2026-10-13）：P2A-FIX 完成，Staging migration 已依核准套用、控制面真實測試 PASS 並復原。整合 MCP Hosted GO 尚未達成：Vercel env list/write 403。最新證據見 `docs/mcp-phase2a-hosted-acceptance.md`；不進入 P2B-01、不合併或部署 Production。**
 
 ## 範圍與版本
 
@@ -189,9 +189,9 @@ P2A-FIX 已修正 exact Staging host、private schema 授權／future EXECUTE、
 
 `npm run test:mcp-public` 的各 focused suites、75 DB checks、原五工具 transport regression、lint/typecheck/build 已執行。獨立 review findings 與最終狀態見 `docs/mcp-p2a-fix-review.md`。沒有重跑 Phase 1 閉环或無關 UI 工作。
 
-今天的 Staging 唯讀 preflight：`quota_migration_applied=false`、`controls_exist=false`、`helper_schema_exists=false`、`anon_private_usage=false`；因此可以在尚未套用的 migration 中修正 helper 邊界，未改 hosted schema。Vercel branch env metadata 仍 403。Geoapify 截圖顯示每日 3,000 credits / 歷史 177 used，這不是費用硬限制已確認。
+修正前 preflight：migration/controls/helper schema不存在，anon private USAGE=false。之後 owner 已核准並套用；Supabase MCP version=`20261013050238`，檔名對齊為 `supabase/migrations/20261013050238_mcp_public_controls.sql`，SQL不變，不重跑。Vercel branch env metadata/write均403。Geoapify圖的3000/177是歷史額度使用訊號，不是費用硬限制確證。
 
-下一個任務是 P2A-HOSTED。需要 owner 一次核准：**只在 `wpravdqviylkcpsioybu` 套用已 review 的 migration、生成與安全配置獨立 control secret / DB hash、調整新 quota state 做驗收並復原；只改 `codex/roadtag-p2a-02` Preview env，受控開啟後關閉並 Preview redeploy；經確認的 Geoapify staging credentials／有限 geocode calls。** 不含 Production、既有案件／Storage／OAuth、merge 或公開發布。Vercel 403 必須由正常有權限連線／Dashboard 處理，核准文字本身不能解除 403。
+owner 已核准上述 staging migration/secret/control-state測試、指定branch Preview env/redeploy與最多10次Geoapify（先核對限制）；不含Production、cases/Storage/OAuth、merge/publication。Staging控制面已測並恢復 disabled/gate未配置/counters=0/leases=0；剩餘整合測試待正常Vercel env權限，無需重複索取相同授權。實際矩陣及Secret清理見最終Hosted Acceptance報告。
 
 最小 HTTPS 工具 harness 已備妥（尚未對 hosted 執行）：
 

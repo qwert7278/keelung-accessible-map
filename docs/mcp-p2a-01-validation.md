@@ -4,6 +4,8 @@
 
 **最新結論：Phase 2A Final Hosted Acceptance NO-GO。P2A-02 已實作，但 hosted gate 未通過；不進入 P2B-01、不合併、不部署、不公開發布。**
 
+2026-10-13 更新：P2A-FIX與獨立review已完成；核准後Staging migration與控制面配額／TTL／权限實測取得證據，且復原關閉。整合三工具仍待Vercel env權限（list/write 403）。唯一最新整合證據來源為 PR #24 的 `docs/mcp-phase2a-hosted-acceptance.md`；下方10-12的「未套用」為歷史snapshot。
+
 ## 規格、版本與範圍
 
 - 規格來源：`C:/Users/qwert/Desktop/roadtag-geoapify-build/ROAD_TAG_AI_AGENT_ECOSYSTEM_MASTER_PLAN_v2_2026-10-12.md`，v2.0，Section 2A 與 Section 6 的第一項 atomic job。
