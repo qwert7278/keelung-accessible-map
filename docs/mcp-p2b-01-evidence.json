@@ -1,0 +1,176 @@
+{
+  "task": "P2B-01",
+  "decision": "NO-GO",
+  "server_sha": "9aec7391e1692aad389ec71e8e2e146bf8bbf1b5",
+  "target": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app",
+  "tools": [
+    "get_report",
+    "resolve_location",
+    "search_nearby_reports"
+  ],
+  "clients": [
+    {
+      "name": "Official TypeScript SDK",
+      "version": "2.1.0",
+      "time": "2026-10-13T12:18:23.733Z",
+      "status": "PASS",
+      "results": {
+        "get_report": {
+          "id": "a998e059-f20b-4928-9e63-817cf8b10950",
+          "lat": 25.120772,
+          "lng": 121.743712,
+          "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a998e059-f20b-4928-9e63-817cf8b10950",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        "resolve_location": {
+          "lat": 25.120772,
+          "lng": 121.743712,
+          "status": "resolved",
+          "city_id": "TW-KEE",
+          "city_name": "基隆市",
+          "district": "仁愛區"
+        },
+        "search_nearby_reports": {
+          "reports": [
+            {
+              "id": "fa0a3df3-fb93-46da-8d48-0570a0ba040d",
+              "lat": 25.120772,
+              "lng": 121.743712,
+              "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=fa0a3df3-fb93-46da-8d48-0570a0ba040d",
+              "status": "open",
+              "city_id": "TW-KEE",
+              "district": "仁愛區"
+            },
+            {
+              "id": "a998e059-f20b-4928-9e63-817cf8b10950",
+              "lat": 25.120772,
+              "lng": 121.743712,
+              "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a998e059-f20b-4928-9e63-817cf8b10950",
+              "status": "open",
+              "city_id": "TW-KEE",
+              "district": "仁愛區"
+            }
+          ],
+          "truncated": false
+        }
+      }
+    },
+    {
+      "name": "Codex CLI",
+      "version": "0.159.3",
+      "time": "2026-10-13T12:19:29.317Z",
+      "status": "PASS",
+      "results": {
+        "get_report": {
+          "id": "a998e059-f20b-4928-9e63-817cf8b10950",
+          "lat": 25.120772,
+          "lng": 121.743712,
+          "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a998e059-f20b-4928-9e63-817cf8b10950",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        "resolve_location": {
+          "lat": 25.120772,
+          "lng": 121.743712,
+          "status": "resolved",
+          "city_id": "TW-KEE",
+          "city_name": "基隆市",
+          "district": "仁愛區"
+        },
+        "search_nearby_reports": {
+          "reports": [
+            {
+              "id": "fa0a3df3-fb93-46da-8d48-0570a0ba040d",
+              "lat": 25.120772,
+              "lng": 121.743712,
+              "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=fa0a3df3-fb93-46da-8d48-0570a0ba040d",
+              "status": "open",
+              "city_id": "TW-KEE",
+              "district": "仁愛區"
+            },
+            {
+              "id": "a998e059-f20b-4928-9e63-817cf8b10950",
+              "lat": 25.120772,
+              "lng": 121.743712,
+              "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a998e059-f20b-4928-9e63-817cf8b10950",
+              "status": "open",
+              "city_id": "TW-KEE",
+              "district": "仁愛區"
+            }
+          ],
+          "truncated": false
+        }
+      }
+    },
+    {
+      "name": "Gemini CLI",
+      "version": "0.63.0",
+      "time": "2026-10-14T04:23:38.786Z",
+      "status": "FAIL",
+      "exit": 86,
+      "successful_tool_calls": 0,
+      "initial_model": "gemini-3.5-flash",
+      "provider_http": 503,
+      "provider_last_path": "/v1beta/models/gemini-3.8-flash:streamGenerateContent"
+    }
+  ],
+  "shared_results": {
+    "get_report": {
+      "id": "a998e059-f20b-4928-9e63-817cf8b10950",
+      "lat": 25.120772,
+      "lng": 121.743712,
+      "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a998e059-f20b-4928-9e63-817cf8b10950",
+      "status": "open",
+      "city_id": "TW-KEE",
+      "district": "仁愛區"
+    },
+    "resolve_location": {
+      "lat": 25.120772,
+      "lng": 121.743712,
+      "status": "resolved",
+      "city_id": "TW-KEE",
+      "city_name": "基隆市",
+      "district": "仁愛區"
+    },
+    "search_nearby_reports": {
+      "reports": [
+        {
+          "id": "fa0a3df3-fb93-46da-8d48-0570a0ba040d",
+          "lat": 25.120772,
+          "lng": 121.743712,
+          "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=fa0a3df3-fb93-46da-8d48-0570a0ba040d",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "a998e059-f20b-4928-9e63-817cf8b10950",
+          "lat": 25.120772,
+          "lng": 121.743712,
+          "url": "https://keelung-accessible-map-git-code-e64c38-masons-projects-2c78a251.vercel.app/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a998e059-f20b-4928-9e63-817cf8b10950",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        }
+      ],
+      "truncated": false
+    }
+  },
+  "cross_client_consistency": {
+    "sdk_codex": "PASS",
+    "three_clients": "PENDING"
+  },
+  "writes_unavailable": true,
+  "private_fields_absent": true,
+  "invalid_id_denied": true,
+  "provider_budget": {
+    "authorized_cap": 15,
+    "requests": 12,
+    "count_includes_metadata": true,
+    "stopped_on_first_503_in_extra_window": true
+  },
+  "public_result_sha256": "7ffd444ee81158dc4268927eda07d8d55ee76a44e5f6470021d17692c54cf8e8"
+}

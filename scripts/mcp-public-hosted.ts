@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {Client,StreamableHTTPClientTransport} from '@modelcontextprotocol/client';
 import {z} from 'zod';
+import {writeFile} from 'node:fs/promises';
 async function main(){
 const url=new URL(process.env.MCP_HOSTED_PREVIEW_URL||'http://invalid');
 // Pin independently from authenticated Vercel deployment metadata, not user input.
@@ -19,11 +20,15 @@ const fetchPreview:typeof fetch=async(input,init)=>{
  return fetch(new Request(request,{headers,redirect:'error',signal:AbortSignal.any([request.signal,AbortSignal.timeout(30000)])}));
 };
 const result=z.object({ok:z.boolean(),data:z.record(z.string(),z.unknown()).optional(),error:z.object({code:z.string()}).optional()});
+const evidence:Record<string,unknown>={client:'official-typescript-sdk',protocol:'2025-11-25',sha,target:url.origin,time:new Date().toISOString(),tools:['get_report','resolve_location','search_nearby_reports']};
+const publicSummary=(row:Record<string,unknown>)=>Object.fromEntries(['id','lat','lng','url','status','city_id','city_name','district'].filter(k=>k in row).map(k=>[k,row[k]]));
 async function call(name:string,args:Record<string,unknown>){
  const output=await client.callTool({name,arguments:args});
  const body=result.parse(output.structuredContent);assert(body.ok,'Expected a successful '+name+' public read');
  const serialized=JSON.stringify(output);
  for(const field of ['created_by','admin_note','image_path','photo_token','credentialHash'])assert(!serialized.includes('"'+field+'"'),'Private output field found');
+ const data=body.data!;
+ if(!(name in evidence))evidence[name]=name==='get_report'?publicSummary(z.record(z.string(),z.unknown()).parse(data.report)):name==='search_nearby_reports'?{reports:z.array(z.record(z.string(),z.unknown())).parse(data.reports).map(publicSummary),truncated:data.truncated}:publicSummary(data);
  console.log(JSON.stringify({test:name,status:'PASS'}));return body.data!;
 }
 try{
@@ -40,6 +45,8 @@ try{
  }
  const invalid=await client.callTool({name:'get_report',arguments:{report_id:'invalid'}});assert.equal(invalid.isError,true);
  console.log(JSON.stringify({test:'writes/invalid-id',status:'PASS'}));
+ evidence.writes_unavailable=true;evidence.invalid_id_denied=true;evidence.private_fields_absent=true;
+ if(process.env.MCP_HOSTED_EVIDENCE_FILE)await writeFile(process.env.MCP_HOSTED_EVIDENCE_FILE,JSON.stringify(evidence,null,2)+'\n');
 }finally{await client.close();}
 }
 await main().catch(()=>{
