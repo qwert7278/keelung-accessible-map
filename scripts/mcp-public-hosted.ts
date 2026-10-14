@@ -1,26 +1,34 @@
-// Only run after explicit owner approval of staging quota-state writes.
-// This is a real HTTPS SDK harness, not evidence until executed against Preview.
+// Only run after explicit owner approval of the target's test window.
+// This is a real HTTPS SDK harness, not evidence until executed against that target.
 import assert from 'node:assert/strict';
 import {Client,StreamableHTTPClientTransport} from '@modelcontextprotocol/client';
 import {z} from 'zod';
 import {writeFile} from 'node:fs/promises';
-async function main(){
+import {pathToFileURL} from 'node:url';
+export function publicHostedConfiguration(){
 const url=new URL(process.env.MCP_HOSTED_PREVIEW_URL||'http://invalid');
+const production=process.env.MCP_PRODUCTION_TEST_AUTHORIZED==='true';
 // Pin independently from authenticated Vercel deployment metadata, not user input.
-const approvedOrigin=z.string().url().parse(process.env.MCP_HOSTED_APPROVED_PREVIEW_ORIGIN);
+const approvedOrigin=z.string().url().parse(process.env[production?'MCP_HOSTED_APPROVED_PRODUCTION_ORIGIN':'MCP_HOSTED_APPROVED_PREVIEW_ORIGIN']);
 assert(process.env.MCP_HOSTED_TEST_AUTHORIZED==='true','Owner approval is required before setting the test gate; the gate alone is not consent.');
-assert(url.protocol==='https:'&&url.hostname.startsWith('keelung-accessible-')&&url.hostname.endsWith('.vercel.app')&&url.pathname==='/api/mcp-public'&&!url.username&&!url.password&&!url.search&&!url.hash,'Use the exact current Preview endpoint, never Production.');
+assert(url.protocol==='https:'&&(production?url.origin==='https://roadtag.org':url.hostname.startsWith('keelung-accessible-')&&url.hostname.endsWith('.vercel.app'))&&url.pathname==='/api/mcp-public'&&!url.username&&!url.password&&!url.search&&!url.hash,'Use the exact independently approved endpoint.');
+if(production)assert(approvedOrigin==='https://roadtag.org'&&!process.env.VERCEL_AUTOMATION_BYPASS_SECRET&&!process.env.MCP_HOSTED_CREDENTIAL_FILE,'Production acceptance must be anonymous, without Preview test credentials.');
 assert(url.origin===approvedOrigin,'Only the independently approved exact Preview origin may receive protection credentials.');
 const id=z.uuid().parse(process.env.MCP_HOSTED_REPORT_ID),sha=z.string().regex(/^[0-9a-f]{40}$/).parse(process.env.MCP_HOSTED_EXPECTED_SHA);
+return {url,id,sha,production};
+}
+async function main(){
+const {url,id,sha,production}=publicHostedConfiguration();
 const client=new Client({name:'roadtag-hosted-acceptance',version:'1.0.0'},{supportedProtocolVersions:['2025-11-25']});
 const fetchPreview:typeof fetch=async(input,init)=>{
  const request=new Request(input,init);assert(new URL(request.url).origin===url.origin,'Never forward protection credentials to another origin.');
  const headers=new Headers(request.headers);
+ if(production)for(const name of ['authorization','cookie','x-vercel-protection-bypass','x-roadtag-control-key'])assert(!headers.has(name),'No private credentials in public acceptance');
  if(process.env.VERCEL_AUTOMATION_BYPASS_SECRET)headers.set('x-vercel-protection-bypass',process.env.VERCEL_AUTOMATION_BYPASS_SECRET);
  return fetch(new Request(request,{headers,redirect:'error',signal:AbortSignal.any([request.signal,AbortSignal.timeout(30000)])}));
 };
 const result=z.object({ok:z.boolean(),data:z.record(z.string(),z.unknown()).optional(),error:z.object({code:z.string()}).optional()});
-const evidence:Record<string,unknown>={client:'official-typescript-sdk',protocol:'2025-11-25',sha,target:url.origin,time:new Date().toISOString(),tools:['get_report','resolve_location','search_nearby_reports']};
+const evidence:Record<string,unknown>={client:'official-typescript-sdk',protocol:'2025-11-25',sha,target:url.origin,production,anonymous:production,time:new Date().toISOString(),tools:['get_report','resolve_location','search_nearby_reports']};
 const publicSummary=(row:Record<string,unknown>)=>Object.fromEntries(['id','lat','lng','url','status','city_id','city_name','district'].filter(k=>k in row).map(k=>[k,row[k]]));
 async function call(name:string,args:Record<string,unknown>){
  const output=await client.callTool({name,arguments:args});
@@ -49,7 +57,7 @@ try{
  if(process.env.MCP_HOSTED_EVIDENCE_FILE)await writeFile(process.env.MCP_HOSTED_EVIDENCE_FILE,JSON.stringify(evidence,null,2)+'\n');
 }finally{await client.close();}
 }
-await main().catch(()=>{
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)await main().catch(()=>{
  // This also covers malformed configuration; never log raw URLs/tokens/errors.
  console.error(JSON.stringify({status:'FAIL',reason:'Hosted configuration/protocol assertion failed; inspect sanitized operator evidence.'}));process.exitCode=1;
 });

@@ -4,14 +4,16 @@ import {RoadTagService} from '../roadtag/service.js';
 import {RoadError,schemas,type Principal} from '../roadtag/contracts.js';
 import {PublicSupabaseBackend} from '../roadtag/public-supabase.js';
 import {observePublic,publicRisk,PublicControlClient,type PublicControls,type PublicEvent} from './public-controls.js';
-export type PublicSettings={enabled:boolean;origin:string;controls?:PublicControls;riskSecret?:string;trustVercel?:boolean;timeoutMs?:number;waitUntil?:(task:Promise<void>)=>void;observe?:(event:PublicEvent)=>void};
+export type PublicSettings={enabled:boolean;origin:string;controls?:PublicControls;riskSecret?:string;trustVercel?:boolean;geocoding?:boolean;timeoutMs?:number;waitUntil?:(task:Promise<void>)=>void;observe?:(event:PublicEvent)=>void};
 export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings){
  return async(request:Request):Promise<Response>=>{
   const started=Date.now(),headers={'Cache-Control':'no-store'};
   const emit=(operation:PublicEvent['operation'],outcome:PublicEvent['outcome'],start:number,status?:number)=>{try{(settings.observe||observePublic)({event:'mcp_public',operation,outcome,duration_ms:Math.max(0,Date.now()-start),...(status?{http_status:status}:{})});}catch{/* Observability must not change tool outcomes. */}};
   const fail=(status:number,code:string,retry?:number)=>Response.json({error:{code}},{status,headers:{...headers,...(retry?{'Retry-After':String(retry)}:{})}});
   if(!settings.enabled){emit('request','SERVICE_UNAVAILABLE',started,503);return fail(503,'SERVICE_UNAVAILABLE');}
-  if(new URL(request.url).origin!==settings.origin||(request.headers.has('origin')&&request.headers.get('origin')!==settings.origin)){emit('request','ERROR',started,403);return fail(403,'FORBIDDEN');}
+  const expected=new URL(settings.origin),host=request.headers.get('host')?.toLowerCase();
+  const validHost=!host||host===expected.host||(!expected.port&&host===expected.hostname+(expected.protocol==='https:'?':443':':80'));
+  if(new URL(request.url).origin!==settings.origin||!validHost||(request.headers.has('origin')&&request.headers.get('origin')!==settings.origin)){emit('request','ERROR',started,403);return fail(403,'FORBIDDEN');}
   if(!settings.controls||!settings.riskSecret||settings.riskSecret.length<32){emit('request','SERVICE_UNAVAILABLE',started,503);return fail(503,'SERVICE_UNAVAILABLE');}
   if(request.method!=='POST'){emit('request','ERROR',started,405);return new Response(null,{status:405,headers:{...headers,Allow:'POST'}});}
   const controls=settings.controls,risk=publicRisk(request,settings.riskSecret,settings.trustVercel),abort=new AbortController();
@@ -33,12 +35,13 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
       signal.throwIfAborted();
       if(!(publicReadTools as readonly string[]).includes(name))throw new RoadError('FORBIDDEN');
       const geo=name==='resolve_location'?schemas.resolve_location.safeParse(input):null;
+      if(geo?.success&&geo.data.query&&settings.geocoding===false)throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');
       if(geo?.success&&geo.data.query&&geo.data.query.length>=2&&geo.data.lat===undefined&&geo.data.lng===undefined&&process.env.GEOAPIFY_LOCATION_ENABLED==='true'&&process.env.GEOAPIFY_API_KEY){
        const cost=await controls.acquire(risk,'geocode',lease);if(!cost.allowed)throw new RoadError(cost.code||'SERVICE_UNAVAILABLE');
       }
       signal.throwIfAborted();const value=await scoped.call(name,input,principal,signal);emit(name as PublicEvent['operation'],'OK',start);return value;
      }catch(error){emit(name as PublicEvent['operation'],signal.aborted?'TIMEOUT':error instanceof RoadError&&error.code==='RATE_LIMITED'?'RATE_LIMITED':'ERROR',start);throw error;}
-    },{publicReadOnly:true}),{legacy:'stateless',maxRequestBodySize:32768});
+    },{publicReadOnly:true,coordinatesOnly:settings.geocoding===false}),{legacy:'stateless',maxRequestBodySize:32768});
     const response=await handler.fetch(new Request(request,{signal}));
     // Hold the lease until tool/SSE completion, not merely until headers arrive.
     // No server subscriptions are offered. Bound even an unexpected response body.
@@ -60,14 +63,16 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
 }
 export function publicEnvironment(){
  try{
-  // P2A is Preview-only. Production activation needs the separate P2B release gate.
-  if(process.env.MCP_PUBLIC_READ_ENABLED!=='true'||process.env.VERCEL_ENV==='production')return null;
-  const originUrl=new URL(process.env.MCP_PUBLIC_READ_ORIGIN||''),url=new URL(process.env.MCP_PUBLIC_READ_SUPABASE_URL||'');
+  const production=process.env.VERCEL_ENV==='production',prefix=production?'MCP_PUBLIC_PRODUCTION_':'MCP_PUBLIC_';
+  if(process.env[prefix+'READ_ENABLED']!=='true'||(production&&process.env.VERCEL!=='1'))return null;
+  if(!production&&process.env.VERCEL_ENV&&!['preview','development'].includes(process.env.VERCEL_ENV))return null;
+  const originUrl=new URL(process.env[prefix+'READ_ORIGIN']||''),url=new URL(process.env[prefix+'READ_SUPABASE_URL']||'');
   if(originUrl.protocol!=='https:'&&!['localhost','127.0.0.1'].includes(originUrl.hostname))return null;
   if(originUrl.username||originUrl.password||originUrl.pathname!=='/'||originUrl.search||originUrl.hash)return null;
-  if(url.origin!=='https://wpravdqviylkcpsioybu.supabase.co'||url.username||url.password||url.pathname!=='/'||url.search||url.hash)return null;
-  const key=process.env.MCP_PUBLIC_READ_SUPABASE_PUBLISHABLE_KEY,gate=process.env.MCP_PUBLIC_CONTROL_SECRET;
-  if(!key||!gate||gate.length<32||gate.length>128||gate===process.env.MCP_PHOTO_SECRET||gate===process.env.UPLOAD_GATE_SECRET)return null;
-  return {settings:{enabled:true,origin:originUrl.origin,controls:new PublicControlClient(url.origin,key,gate),riskSecret:gate,trustVercel:process.env.VERCEL==='1'},service:new RoadTagService(new PublicSupabaseBackend(url.origin,key),originUrl.origin,'')};
+  if(production&&originUrl.origin!=='https://roadtag.org')return null;
+  if(url.origin!==(production?'https://ifcicahnrpkwjcxmnmug.supabase.co':'https://wpravdqviylkcpsioybu.supabase.co')||url.username||url.password||url.pathname!=='/'||url.search||url.hash)return null;
+  const key=process.env[prefix+'READ_SUPABASE_PUBLISHABLE_KEY'],gate=process.env[prefix+'CONTROL_SECRET'];
+  if(!key||!gate||gate.length<32||gate.length>128||[process.env.MCP_PHOTO_SECRET,process.env.UPLOAD_GATE_SECRET,process.env.SUPABASE_SERVICE_ROLE_KEY,process.env.MCP_SUPABASE_SERVICE_KEY,process.env.MCP_SESSION_ENCRYPTION_KEY,...(production?[process.env.MCP_PUBLIC_CONTROL_SECRET]:[])].includes(gate))return null;
+  return {settings:{enabled:true,origin:originUrl.origin,controls:new PublicControlClient(url.origin,key,gate),riskSecret:gate,trustVercel:process.env.VERCEL==='1',...(production?{geocoding:process.env.MCP_PUBLIC_PRODUCTION_GEOCODING_ENABLED==='true'}:{})},service:new RoadTagService(new PublicSupabaseBackend(url.origin,key),originUrl.origin,'')};
  }catch{return null;}
 }
