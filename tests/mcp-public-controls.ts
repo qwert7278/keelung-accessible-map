@@ -15,13 +15,13 @@ try{
  assert.equal((await local.db.query<{allowed:boolean}>("select has_schema_privilege('anon','private','USAGE') as allowed")).rows[0].allowed,false,'Anonymous callers must not gain private schema access');
  await local.db.exec('create function private.p2a_future_probe() returns integer language sql as $$select 1$$; create function mcp_public_quota.p2a_future_probe() returns integer language sql as $$select 1$$;');
  for(const schema of ['private','mcp_public_quota']){
-  assert.equal((await local.db.query<{allowed:boolean}>('select has_function_privilege($1,$2,$3) as allowed',['anon',schema+'.p2a_future_probe()','EXECUTE'])).rows[0].allowed,false);
+  assert.equal((await local.db.query<{allowed:boolean}>('select has_schema_privilege($1,$2,$3) as allowed',['anon',schema,'USAGE'])).rows[0].allowed,false);
   await assert.rejects(local.db.transaction(async tx=>{await tx.exec('set local role anon');await tx.exec('select '+schema+'.p2a_future_probe()');}));
  }
  // Even an explicit future PUBLIC grant cannot bypass the private namespace gate.
  await local.db.exec('grant execute on function private.p2a_future_probe() to public; create table private.p2a_future_business(id integer); grant select on private.p2a_future_business to public;');
  for(const sql of ['select private.p2a_future_probe()','select * from private.p2a_future_business'])await assert.rejects(local.db.transaction(async tx=>{await tx.exec('set local role anon');await tx.exec(sql);}));
- await local.db.exec('revoke execute on function private.p2a_future_probe() from public');
+ await local.db.exec('revoke execute on function private.p2a_future_probe(),mcp_public_quota.p2a_future_probe() from public');
  assert.equal((await local.db.query<{allowed:boolean}>("select has_schema_privilege('anon','mcp_public_quota','CREATE') as allowed")).rows[0].allowed,false);
  assert.equal((await call('request')).code,'SERVICE_UNAVAILABLE');
  await local.db.query('update private.mcp_public_control set enabled=true,gate_hash=$1',[hash(gate)]);
