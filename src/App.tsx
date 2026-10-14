@@ -195,6 +195,7 @@ export default function App() {
   }
 
   function openReportForm() {
+    gpsRevision.current++;
     if (!canReportInCity(city.id)) { setToast("此縣市目前提供地圖預覽，正式回報尚未開放。"); return; }
     setCreating(true);
     if (guideStep === 0) setGuideStep(1);
@@ -339,6 +340,22 @@ export default function App() {
     setFocus(location);setFocusZoom(17);setFocusRevision(r=>r+1);
     rememberGeography(geography.city.id,geography.district);
     window.history.replaceState({},'',geographyUrl(window.location.href,geography.city.id,geography.district));
+  }
+  async function browseMap(location:Location,zoom:number) {
+    const revision=++gpsRevision.current;
+    manuallyChosen.current=true;setSuggestionNote('');
+    try {
+      const found=await geographyAt(location,city);
+      if(revision!==gpsRevision.current)return;
+      if(!found){setToast('地圖中心未對應到行政區，可繼續拖動或使用上方選單。');return;}
+      if(found.city.id===city.id && found.district===district)return;
+      closeReport();setLinkedReport(null);setCity(found.city);setDistrict(found.district);setPage(1);
+      setFocus(location);setFocusZoom(zoom);
+      rememberGeography(found.city.id,found.district);
+      window.history.replaceState({},'',geographyUrl(window.location.href,found.city.id,found.district));
+    } catch {
+      if(revision===gpsRevision.current)setToast('行政區資料暫時無法載入，請使用上方選單切換。');
+    }
   }
   function locate() {
     if (!navigator.geolocation) {setToast('此瀏覽器不支援定位。你仍可拖曳地圖查看。');return;}
@@ -667,7 +684,7 @@ export default function App() {
             <div className="map-heading">{pageIntro}<div className="mobile-geography"><GeographyPicker city={city} district={district} onCity={chooseCity} onDistrict={chooseDistrict} />
           {!canReportInCity(city.id) && <p className="city-preview-note">此縣市提供地圖預覽，正式回報尚未開放。</p>}</div></div>
             <div className="map-stage">
-            <MapView key={city.id} city={city} activeReportId={pageReports.some(r=>r.id===(hoveredReportId || keyboardReportId)) ? hoveredReportId || keyboardReportId : selected || focusedReportId} reports={visible.map(r=>({...r,address:r.address || nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || ''}))} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
+            <MapView key={city.id} city={city} onBrowseStart={!creating && !selected && !adminPage ? () => {gpsRevision.current++;manuallyChosen.current=true;} : undefined} onBrowseEnd={!creating && !selected && !adminPage ? browseMap : undefined} cityOverview={district === 'all' && !selected && !focusedReportId} activeReportId={pageReports.some(r=>r.id===(hoveredReportId || keyboardReportId)) ? hoveredReportId || keyboardReportId : selected || focusedReportId} reports={visible.map(r=>({...r,address:r.address || nearbyAddresses[`${r.id}:${r.location.lat}:${r.location.lng}`] || ''}))} onSelect={choose} focus={focus || districtCamera(city, district).focus} focusZoom={focusZoom} focusRevision={focusRevision} />
             <div className="map-caption">
               <span className="live-dot" />
               {city.name} · {district === 'all' ? '所有行政區' : district}

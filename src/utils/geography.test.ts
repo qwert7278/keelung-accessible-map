@@ -1,9 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CITIES } from '../config';
 import { initialGeography, mapLink } from './geography';
 import { validateDraft } from './validation';
 
 describe('全台地圖範圍', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('只在已同意且沒有城市或案件連結時恢復行政區偏好', () => {
+    const cookie = 'roadtag-consent=' + encodeURIComponent(JSON.stringify({ version: 1, preferences: true, expires: Date.now() + 10000 }));
+    vi.stubGlobal('document', { cookie });
+    vi.stubGlobal('localStorage', { getItem: () => JSON.stringify({ city: 'TW-TPE', district: '大安區' }) });
+    expect(initialGeography('').district).toBe('大安區');
+    expect(initialGeography('?city=TW-TPE').district).toBe('中山區');
+    expect(initialGeography('?report=sample').district).toBe('仁愛區');
+    expect(initialGeography('?district=all').district).toBe('all');
+    vi.stubGlobal('localStorage', { getItem: () => JSON.stringify({ city: 'TW-TPE', district: '仁愛區' }) });
+    expect(initialGeography('').district).toBe('中山區');
+    vi.stubGlobal('document', { cookie: '' });
+    expect(initialGeography('').district).toBe('仁愛區');
+  });
   it('提供 22 縣市與 368 個行政區，沒有重複城市代碼', () => {
     expect(CITIES).toHaveLength(22);
     expect(CITIES.reduce((n, c) => n + c.districts.length, 0)).toBe(368);
@@ -19,6 +33,13 @@ describe('全台地圖範圍', () => {
   it('切換城市時不沿用其他城市的行政區', () => {
     expect(initialGeography('?city=TW-TPE&district=仁愛區').district).toBe('中山區');
     expect(initialGeography('?city=TW-KEE').district).toBe('仁愛區');
+  });
+  it('所有縣市的新入口預設顯示設定的中心行政區', () => {
+    expect(initialGeography('').district).toBe(CITIES[0].defaultDistrict);
+    for (const city of CITIES) expect(initialGeography('?city='+city.id).district).toBe(city.defaultDistrict);
+  });
+  it('明確的所有行政區連結保持全部範圍', () => {
+    for (const city of CITIES) expect(initialGeography('?city='+city.id+'&district=all').district).toBe('all');
   });
   it('首頁案件連結保留城市、行政區與案件', () => {
     const link = mapLink('TW-TPE', '中山區', 'test-report');

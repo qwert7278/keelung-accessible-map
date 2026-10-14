@@ -2,9 +2,14 @@ import { reportMarkerLabel } from '../utils/reportMapList';
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { CITY, type City } from "../config";
 import { STATUSES, type Location, type Report } from "../types";
-import { cameraKey } from "../utils/mapCamera";
+import { cameraKey, cityOverviewBounds } from "../utils/mapCamera";
+import { userMapMovement } from '../utils/userMapMovement';
 type Props = {
   city?: City;
+  cityOverview?: boolean;
+  onBrowseStart?: () => void;
+  onBrowseEnd?: (center: Location, zoom: number) => void;
+  cityRegions?: Awaited<ReturnType<typeof import('../utils/districtBoundary').districtRegions>>;
   reports: Report[];
   onSelect: (id: string) => void;
   activeReportId?: string | null;
@@ -44,11 +49,28 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
   let markers: google.maps.marker.AdvancedMarkerElement[] = [],
     lastCamera = '', lastMarkers = '';
   const reportMarkers = new Map<string,{content:HTMLButtonElement; marker:google.maps.marker.AdvancedMarkerElement}>();
+  let lastRegions: Props['cityRegions'], lastOverview = false;
+  map.data.setStyle({strokeColor:'#08787c', strokeWeight:2, fillOpacity:0.025, clickable:false});
+  const browsing = userMapMovement(()=>{const center=map.getCenter(),zoom=map.getZoom();if(center && zoom!==undefined)latest().onBrowseEnd?.(center.toJSON(),zoom);},()=>latest().onBrowseStart?.());
+  const drag = map.addListener('dragstart',()=>browsing.start());
+  const idle = map.addListener('idle',()=>{
+    const center=map.getCenter(),zoom=map.getZoom();
+    if(center && zoom!==undefined) browsing.end(center.toJSON(),zoom);
+  });
+  const keyBrowse=(event:KeyboardEvent)=>{
+    if(event.target instanceof HTMLElement && event.target.getAttribute('role')==='region' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)) {const center=map.getCenter(),zoom=map.getZoom();if(center && zoom!==undefined){browsing.start();browsing.end(center.toJSON(),zoom);}}
+  };
+  node.addEventListener('keydown',keyBrowse);
   const click = map.addListener("click", (e: google.maps.MapMouseEvent) => {
     if (latest().picking && e.latLng) latest().onPick?.(e.latLng.toJSON());
   });
   return {
     render(p: Props) {
+      if (lastRegions !== p.cityRegions || lastOverview !== !!p.cityOverview) {
+        map.data.forEach(feature => map.data.remove(feature));
+        lastRegions = p.cityRegions; lastOverview = !!p.cityOverview;
+        if (p.cityOverview) map.data.addGeoJson({type:'FeatureCollection',features:(p.cityRegions || []).map(region => ({type:'Feature',properties:{},geometry:{type:'MultiPolygon',coordinates:region.polygons}}))});
+      }
       const markerKey=JSON.stringify([p.reports,p.position]);
       if (markerKey!==lastMarkers) {
       lastMarkers=markerKey; reportMarkers.clear();
@@ -94,13 +116,18 @@ export async function createGoogleMap(node: HTMLElement, latest: () => Props) {
         content.setAttribute('aria-pressed',String(active));
         marker.zIndex=active?10000:undefined;
       });
-      if (p.focus && cameraKey(p.focus, p.focusZoom, p.focusRevision) !== lastCamera) {
-        map.setCenter(p.focus);
+      const overviewBounds = cityOverviewBounds(p.city || CITY, p.cityRegions || [], p.reports);
+      const nextCamera = p.cityOverview ? `city:${(p.city || CITY).id}:${JSON.stringify(overviewBounds)}:${p.focusRevision || 0}` : cameraKey(p.focus, p.focusZoom, p.focusRevision);
+      if (p.cityOverview && nextCamera !== lastCamera) {
+        browsing.cancel(); map.fitBounds(overviewBounds,24); lastCamera = nextCamera;
+      } else if (!p.cityOverview && p.focus && nextCamera !== lastCamera) {
+        browsing.cancel(); map.setCenter(p.focus);
         if (p.focusZoom !== undefined || !lastCamera) map.setZoom(p.focusZoom ?? 16);
         lastCamera = cameraKey(p.focus, p.focusZoom, p.focusRevision);
       }
     },
     destroy() {
+      browsing.cancel(); drag.remove(); idle.remove(); node.removeEventListener('keydown',keyBrowse);
       click.remove();
       markers.forEach((m) => {
         m.map = null;
