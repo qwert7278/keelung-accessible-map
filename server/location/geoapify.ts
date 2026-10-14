@@ -39,9 +39,9 @@ export function createGeoapifyBudget(now=()=>Date.now(), minuteMax=80, dayMax=10
   };
 }
 const reserveLookup=createGeoapifyBudget();
-async function lookup(url:URL):Promise<unknown> {
+async function lookup(url:URL,signal?:AbortSignal):Promise<unknown> {
   reserveLookup();
-  const response=await fetch(url,{signal:AbortSignal.timeout(5000),redirect:'error'});
+  const response=await fetch(url,{signal:AbortSignal.any([AbortSignal.timeout(5000),...(signal?[signal]:[])]),redirect:'error'});
   if (!response.ok) throw new Error('Geoapify unavailable');
   return response.json();
 }
@@ -54,7 +54,7 @@ function endpoint(action:'autocomplete'|'reverse') {
   return url;
 }
 export const geoapifyProvider:LocationProvider={
-  async search(query,cityId) {
+  async search(query,cityId,signal) {
     if(query.trim().length<2 || query.trim().length>200)throw new Error('Invalid location query');
     const url=endpoint('autocomplete');
     url.searchParams.set('text',query.trim().replace(/(\d+)之(\d+)(?=號)/g,'$1-$2'));
@@ -62,7 +62,7 @@ export const geoapifyProvider:LocationProvider={
     url.searchParams.set('limit','5');
     // City hint is a ranking hint, never an exclusion: users can search across Taiwan.
     if (cityId==='TW-KEE') url.searchParams.set('bias','proximity:121.7405,25.1276');
-    return normalizeGeoapifySearch(await lookup(url));
+    return normalizeGeoapifySearch(await lookup(url,signal));
   },
   async reverse(point:LocationPoint) {
     if (!validLocation(point) || point.lat<21 || point.lat>26.5 || point.lng<118 || point.lng>123) throw new Error('Invalid location');
