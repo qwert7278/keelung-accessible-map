@@ -1,0 +1,421 @@
+{
+  "status": "GO",
+  "task": "Production Public Read MCP Release",
+  "date": "2026-10-14",
+  "timezone": "Asia/Taipei",
+  "endpoint": "https://roadtag.org/api/mcp-public",
+  "program_sha": "6c708bd8efcdaa627ce9be05262dd9f95ffbe9f3",
+  "pull_requests": [
+    23,
+    24,
+    28
+  ],
+  "ci": {
+    "status": "PASS",
+    "url": "https://github.com/qwert7278/keelung-accessible-map/actions/runs/38546131085"
+  },
+  "deployment": {
+    "id": "dpl_7DNwAcpFDeTAtn8gAA7CEow6ybAu",
+    "status": "READY",
+    "target": "production",
+    "ref": "main",
+    "alias": "roadtag.org"
+  },
+  "migration": {
+    "approved_file": "20261013050238_mcp_public_controls.sql",
+    "sha256": "22a0a67782ec1f29a27fab5b8ac53933021bcc51e117d2bad6d0ffcc0a121428",
+    "applied_version": "20261014095142",
+    "name": "mcp_public_controls"
+  },
+  "sdk": {
+    "client": "official-typescript-sdk",
+    "protocol": "2025-11-25",
+    "sha": "6c708bd8efcdaa627ce9be05262dd9f95ffbe9f3",
+    "target": "https://roadtag.org",
+    "production": true,
+    "anonymous": true,
+    "time": "2026-10-14T10:03:27.958Z",
+    "tools": [
+      "get_report",
+      "resolve_location",
+      "search_nearby_reports"
+    ],
+    "get_report": {
+      "id": "b770f433-72c7-4f3e-93e8-ec54a7a9c3da",
+      "lat": 25.1269672,
+      "lng": 121.7421773,
+      "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=b770f433-72c7-4f3e-93e8-ec54a7a9c3da",
+      "status": "open",
+      "city_id": "TW-KEE",
+      "district": "仁愛區"
+    },
+    "resolve_location": {
+      "lat": 25.1269672,
+      "lng": 121.7421773,
+      "status": "resolved",
+      "city_id": "TW-KEE",
+      "city_name": "基隆市",
+      "district": "仁愛區"
+    },
+    "search_nearby_reports": {
+      "reports": [
+        {
+          "id": "b770f433-72c7-4f3e-93e8-ec54a7a9c3da",
+          "lat": 25.1269672,
+          "lng": 121.7421773,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=b770f433-72c7-4f3e-93e8-ec54a7a9c3da",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "a6ac4da0-26de-47f7-9964-5fabc44b5767",
+          "lat": 25.1268808,
+          "lng": 121.7422185,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=a6ac4da0-26de-47f7-9964-5fabc44b5767",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "d9ac8613-481e-4a44-a75e-9180fdfdfa2f",
+          "lat": 25.1270668,
+          "lng": 121.7420535,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=d9ac8613-481e-4a44-a75e-9180fdfdfa2f",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "cd854b5b-f304-4395-a8eb-71bafaad8626",
+          "lat": 25.127189,
+          "lng": 121.741575,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=cd854b5b-f304-4395-a8eb-71bafaad8626",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "c9c81afc-1e0a-4d5b-838a-e22e21de95a7",
+          "lat": 25.1265924223733,
+          "lng": 121.741442592723,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=c9c81afc-1e0a-4d5b-838a-e22e21de95a7",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "4344137e-51fe-4580-8966-5527691fbbad",
+          "lat": 25.1264515752976,
+          "lng": 121.741466690645,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=4344137e-51fe-4580-8966-5527691fbbad",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "f9c8d4e2-91b7-4fc1-8a6e-2d5304b7c819",
+          "lat": 25.1263728,
+          "lng": 121.7413938,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=f9c8d4e2-91b7-4fc1-8a6e-2d5304b7c819",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "963c7cdc-80ad-4358-a960-13dffe691a08",
+          "lat": 25.1248386,
+          "lng": 121.742952,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=963c7cdc-80ad-4358-a960-13dffe691a08",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "b7e1c362-6ea2-46dd-9f73-a129fe4c84b1",
+          "lat": 25.1289161,
+          "lng": 121.7401812,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=b7e1c362-6ea2-46dd-9f73-a129fe4c84b1",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        },
+        {
+          "id": "57654ee6-b8b5-48bf-941a-18806f295a07",
+          "lat": 25.1287884,
+          "lng": 121.7448982,
+          "url": "https://roadtag.org/map?city=TW-KEE&district=%E4%BB%81%E6%84%9B%E5%8D%80&report=57654ee6-b8b5-48bf-941a-18806f295a07",
+          "status": "open",
+          "city_id": "TW-KEE",
+          "district": "仁愛區"
+        }
+      ],
+      "truncated": false
+    },
+    "writes_unavailable": true,
+    "invalid_id_denied": true,
+    "private_fields_absent": true
+  },
+  "homepage": {
+    "status": "PASS",
+    "target": "https://roadtag.org",
+    "widths": [
+      1280,
+      390,
+      320
+    ],
+    "keyboard_copy": true,
+    "exact_url": true,
+    "http_status": 200,
+    "anonymous": true,
+    "mcp_requests": 1
+  },
+  "boundaries": [
+    {
+      "name": "private-report-fields",
+      "status": 401,
+      "result": "PASS"
+    },
+    {
+      "name": "private-control",
+      "status": 406,
+      "result": "PASS"
+    },
+    {
+      "name": "legacy-mcp-unauthenticated",
+      "status": 401,
+      "result": "PASS"
+    }
+  ],
+  "request_budget": {
+    "approved_max": 30,
+    "reserved_total": 21,
+    "actual_http_requests": 20,
+    "unused_homepage_reservations": 1
+  },
+  "http_events": [
+    {
+      "number": 1,
+      "at": "2026-10-14T09:56:08.982Z",
+      "method": "tools/list",
+      "status": 503,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "application/json",
+      "errorCode": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "number": 2,
+      "at": "2026-10-14T09:59:16.973Z",
+      "method": "tools/list",
+      "status": 503,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "application/json",
+      "errorCode": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "number": 3,
+      "at": "2026-10-14T09:59:46.703Z",
+      "method": "tools/list",
+      "status": 503,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "application/json",
+      "errorCode": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "number": 4,
+      "at": "2026-10-14T10:02:53.339Z",
+      "method": "tools/list",
+      "status": 503,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "application/json",
+      "errorCode": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "number": 5,
+      "at": "2026-10-14T10:03:30.166Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 6,
+      "at": "2026-10-14T10:03:31.765Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 202
+    },
+    {
+      "number": 7,
+      "at": "2026-10-14T10:03:32.272Z",
+      "client": "official-sdk",
+      "method": "GET",
+      "status": 405
+    },
+    {
+      "number": 8,
+      "at": "2026-10-14T10:03:32.947Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 9,
+      "at": "2026-10-14T10:03:35.941Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 10,
+      "at": "2026-10-14T10:03:37.040Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 11,
+      "at": "2026-10-14T10:03:39.019Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 12,
+      "at": "2026-10-14T10:03:40.361Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 13,
+      "at": "2026-10-14T10:03:41.022Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 14,
+      "at": "2026-10-14T10:03:42.229Z",
+      "client": "official-sdk",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "number": 15,
+      "at": "2026-10-14T10:04:57.643Z",
+      "method": "tools/list",
+      "status": 200,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "text/event-stream",
+      "tools": [
+        "resolve_location",
+        "search_nearby_reports",
+        "get_report"
+      ]
+    },
+    {
+      "number": 16,
+      "at": "2026-10-14T10:04:58.543Z",
+      "method": "tools/list",
+      "status": 429,
+      "retryAfter": "3",
+      "cacheControl": "no-store",
+      "contentType": "application/json",
+      "errorCode": "RATE_LIMITED"
+    },
+    {
+      "number": 17,
+      "at": "2026-10-14T10:10:38.743Z",
+      "method": "tools/list",
+      "status": 200,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "text/event-stream",
+      "tools": [
+        "resolve_location",
+        "search_nearby_reports",
+        "get_report"
+      ]
+    },
+    {
+      "number": 18,
+      "at": "2026-10-14T10:11:39.450Z",
+      "method": "tools/list",
+      "status": 503,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "application/json",
+      "errorCode": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "number": 19,
+      "at": "2026-10-14T10:15:11.501Z",
+      "method": "get_report",
+      "status": 200,
+      "retryAfter": null,
+      "cacheControl": "no-store",
+      "contentType": "text/event-stream",
+      "public_read_pass": true
+    },
+    {
+      "number": 20,
+      "client": "production-homepage-reserved",
+      "at": "2026-10-14T10:16:01.371Z",
+      "maximum_requests": 1
+    },
+    {
+      "number": 21,
+      "client": "production-homepage-reserved",
+      "at": "2026-10-14T10:20:10.379Z",
+      "maximum_requests": 1
+    }
+  ],
+  "final_state": {
+    "server_enabled": true,
+    "homepage_released": true,
+    "db_enabled": true,
+    "gate_configured": true,
+    "geocoding_enabled": false,
+    "request_limits": [
+      60,
+      600,
+      600,
+      5000
+    ],
+    "geocode_limits": [
+      5,
+      20,
+      40,
+      200
+    ],
+    "concurrency_limits": [
+      4,
+      16
+    ],
+    "active_leases": 0,
+    "test_state_cleared_before_go": true,
+    "live_counters_preserved": true,
+    "local_secret_file_removed": true,
+    "staging": {
+      "enabled": false,
+      "gate_configured": false,
+      "counters": 0,
+      "leases": 0
+    }
+  },
+  "limitations": [
+    "Address and landmark search disabled; coordinate resolution supported.",
+    "No vendor model subscription or Registry/Gallery publication performed.",
+    "Optional SDK GET channel returns 405; POST Streamable HTTP/SSE succeeds."
+  ],
+  "resolved_operator_issues": [
+    "Transient Supabase request-state error; state read back and restoration retried successfully.",
+    "Homepage script checked before module initialization; real enabled state awaited, no product change."
+  ],
+  "rollback": "Set private.mcp_public_control.enabled=false immediately; set new Production server/homepage flags=false and redeploy. Do not DROP quota or change business RLS/data."
+}

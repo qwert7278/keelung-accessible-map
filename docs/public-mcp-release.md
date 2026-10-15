@@ -2,7 +2,7 @@
 
 2026-10-14（Asia/Taipei）。規格：`ROAD_TAG_PUBLIC_READ_MCP_PRODUCTION_RELEASE_GO_2026-10-14.md`。
 
-**Engineering preparation；Awaiting Production Approval。正式網址尚未發布，不宣稱可用。** 本輪取代舊 P2B-01 的三 Client／兩 Agent 強制門檻；歷史報告與 PASS／NO-GO 不改寫。未執行 Production migration、env、merge、部署／啟用或平台發布。
+**Production Public Read MCP：GO。** Owner 已明確核准本文限定的正式發布範圍，2026-10-14 已完成實際發布與匿名驗收。正式網址為 https://roadtag.org/api/mcp-public 。本輪取代舊 P2B-01 的三 Client／兩 Agent 強制門檻；歷史報告不改寫，沒有平台模型訂閱或 Registry 發布。
 
 ## 變更與獨立設定
 
@@ -32,7 +32,7 @@
 
 Migration 初始 enabled=false／gate=null。發布時只設定這個新控制 row 的 Gate hash；不寫案件／照片／OAuth。配置前比較新 Gate 不等於 Staging／Alpha／upload／service-role Secret，保留既有權限。PG local regression 已驗證未來私有／helper 函式不可直接調用，無關既有及未來函式 ACL 不變。
 
-## 一次性待核准操作範圍
+## 已核准的限定操作範圍
 
 待核准 SQL SHA-256：`22a0a67782ec1f29a27fab5b8ac53933021bcc51e117d2bad6d0ffcc0a121428`。執行前再次核對檔案雜湊與 reviewed commit；若變更則先重新審核，不套用其他 pending migrations。
 
@@ -42,7 +42,7 @@ Migration 初始 enabled=false／gate=null。發布時只設定這個新控制 r
 4. **公開 GO**：上述全 PASS 後允許最後 server flag=true、DB enabled=true、首頁 flag=true 的正式部署；核對 READY／SHA／roadtag.org、首頁手機複製、公開案件與原 /api/mcp-chatgpt 的未登入拒絕仍正常。www HTTPS 的保留方法 redirect 另核對，但 Client 使用 canonical roadtag.org，不帶保護憑證。
 5. **止損／觀察**：任一步 FAIL 立即停新 DB enabled 與 Public server／首頁 flags，不改業務資料；刪短效驗收設定／Secret 暫存。成功保留唯一正式 server Gate 和 hash；不撤銷正式 Gate 導致服務停擺。有限觀察 log 的 429/503／lease，用去敏摘要記錄 SHA、時間與結果。不登錄 Registry／Gallery，不啟動寫入。
 
-這份 runbook 不是上述操作的預先核准。最終交付提供實際 PR／head／CI／Preview，再請 owner 一次核准以上範圍；不要在聊天貼 Secret。
+Owner 已回覆「核准上述 Production 公開讀取發布範圍」。核准只涵蓋以上操作，不包含後续 Registry／Gallery／公開寫入；不要在聊天貼 Secret。
 
 ## 標準公網驗收與回滾
 
@@ -73,4 +73,36 @@ npx tsx scripts/mcp-public-hosted.ts
 
 作者 Review 已修正：Gate 禁止重用 Alpha 實際 service/session Secret；Host 應接受 DNS 大小寫／HTTPS 預設 443 等價形式，仍拒絕錯誤 Host／Origin。新增 RED→GREEN 回歸。沒有新增獨立 reviewer，也不把作者審查／CI 冒稱獨立審查；既有 #23/#24 獨立 P2A-FIX review 沿用。
 
-新 PR CI／停用 Preview 與 head 於 Engineering Ready 交付讀回；**真實 Production 三工具、正式 quota／Kill Switch、最終公開部署仍 PENDING OWNER APPROVAL**。沒有把 local fixture 或 SDK unit test 報為正式公網 PASS。
+工程 PR #28 的審核 Head 52e8be8，與合併後 main 的必要整合 Head 4992c6d，Quality push／PR CI 均 PASS。#23、#24、#28 已依序 merge；最終程式 main **6c708bd8efcdaa627ce9be05262dd9f95ffbe9f3** 的 [Quality CI](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38546131085) PASS。
+
+## 正式發布實際證據（2026-10-14）
+
+程式 [PR #28](https://github.com/qwert7278/keelung-accessible-map/pull/28) 已合併。正式 [Vercel deployment](https://vercel.com/masons-projects-2c78a251/keelung-accessible-map/7DNwAcpFDeTAtn8gAA7CEow6ybAu) `dpl_7DNwAcpFDeTAtn8gAA7CEow6ybAu` 為 READY／target=production／ref=main／SHA=6c708bd8efcdaa627ce9be05262dd9f95ffbe9f3，alias 含 roadtag.org。沒有從別的分支或第二個 Production 系統發布。
+
+| 實際正式驗收 | 結果／證據 |
+|---|---|
+| 官方 TypeScript MCP SDK 2.1.0 | PASS；無 Cookie／Authorization／Vercel bypass，initialize、三工具發現及三工具呼叫 |
+| get_report | PASS；既有公開案件 b770f433-72c7-4f3e-93e8-ec54a7a9c3da；正式案件網址正確；最後部署再次讀取 PASS |
+| resolve_location | PASS；25.1269672, 121.7421773 → 基隆市／仁愛區 |
+| search_nearby_reports | PASS；500m／include_resolved=true，10 件既有公開回報，含上述案件，truncated=false |
+| 匿名寫入／輸出隔離 | PASS；create_report、add_observation 不可用；錯誤 ID 拒絕；完整 SDK 回應無 created_by／admin_note／image_path／photo_token／credentialHash |
+| 匿名 REST 權限 | PASS；reports 私密欄位 401；private 控制表 schema 406；anon private／helper USAGE=false、控制表 SELECT=false |
+| 429／Retry-After | PASS；短暫 request_ip_minute=1，tools/list 200 → 429／Retry-After=3／no-store；已恢復 60 |
+| 兩層 Kill Switch | PASS；DB=true／server=false → 503；server=true／DB=false → 503；均 no-store |
+| SSE／Lease | PASS；實際 tools/list／get_report 為完整 text/event-stream，SDK 正常結束，最終 active_leases=0 |
+| 原五工具 OAuth 隔離 | PASS；既有端點允許匿名 initialize／discovery 是原設計，實際匿名 tools/call → 401；没有修改其設定／工具 |
+| 正式首頁 | PASS；1280／390／320px 無水平溢出；390px 鍵盤 Enter、真實 clipboard 精確網址；複製前的真實 MCP POST 200，無 Cookie／Authorization |
+| 正式網站 | PASS；首頁／map HEAD 200，www 首頁 308 → canonical roadtag.org |
+| 資料／費用範圍 | 本輪沒有執行案件、照片、OAuth 寫入；沒有模型或 Geoapify 呼叫；地址／地標搜尋維持明示停用 |
+
+Production migration 工具以實際套用時間登錄版本 **20261014095142**／name=mcp_public_controls；套用的是核准的 `20261013050238` 檔案全文，SHA-256 **22a0a67782ec1f29a27fab5b8ac53933021bcc51e117d2bad6d0ffcc0a121428**。没有批次 db push、覆寫舊 migration 或套用其他 pending SQL。
+
+初始 default-off、獨立 Gate／DB hash、正式專屬 env、測試開啟、暫調 quota、停用清理、最後 GO 已依序執行。測試狀態在最後 GO 前清到 Counter／Lease=0；正式啟用後的正常讀取 counter 保留，不為清理重設公網配額。最終 DB enabled=true／Gate configured=true、server=true、首頁=true、geocoding=false，request 60/600/600/5000、geocode 5/20/40/200、concurrent 4/16；active_leases=0。Staging 保持 disabled／gate=null／counter=lease=0。只在 Vercel 和 DB 保留正式 Gate／hash，本機臨時 Gate 檔已移除，沒有建立保護 bypass 或公開控制 Secret。
+
+已記錄 **20 次實際 MCP HTTP 請求**；預算檔保守占用 **21／30**（包含一次沒有送出 MCP 的首頁測試預留）。官方 SDK 的可選 GET 通道回 405，POST Streamable HTTP／SSE 正常，沒有視為跨平台失敗。沒有重跑 Phase 1、Phase 2A 完整驗收。
+
+已解決的驗收工具問題：一次 Supabase request-state 過期，以重新讀回及短 SQL 重試恢復；一次首頁檢查早於 module 初始化，以等待真實啟用狀態修正。均未修改產品程式或降低標準。正式頁面 JS 無錯誤、compiled release flag=true，最後真實 clipboard 驗收 PASS。
+
+有限觀察：14 日指定正式 deployment 最近 5 分鐘 runtime grouped logs 只有 info=1，沒有 error／warning group；這不是長期監控或所有 HTTP 狀態的統計。15 日續接讀回 roadtag.org 仍指向同一 READY deployment／SHA，DB enabled=true、Gate configured=true、request_ip_minute=60、active_leases=0，本機臨時 Gate 檔不存在；沒有重跑 MCP 全套或改動正式設定。
+
+機器可讀去敏證據：[`public-mcp-production-evidence.json`](./public-mcp-production-evidence.json)。地址 provider 與第三方平台帳號驗收不作本次 GO 門檻。下一步可另行準備 Registry／Gallery 發布，需新核准；本輪停止於公開唯讀服務交付。
