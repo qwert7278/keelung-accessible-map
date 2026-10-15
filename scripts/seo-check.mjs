@@ -54,6 +54,9 @@ const faqSchema = [...index.matchAll(/<script type="application\/ld\+json">([\s\
 const visibleFaq = index.match(/<section[^>]*class="section wrap home-faq"[\s\S]*?<\/section>/)?.[0] || '';
 check(faqSchema?.mainEntity?.length === [...visibleFaq.matchAll(/<details\b/g)].length && faqSchema?.mainEntity?.length >= 5, 'Homepage needs the matching visible FAQ schema.');
 const chatgptGuide = index.match(/<section[^>]*id="chatgpt"[\s\S]*?<\/section>/)?.[0] || '';
+check(/^<section[^>]*\bhidden\b[^>]*\binert\b/.test(chatgptGuide), 'Closed Alpha ChatGPT section must remain hidden and inert.');
+check(!index.replace(chatgptGuide, '').includes('href="#chatgpt"'), 'Homepage must not expose a navigation entry to the hidden ChatGPT section.');
+check(!faqSchema?.mainEntity?.some(q => q.name.includes('ChatGPT')), 'Public FAQ schema must not promote the hidden Closed Alpha.');
 check(chatgptGuide.includes('封閉測試中，暫未對所有人開放'), 'ChatGPT guide must disclose private Closed Alpha access.');
 check(chatgptGuide.includes('id="chatgpt-guide"') && chatgptGuide.includes('href="#chatgpt-guide"') && chatgptGuide.includes('href="/map"'), 'ChatGPT guide needs working tutorial and website links.');
 check((chatgptGuide.match(/<li>/g) || []).length === 6 && chatgptGuide.includes('示意對話') && chatgptGuide.includes('id="copy-chatgpt-example"'), 'ChatGPT guide needs six invite-only steps and a copyable labelled example.');
