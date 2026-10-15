@@ -10,7 +10,7 @@
 
 支援自訂遠端 Streamable HTTP MCP 的 AI 助理，可加入 `https://roadtag.org/api/mcp-public`，匿名唯讀查詢公開道路障礙回報。提供座標解析、附近回報、指定案件詳情；地址／地標文字搜尋暫停，不支援公開建案、修改或照片上傳。民眾回報不是道路安全認證，沒有回報不代表安全。
 
-[官網連接入口](https://roadtag.org/#ai-mcp) · [連接教學與查詢範例](docs/public-mcp-connect-guide.md)。Registry metadata 已準備，尚未登錄；登錄不等於各 AI 平台自動收錄。
+[官網連接入口](https://roadtag.org/#ai-mcp) · [連接教學與查詢範例](docs/public-mcp-connect-guide.md) · [Official MCP Registry：org.roadtag/road-tag](https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest)。2026-10-15 已登錄 1.0.0；登錄不等於各 AI 平台自動收錄。
 
 ## Demo 與原始碼
 

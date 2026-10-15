@@ -1,6 +1,6 @@
 # Road Tag 公開介紹與分享素材
 
-狀態：文案準備完成，尚未代為發文；Official Registry 尚未登錄。既有正式 MCP 可用，官網入口為 https://roadtag.org/#ai-mcp 。
+狀態：文案準備完成，尚未代為發文；2026-10-15 [Official Registry 已登錄 org.roadtag/road-tag 1.0.0](https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest)，公開回讀 status=active。官網入口為 https://roadtag.org/#ai-mcp 。
 
 ## 中文介紹（80–140 字）
 
@@ -26,4 +26,4 @@ https://roadtag.org/api/mcp-public
 
 先分享官網入口與上述座標示例，邀請使用者回報「Client／版本、是否有自訂遠端 MCP、三工具是否出現、去敏錯誤」。不要收集 Token、私人對話、精確住址或帳號資料。未取得發文／平台上架授權，不自動發佈社群貼文。
 
-Registry 正式查詢成功後才能加上實際條目連結；不要先加「官方收錄」或保證所有 AI 平台自動發現。若需要低頻健康監控，應另行核准頻率、通知條件及配額，這份文件沒有建立排程。
+上方 Registry 連結已在發布後實際查詢確認，但不保證所有 AI 平台自動發現或相容。若需要低頻健康監控，應另行核准頻率、通知條件及配額，這份文件沒有建立排程。
