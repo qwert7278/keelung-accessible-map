@@ -103,4 +103,6 @@ Production migration 工具以實際套用時間登錄版本 **20261014095142**�
 
 已解決的驗收工具問題：一次 Supabase request-state 過期，以重新讀回及短 SQL 重試恢復；一次首頁檢查早於 module 初始化，以等待真實啟用狀態修正。均未修改產品程式或降低標準。正式頁面 JS 無錯誤、compiled release flag=true，最後真實 clipboard 驗收 PASS。
 
+有限觀察：14 日指定正式 deployment 最近 5 分鐘 runtime grouped logs 只有 info=1，沒有 error／warning group；這不是長期監控或所有 HTTP 狀態的統計。15 日續接讀回 roadtag.org 仍指向同一 READY deployment／SHA，DB enabled=true、Gate configured=true、request_ip_minute=60、active_leases=0，本機臨時 Gate 檔不存在；沒有重跑 MCP 全套或改動正式設定。
+
 機器可讀去敏證據：[`public-mcp-production-evidence.json`](./public-mcp-production-evidence.json)。地址 provider 與第三方平台帳號驗收不作本次 GO 門檻。下一步可另行準備 Registry／Gallery 發布，需新核准；本輪停止於公開唯讀服務交付。
