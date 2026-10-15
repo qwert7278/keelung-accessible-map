@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "org.roadtag/road-tag",
+  "title": "Road Tag - Accessible Road Reports",
+  "description": "Taiwan community road barriers. Read-only, coordinates only; address/landmark search unavailable.",
+  "version": "1.0.0",
+  "websiteUrl": "https://roadtag.org/#ai-mcp",
+  "repository": {
+    "url": "https://github.com/qwert7278/keelung-accessible-map",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://roadtag.org/api/mcp-public"
+    }
+  ]
+}
