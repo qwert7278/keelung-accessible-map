@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-15",
+  "metadata_sha256": "9c87d46b6d22836f501fcd2e676bd2dafe5bb33fe451ebfc005dc8ebbe7f6d07",
+  "schema_url": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "schema_sha256": "3fba09590c99f61735d234822279f4223fab9e300c0a81e81c91ab62a4114de0",
+  "official_schema": "PASS",
+  "description_length": 97,
+  "pr29_evidence_structure": "PASS",
+  "pr29_private_fields_and_credential_patterns": "PASS",
+  "exact_name_lookup": {
+    "url": "https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest",
+    "status": 404,
+    "registered": false
+  },
+  "homepage": {
+    "http": 200,
+    "content": "PASS",
+    "ui_changed": false
+  },
+  "registry_published": false,
+  "official_publisher": {
+    "version": "1.8.1",
+    "commit": "f52dc8525a441a3abf5fedc9912152d95af5aab1",
+    "archive_sha256": "399ad0d6e00a50812b563a71d8bfbff5160c085e6b13aac6ec083d98d5ff7c45",
+    "command": "mcp-publisher validate server.json",
+    "status": "PASS",
+    "registry": "https://registry.modelcontextprotocol.io"
+  },
+  "pr29": {
+    "head": "dcd9a9ff4209a4d85f87a2c12e18018ec8d9cb3b",
+    "files": 2,
+    "findings": [],
+    "review": "read-only docs review; not a new independent security review",
+    "ci": "PASS",
+    "draft": true,
+    "merged": false,
+    "reason": "awaiting owner authorization"
+  },
+  "engineering_status": "READY TO PUBLISH / awaiting owner approval",
+  "production_changes": false,
+  "new_mcp_requests": 0,
+  "domain_proof_completed": false,
+  "publisher_login_performed": false,
+  "new_secret_created": false
+}

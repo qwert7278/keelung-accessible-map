@@ -6,6 +6,12 @@
 
 正式模式使用既有 Supabase，公開顯示民眾回報、位置與照片，正式回報開放台灣 22 個縣市與 368 個行政區。Demo 僅供隔離測試，資料不會送入正式系統。平台不是政府通報系統，也不保證路線安全。
 
+## 用自己的 AI 助理查詢
+
+支援自訂遠端 Streamable HTTP MCP 的 AI 助理，可加入 `https://roadtag.org/api/mcp-public`，匿名唯讀查詢公開道路障礙回報。提供座標解析、附近回報、指定案件詳情；地址／地標文字搜尋暫停，不支援公開建案、修改或照片上傳。民眾回報不是道路安全認證，沒有回報不代表安全。
+
+[官網連接入口](https://roadtag.org/#ai-mcp) · [連接教學與查詢範例](docs/public-mcp-connect-guide.md)。Registry metadata 已準備，尚未登錄；登錄不等於各 AI 平台自動收錄。
+
 ## Demo 與原始碼
 
 唯一正式網址：[roadtag.org](https://roadtag.org/)。唯一發布流程：本機修改與驗收 → 你確認 OK → 推送 GitHub `main` → Vercel 自動部署 Production → 核對正式網址。ChatGPT Sites 已退出正式發布流程，保留為僅擁有者可存取的歷史封存；不合併、不同步、不再發布。程式與 Supabase migration 由同一 repo 版本管理，線上資料與照片留在 Supabase。細節見[單一發布與維護流程](docs/single-release-workflow.md)。
