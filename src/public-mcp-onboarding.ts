@@ -1,9 +1,16 @@
 const endpoint='https://roadtag.org/api/mcp-public';
-export function initPublicMcp(root:Document=document,released=import.meta.env.VITE_MCP_PUBLIC_RELEASED==='true'):()=>void{
+export function initPublicMcp(root:Document=document,released=import.meta.env.VITE_MCP_PUBLIC_RELEASED==='true',textSearchReleased=import.meta.env.VITE_MCP_PUBLIC_TEXT_SEARCH_RELEASED==='true'):()=>void{
  const button=root.getElementById('copy-mcp-url') as HTMLButtonElement|null;
  const example=root.getElementById('copy-mcp-prompt') as HTMLButtonElement|null;
  const text=root.getElementById('public-mcp-prompt'),status=root.getElementById('public-mcp-status');
  if(!button||!example||!text||!status)return ()=>{};
+ const capabilities=root.getElementById('public-mcp-capabilities'),notice=root.getElementById('public-mcp-location-note');
+ const textSearch=released&&textSearchReleased;
+ if(textSearch){
+  if(capabilities)capabilities.textContent='可用台灣地址、門牌、巷弄、商家或地標取得候選位置，再查詢附近公開回報與指定案件。候選位置需要確認；地標僅供查詢周邊，不是障礙的精確位置。';
+  text.textContent='請透過 Road Tag 查詢基隆車站附近 500 公尺的公開道路障礙；若有多個候選位置請先讓我選擇，再附上案件網址及地理資料來源。請依回報內容回答，不要把沒有回報的地點當成安全道路。';
+ }
+ if(notice)notice.hidden=!textSearch;
  button.disabled=example.disabled=!released;
  status.textContent=released?'公開唯讀查詢；複製前會先確認服務可連接。':'公開唯讀 MCP 準備中，尚未開放。';
  let disposed=false,busy=false;

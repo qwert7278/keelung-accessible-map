@@ -1,3 +1,4 @@
+import {createGeoapifyProvider} from '../server/location/geoapify.js';
 import assert from 'node:assert/strict';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {mkdtemp} from 'node:fs/promises';
@@ -83,7 +84,7 @@ try{
  const env={...process.env};let upstream=0;
  try{
   process.env.GEOAPIFY_LOCATION_ENABLED='true';process.env.GEOAPIFY_API_KEY='isolated-provider-fixture';globalThis.fetch=async()=>{upstream++;throw Error('unexpected upstream');};
-  const costBlocked=publicMcpEndpoint(service,{enabled:true,origin:service.origin,riskSecret:gate,controls:{acquire:async(_risk,kind)=>kind==='request'?{allowed:true,lease:randomUUID()}:{allowed:false,code:'RATE_LIMITED',retry_after:60},release:async()=>{}},observe:e=>events.push(e)});
+  const costBlocked=publicMcpEndpoint(new RoadTagService(service.backend,service.origin,'',createGeoapifyProvider('isolated-provider-fixture')),{geocoding:true,enabled:true,origin:service.origin,riskSecret:gate,controls:{acquire:async(_risk,kind)=>kind==='request'?{allowed:true,lease:randomUUID()}:{allowed:false,code:'RATE_LIMITED',retry_after:60},release:async()=>{}},observe:e=>events.push(e)});
   const geoReq=new Request(service.origin+'/api/mcp-public',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'resolve_location',arguments:{query:'PRIVATE_QUERY_MARKER'}}})});
   const costResponse=await costBlocked(geoReq);assert((await costResponse.text()).includes('RATE_LIMITED'));assert.equal(upstream,0);
  }finally{globalThis.fetch=realFetch;process.env=env;}

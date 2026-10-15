@@ -1183,7 +1183,8 @@
         <p class="chatgpt-status">用自己的 AI 助理查詢｜公開唯讀 MCP</p>
         <h2 id="public-mcp-title">用你的 AI 助理查詢道路障礙</h2>
         <p class="chatgpt-lead">若你的 AI 助理支援「自訂遠端 MCP Server」，可加入下方網址，查詢 Road Tag 已公開的無障礙道路回報。不需要 Road Tag 帳號、邀請碼或 Secret。</p>
-        <p>目前提供座標候選位置、附近公開回報與指定案件詳情。<strong>地址／地標搜尋暫停，請先提供座標。</strong></p>
+        <p id="public-mcp-capabilities">目前提供座標候選位置、附近公開回報與指定案件詳情。<strong>地址／地標搜尋暫停，請先提供座標。</strong></p>
+        <p id="public-mcp-location-note" hidden>地址與地標查詢會傳送至第三方 Geoapify，請避免輸入不必要的私人住址或個資。位置資料：<a href="https://www.geoapify.com/">Powered by Geoapify</a>／<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>。</p>
         <div class="public-mcp-connection"><code class="public-mcp-address">https://roadtag.org/api/mcp-public</code><button type="button" class="button secondary" id="copy-mcp-url" disabled>複製 MCP 網址</button></div>
         <p id="public-mcp-status" role="status" aria-live="polite">公開唯讀 MCP 準備中，尚未開放。</p>
         <p>請到 AI 助理設定中的 MCP／Tools／Connectors 新增遠端 Server 並貼上網址；選單名稱依平台而異。僅支援自訂遠端 MCP 的客戶端可嘗試連接，並非自動安裝或各平台官方驗收。</p>

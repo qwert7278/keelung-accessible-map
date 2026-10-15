@@ -12,6 +12,8 @@
 
 [官網連接入口](https://roadtag.org/#ai-mcp) · [連接教學與查詢範例](docs/public-mcp-connect-guide.md) · [Official MCP Registry：org.roadtag/road-tag](https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest)。2026-10-15 已登錄 1.0.0；登錄不等於各 AI 平台自動收錄。
 
+地址／地標文字搜尋已有獨立 Public provider 的工程準備；**尚未正式啟用**，目前仍請使用座標。[成本、驗證與 Owner 核准清單](docs/public-mcp-geocoding-release.md)；Registry 1.0.0 內容保持不變。
+
 ## Demo 與原始碼
 
 唯一正式網址：[roadtag.org](https://roadtag.org/)。唯一發布流程：本機修改與驗收 → 你確認 OK → 推送 GitHub `main` → Vercel 自動部署 Production → 核對正式網址。ChatGPT Sites 已退出正式發布流程，保留為僅擁有者可存取的歷史封存；不合併、不同步、不再發布。程式與 Supabase migration 由同一 repo 版本管理，線上資料與照片留在 Supabase。細節見[單一發布與維護流程](docs/single-release-workflow.md)。
