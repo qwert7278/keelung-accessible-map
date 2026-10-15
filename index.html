@@ -1015,7 +1015,7 @@
     </style>
     <link rel="stylesheet" href="/brand-tokens.css" />
     <link rel="stylesheet" href="/roadtag-home.css?v=20261014-public-mcp" />
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"__PUBLIC_SITE_URL__/#faq","mainEntity":[{"@type":"Question","name":"這個平台主要回報哪些問題？","acceptedAnswer":{"@type":"Answer","text":"路見不平以騎樓與人行道為核心，記錄高低差、路面破損、通道阻塞、缺乏坡道等通行障礙，並留下位置、照片及現場說明。"}},{"@type":"Question","name":"可以選擇哪些縣市？","acceptedAnswer":{"@type":"Answer","text":"地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。"}},{"@type":"Question","name":"回報會自動送交政府嗎？","acceptedAnswer":{"@type":"Answer","text":"目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。"}},{"@type":"Question","name":"為什麼切換縣市後先顯示市中心行政區？","acceptedAnswer":{"@type":"Answer","text":"每個縣市先以設定的中心行政區作為瀏覽起點；選擇「所有行政區」可查看全市範圍與案件分布。這不是案件數量或人流排名。"}},{"@type":"Question","name":"誰負責建置與維護 Road Tag？","acceptedAnswer":{"@type":"Answer","text":"路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。"}},{"@type":"Question","name":"一定要 GPS 或 Google Maps 才能透過 ChatGPT 回報嗎？","acceptedAnswer":{"@type":"Answer","text":"已獲邀請的測試使用者可以先提供地址或地標，不必複製 Google Maps 網址或座標。候選位置仍須確認；定位不明確時，請補充說明或使用網站地圖選點。"}},{"@type":"Question","name":"ChatGPT 會直接發布我的回報嗎？","acceptedAnswer":{"@type":"Answer","text":"不會。會先核對候選位置與附近案件，最後由你確認照片、內容與提交。附近案件不會自動視為相同障礙。"}},{"@type":"Question","name":"沒有 ChatGPT 或尚未獲邀請，可以回報嗎？","acceptedAnswer":{"@type":"Answer","text":"可以使用網站回報。ChatGPT 回報目前是私有封閉測試，暫未提供所有人可用的連線入口。"}}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"__PUBLIC_SITE_URL__/#faq","mainEntity":[{"@type":"Question","name":"這個平台主要回報哪些問題？","acceptedAnswer":{"@type":"Answer","text":"路見不平以騎樓與人行道為核心，記錄高低差、路面破損、通道阻塞、缺乏坡道等通行障礙，並留下位置、照片及現場說明。"}},{"@type":"Question","name":"可以選擇哪些縣市？","acceptedAnswer":{"@type":"Answer","text":"地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。"}},{"@type":"Question","name":"回報會自動送交政府嗎？","acceptedAnswer":{"@type":"Answer","text":"目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。"}},{"@type":"Question","name":"為什麼切換縣市後先顯示市中心行政區？","acceptedAnswer":{"@type":"Answer","text":"每個縣市先以設定的中心行政區作為瀏覽起點；選擇「所有行政區」可查看全市範圍與案件分布。這不是案件數量或人流排名。"}},{"@type":"Question","name":"誰負責建置與維護 Road Tag？","acceptedAnswer":{"@type":"Answer","text":"路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。"}}]}</script>
   <script type="application/ld+json" data-roadtag-page>{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"__PUBLIC_SITE_URL__/#page","url":"__PUBLIC_SITE_URL__/","name":"路見不平 Road Tag｜台灣騎樓與人行道通行回報平台","inLanguage":"zh-TW","isPartOf":{"@id":"__PUBLIC_SITE_URL__/#website"}},{"@type":"BreadcrumbList","@id":"__PUBLIC_SITE_URL__/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"路見不平","item":"__PUBLIC_SITE_URL__/"}]}]}</script>
 </head>
   <body>
@@ -1027,7 +1027,6 @@
       </a>
       <nav class="nav" aria-label="主要導覽">
         <a href="#how">使用方式</a>
-        <a href="#chatgpt">ChatGPT 回報</a>
         <a href="#ai-mcp">AI 助理查詢</a>
         <a href="#map">即時地圖</a>
         <a class="button" href="/map" data-map-link>開啟通行地圖 <span aria-hidden="true">↗</span></a>
@@ -1153,7 +1152,7 @@
         </div>
       </section>
 
-      <section class="section wrap chatgpt-report" id="chatgpt" aria-labelledby="chatgpt-title">
+      <section class="section wrap chatgpt-report" id="chatgpt" aria-labelledby="chatgpt-title" hidden inert>
         <p class="chatgpt-status">ChatGPT 回報｜封閉測試中</p>
         <h2 id="chatgpt-title">用 ChatGPT，也能協助回報道路障礙</h2>
         <p class="chatgpt-lead">拍下障礙，說出在哪裡，確認後交給 Road Tag。</p>
@@ -1183,13 +1182,13 @@
       <section class="section wrap chatgpt-report" id="ai-mcp" aria-labelledby="public-mcp-title">
         <p class="chatgpt-status">用自己的 AI 助理查詢｜公開唯讀 MCP</p>
         <h2 id="public-mcp-title">用你的 AI 助理查詢道路障礙</h2>
-        <p class="chatgpt-lead">若你的 AI 助理支援「自訂遠端 MCP Server」，服務啟用後可加入下方網址，查詢 Road Tag 已公開的無障礙道路回報。不需要 Road Tag 帳號、邀請碼或 Secret。</p>
+        <p class="chatgpt-lead">若你的 AI 助理支援「自訂遠端 MCP Server」，可加入下方網址，查詢 Road Tag 已公開的無障礙道路回報。不需要 Road Tag 帳號、邀請碼或 Secret。</p>
         <p>目前提供座標候選位置、附近公開回報與指定案件詳情。<strong>地址／地標搜尋暫停，請先提供座標。</strong></p>
         <div class="public-mcp-connection"><code class="public-mcp-address">https://roadtag.org/api/mcp-public</code><button type="button" class="button secondary" id="copy-mcp-url" disabled>複製 MCP 網址</button></div>
         <p id="public-mcp-status" role="status" aria-live="polite">公開唯讀 MCP 準備中，尚未開放。</p>
         <p>請到 AI 助理設定中的 MCP／Tools／Connectors 新增遠端 Server 並貼上網址；選單名稱依平台而異。僅支援自訂遠端 MCP 的客戶端可嘗試連接，並非自動安裝或各平台官方驗收。</p>
         <div class="chatgpt-example"><h3>查詢範例</h3><blockquote id="public-mcp-prompt">請用 Road Tag 查詢座標 25.120772、121.743712 附近 500 公尺的公開道路障礙回報，再提供案件網址。請依回報內容回答，不要把沒有回報的地點當成安全道路。</blockquote><button type="button" class="button secondary" id="copy-mcp-prompt" disabled>複製查詢範例</button></div>
-        <p><strong>這是公開唯讀查詢，不會建立或修改案件。</strong>資料由民眾回報，未列出的地點不代表安全。上方 ChatGPT 照片回報仍屬另行邀請與授權的封閉測試；你也可以直接<a href="/map">使用網站地圖查詢或回報</a>。</p>
+        <p><strong>這是公開唯讀查詢，不會建立或修改案件。</strong>資料由民眾回報，未列出的地點不代表安全。你也可以直接<a href="/map">使用網站地圖查詢或回報</a>。</p>
       </section>
 
       <section class="wrap" aria-labelledby="closing-title">
@@ -1205,10 +1204,7 @@
 <details><summary>可以選擇哪些縣市？</summary><p>地圖提供台灣 22 個縣市與 368 個行政區的選擇，初次使用從基隆市仁愛區開始。台灣 22 個縣市與 368 個行政區均可回報騎樓及人行道通行障礙。</p></details>
 <details><summary>回報會自動送交政府嗎？</summary><p>目前不會。這是民眾共同紀錄平台，尚未串接政府派工。社群回報與案件狀態不代表政府公告，也不保證路線安全。</p></details>
 <details><summary>為什麼切換縣市後先顯示市中心行政區？</summary><p>每個縣市先以設定的中心行政區作為瀏覽起點；選擇「所有行政區」可查看全市範圍與案件分布。這不是案件數量或人流排名。</p></details>
-<details><summary>誰負責建置與維護 Road Tag？</summary><p>路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。</p></details>
-<details><summary>一定要 GPS 或 Google Maps 才能透過 ChatGPT 回報嗎？</summary><p>已獲邀請的測試使用者可以先提供地址或地標，不必複製 Google Maps 網址或座標。候選位置仍須確認；定位不明確時，請補充說明或使用網站地圖選點。</p></details>
-<details><summary>ChatGPT 會直接發布我的回報嗎？</summary><p>不會。會先核對候選位置與附近案件，最後由你確認照片、內容與提交。附近案件不會自動視為相同障礙。</p></details>
-<details><summary>沒有 ChatGPT 或尚未獲邀請，可以回報嗎？</summary><p>可以使用網站回報。ChatGPT 回報目前是私有封閉測試，暫未提供所有人可用的連線入口。</p></details></section>
+<details><summary>誰負責建置與維護 Road Tag？</summary><p>路見不平 Road Tag 由社團法人無礙玩家生活關懷協會會員發起，並由協會負責平台建置與維護。</p></details></section>
     </main>
 
     <footer class="site-footer" id="footer">
