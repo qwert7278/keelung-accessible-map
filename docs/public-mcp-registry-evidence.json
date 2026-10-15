@@ -9,15 +9,16 @@
   "pr29_private_fields_and_credential_patterns": "PASS",
   "exact_name_lookup": {
     "url": "https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest",
-    "status": 404,
-    "registered": false
+    "status": 200,
+    "registered": true,
+    "readback_at": "2026-10-15T09:23:35.762Z"
   },
   "homepage": {
     "http": 200,
     "content": "PASS",
     "ui_changed": false
   },
-  "registry_published": false,
+  "registry_published": true,
   "official_publisher": {
     "version": "1.8.1",
     "commit": "f52dc8525a441a3abf5fedc9912152d95af5aab1",
@@ -32,14 +33,149 @@
     "findings": [],
     "review": "read-only docs review; not a new independent security review",
     "ci": "PASS",
-    "draft": true,
-    "merged": false,
-    "reason": "awaiting owner authorization"
+    "draft": false,
+    "merged": true,
+    "reason": "Owner authorized, original reviewed head/CI verified, merged in order",
+    "merge_commit": "b3fd86d527d1913c51b678301e463de47fe1a028"
   },
-  "engineering_status": "READY TO PUBLISH / awaiting owner approval",
-  "production_changes": false,
-  "new_mcp_requests": 0,
-  "domain_proof_completed": false,
-  "publisher_login_performed": false,
-  "new_secret_created": false
+  "engineering_status": "REGISTRY PUBLISH GO",
+  "production_changes": true,
+  "new_mcp_requests": 2,
+  "domain_proof_completed": true,
+  "publisher_login_performed": true,
+  "new_secret_created": true,
+  "prepublication_exact_name_lookup": {
+    "url": "https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest",
+    "status": 404,
+    "registered": false
+  },
+  "integrated_pr30": {
+    "head": "f5912c0dc4d6f1bbb7e04ad1a54e6f12b18fbb40",
+    "merge_commit": "496893995c93a2151afa2c17fb081b6f6917dd33",
+    "ci": "PASS"
+  },
+  "production_change_scope": "Approved documentation/README/server.json integration and existing Vercel deployment only; no runtime, env, DB, provider or security changes",
+  "publication": {
+    "status": "GO",
+    "approved_scope": "Owner approved entire limited release checklist",
+    "identity": "org.roadtag",
+    "method": "dns",
+    "dns": {
+      "name": "roadtag.org",
+      "type": "TXT",
+      "public_proof": "v=MCPv1; k=ed25519; p=NUI4RaEL430kO9zQIUV0ZWYE1WYOOWKwBEkZjd0+ov0=",
+      "mcp_records_observed": 1,
+      "public_resolver": "1.1.1.1",
+      "ttl": "Auto",
+      "other_records_unchanged": true
+    },
+    "login": {
+      "operation": "login",
+      "status": "PASS",
+      "exit": 0,
+      "at": "2026-10-15T09:21:31.706Z",
+      "name": "org.roadtag/road-tag",
+      "version": "1.0.0",
+      "metadata_sha256": "9c87d46b6d22836f501fcd2e676bd2dafe5bb33fe451ebfc005dc8ebbe7f6d07"
+    },
+    "validation": {
+      "operation": "validate",
+      "status": "PASS",
+      "exit": 0,
+      "at": "2026-10-15T09:22:02.949Z",
+      "name": "org.roadtag/road-tag",
+      "version": "1.0.0",
+      "metadata_sha256": "9c87d46b6d22836f501fcd2e676bd2dafe5bb33fe451ebfc005dc8ebbe7f6d07"
+    },
+    "publish": {
+      "operation": "publish",
+      "status": "PASS",
+      "exit": 0,
+      "at": "2026-10-15T09:22:53.154Z",
+      "name": "org.roadtag/road-tag",
+      "version": "1.0.0",
+      "metadata_sha256": "9c87d46b6d22836f501fcd2e676bd2dafe5bb33fe451ebfc005dc8ebbe7f6d07"
+    },
+    "publish_attempts": 1,
+    "public_readback": {
+      "url": "https://registry.modelcontextprotocol.io/v0.1/servers/org.roadtag%2Froad-tag/versions/latest",
+      "http": 200,
+      "readback_at": "2026-10-15T09:23:35.762Z",
+      "entry": {
+        "server": {
+          "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+          "name": "org.roadtag/road-tag",
+          "description": "Taiwan community road barriers. Read-only, coordinates only; address/landmark search unavailable.",
+          "title": "Road Tag - Accessible Road Reports",
+          "repository": {
+            "url": "https://github.com/qwert7278/keelung-accessible-map",
+            "source": "github"
+          },
+          "version": "1.0.0",
+          "websiteUrl": "https://roadtag.org/#ai-mcp",
+          "remotes": [
+            {
+              "type": "streamable-http",
+              "url": "https://roadtag.org/api/mcp-public"
+            }
+          ]
+        },
+        "_meta": {
+          "io.modelcontextprotocol.registry/official": {
+            "status": "active",
+            "statusChangedAt": "2026-10-15T09:22:47.846749Z",
+            "publishedAt": "2026-10-15T09:22:47.846749Z",
+            "updatedAt": "2026-10-15T09:22:47.846749Z",
+            "isLatest": true
+          }
+        }
+      }
+    },
+    "production": {
+      "sha": "496893995c93a2151afa2c17fb081b6f6917dd33",
+      "ci": "PASS",
+      "ci_url": "https://github.com/qwert7278/keelung-accessible-map/actions/runs/38711698956",
+      "deployment": "dpl_B2iaECuAjoMa6CiYfTkrDAQFUtLw",
+      "status": "READY",
+      "alias": "roadtag.org"
+    },
+    "anonymous_smoke": {
+      "approved_max": 3,
+      "count": 2,
+      "events": [
+        {
+          "at": "2026-10-15T09:22:13.535Z",
+          "status": "PASS",
+          "http": 200,
+          "anonymous": true,
+          "tools": [
+            "get_report",
+            "resolve_location",
+            "search_nearby_reports"
+          ],
+          "cache_control": "no-store"
+        },
+        {
+          "at": "2026-10-15T09:23:37.705Z",
+          "status": "PASS",
+          "http": 200,
+          "anonymous": true,
+          "tools": [
+            "get_report",
+            "resolve_location",
+            "search_nearby_reports"
+          ],
+          "cache_control": "no-store"
+        }
+      ]
+    },
+    "cleanup": {
+      "official_logout": "PASS",
+      "registry_private_key_retained_under_owner_acl": true,
+      "private_key_or_token_in_git": false,
+      "production_mcp_gate_untouched": true
+    },
+    "other_platform_publication": false,
+    "social_posts_sent": false
+  }
 }
