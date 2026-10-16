@@ -3,10 +3,12 @@ import sharp from 'sharp';
 import {schemas,handoffSchema,RoadError,type Backend,type Principal,type PublicRow,type ToolName} from './contracts.js';
 import {candidates,distance,reportUrl,validateLocation} from './geography.js';
 import {geoapifyProvider} from '../location/geoapify.js';
+import type {LocationProvider} from '../location/provider.js';
 import {limitLocationActor} from '../location/safety.js';
 export const hash=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');
 export class RoadTagService {
- constructor(public backend:Backend,public origin:string,private photoSecret:string){}
+ constructor(public backend:Backend,public origin:string,private photoSecret:string,public locationProvider?:LocationProvider|null){}
+ get locationSearchAvailable(){return this.locationProvider!==undefined?this.locationProvider!==null:process.env.GEOAPIFY_LOCATION_ENABLED==='true'&&!!process.env.GEOAPIFY_API_KEY;}
  async call(name:ToolName,raw:unknown,principal:Principal,signal?:AbortSignal):Promise<PublicRow>{
   signal?.throwIfAborted();
   if((name==='create_report'||name==='add_observation')&&!principal.write)throw new RoadError('FORBIDDEN');
@@ -17,13 +19,14 @@ export class RoadTagService {
    const input=schemas.resolve_location.parse(raw);
    if(input.query){
     if(input.lat!==undefined||input.lng!==undefined)throw new RoadError('INVALID_INPUT');
-    if(process.env.GEOAPIFY_LOCATION_ENABLED!=='true'||!process.env.GEOAPIFY_API_KEY)throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');
     if(input.query.length<2)throw new RoadError('INVALID_INPUT');
-    if(limitLocationActor(principal.id))throw new RoadError('RATE_LIMITED');
+    if(!this.locationSearchAvailable)throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');
+    // Public admission is persisted in SQL; do not consume Alpha's process-wide actor budget.
+    if(this.locationProvider===undefined&&limitLocationActor(principal.id))throw new RoadError('RATE_LIMITED');
     try {
-     const matches=await geoapifyProvider.search(input.query,input.city_hint?.replace(/台/g,'臺')==='基隆市'||input.city_hint==='TW-KEE'?'TW-KEE':undefined,signal);
+     const matches=await (this.locationProvider??geoapifyProvider).search(input.query,input.city_hint?.replace(/台/g,'臺')==='基隆市'||input.city_hint==='TW-KEE'?'TW-KEE':undefined,signal);
      const found=matches.flatMap(m=>candidates(m.location.lat,m.location.lng).map(region=>({...region,lat:m.location.lat,lng:m.location.lng,label:m.label,address:m.address,kind:m.kind,precision:m.precision,confidence:m.confidence,needs_confirmation:true,source:m.source}))).slice(0,5);
-     return {status:found.length===0?'not_found':found.length===1?'candidate':'ambiguous',needs_confirmation:true,candidates:found,message:found.length?'候選地址或地標僅供參考，請確認實際障礙位置後再查詢附近案件。':'找不到可靠候選，請補充門牌、店名或地標，或使用地圖選點。'};
+     return {status:found.length===0?'not_found':found.length===1?'candidate':'ambiguous',needs_confirmation:true,candidates:found,...(this.locationProvider&&matches.some(m=>m.source==='Geoapify')?{attribution:{provider:{label:'Powered by Geoapify',url:'https://www.geoapify.com/'},data:{label:'© OpenStreetMap contributors',url:'https://www.openstreetmap.org/copyright'}}}:{}),message:found.length?'候選地址或地標僅供參考，請確認實際障礙位置後再查詢附近案件。':'找不到可靠候選，請補充門牌、店名或地標，或使用地圖選點。'};
     } catch {throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');}
    }
    if(input.lat===undefined||input.lng===undefined)throw new RoadError('INVALID_INPUT');

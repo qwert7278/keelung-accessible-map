@@ -1,3 +1,4 @@
+import {createGeoapifyProvider} from '../server/location/geoapify.js';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {readBounded} from '../server/mcp/handler.js';
@@ -28,7 +29,7 @@ globalThis.fetch=async(input,init)=>{
 };
 try{
  process.env.GEOAPIFY_LOCATION_ENABLED='true';process.env.GEOAPIFY_API_KEY='isolated-fixture';
- const endpoint=publicMcpEndpoint(service,{enabled:true,origin,riskSecret:'fixture'.repeat(8),timeoutMs:20,observe:()=>{},controls:{acquire:async()=>({allowed:true,lease:randomUUID()}),release:async()=>{releases++;}}});
+ const endpoint=publicMcpEndpoint(new RoadTagService(service.backend,origin,'',createGeoapifyProvider('isolated-fixture')),{geocoding:true,enabled:true,origin,riskSecret:'fixture'.repeat(8),timeoutMs:20,observe:()=>{},controls:{acquire:async()=>({allowed:true,lease:randomUUID()}),release:async()=>{releases++;}}});
  assert.equal((await endpoint(request('resolve_location',{query:'基隆車站'}))).status,503);
  await new Promise(r=>setTimeout(r,30));assert.equal(providerCalls,1);assert.equal(providerAborted,1);assert.equal(releases,2);
  // A cancelled request cannot acquire another provider call after receiving quota.

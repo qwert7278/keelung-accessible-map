@@ -36,6 +36,20 @@ https://roadtag.org/api/mcp-public
 
 公開 MCP 不提供 `create_report`、`add_observation`、修改、照片上傳或自動建案。要回報問題，請使用[網站地圖](https://roadtag.org/map)的正常流程。原 `/api/mcp-chatgpt` 是另外邀請與授權的封閉測試，不要拿它代替公開端點。
 
+## 地址／地標搜尋準備（尚未開放）
+
+文字搜尋的獨立 provider 與安全控制正在準備；正式服務目前仍使用上方座標方式。待官網明確顯示可用且工具描述不再標示暫停後，才使用以下範例：
+
+> 請使用 Road Tag 搜尋基隆車站，先列出候選位置讓我確認，再查詢附近 500 公尺的公開道路障礙，附上案件連結與資料來源。沒有回報不代表道路安全。
+
+啟用後 `resolve_location({query, city_hint?})` 最多回傳五個候選；可以輸入台灣地址、巷弄門牌、商家、車站或醫院。即使只有一個候選也需確認，地標只是查詢周邊中心，不是路障精確位置。找不到時補上縣市／門牌，不要要求 AI 猜座標。附近查詢仍最多 500 公尺。
+
+文字會送往第三方 Geoapify，請避免私人住址或不必要個資；Road Tag 不建立搜尋歷史或將文字寫入案件。保留工具回傳的 [Powered by Geoapify](https://www.geoapify.com/) 及 [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) 來源。額度／provider 故障可能只暫停文字搜尋，既有座標讀取仍可用。`RATE_LIMITED` 時依 `Retry-After` 等待，不自動重試或繞過配額。
+
+工程與正式啟用是不同狀態；[發布核准／成本與回滾清單](public-mcp-geocoding-release.md)。Registry 1.0.0 仍描述 coordinates only，新版 metadata 須另行核准。
+
+English: Text search is prepared but not enabled in Production. After an approved release, use a Taiwan address or landmark, confirm location candidates, and keep Geoapify/OpenStreetMap attribution. Queries are sent to Geoapify. Until then, use coordinates.
+
 ## 常見問題
 
 | 狀況 | 處理方式 |
