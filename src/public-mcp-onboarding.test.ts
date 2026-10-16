@@ -1,6 +1,6 @@
 import {describe,it,expect,vi,afterEach} from 'vitest';
 import {initPublicMcp} from './public-mcp-onboarding';
-afterEach(()=>vi.unstubAllGlobals());
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();});
 function fixture(){
  const listeners=new Map<string,()=>Promise<void>>();
  const button=(id:string)=>({disabled:false,addEventListener:vi.fn((_type:string,fn:()=>Promise<void>)=>listeners.set(id,fn)),removeEventListener:vi.fn()});
@@ -8,18 +8,33 @@ function fixture(){
  const nodes:Record<string,unknown>={'copy-mcp-url':url,'copy-mcp-prompt':prompt,'public-mcp-status':status,'public-mcp-prompt':text};
  return {root:{getElementById:(id:string)=>nodes[id]} as unknown as Document,url,prompt,status,click:(id:string)=>listeners.get(id)!()};
 }
-const tools=['resolve_location','get_report','search_nearby_reports'].map(name=>({name}));
-describe('public MCP homepage connection',()=>{
- it('keeps the connection unavailable before a reviewed release',async()=>{const f=fixture();const fetch=vi.fn(),writeText=vi.fn();vi.stubGlobal('fetch',fetch);vi.stubGlobal('navigator',{clipboard:{writeText}});initPublicMcp(f.root,false);expect(f.url.disabled).toBe(true);expect(f.status.textContent).toContain('尚未開放');await f.click('copy-mcp-url');expect(fetch).not.toHaveBeenCalled();expect(writeText).not.toHaveBeenCalled();});
- it('checks actual anonymous discovery and copies the exact public URL',async()=>{const f=fixture(),fetch=vi.fn().mockResolvedValue(new Response('event: message\ndata: '+JSON.stringify({jsonrpc:'2.0',id:1,result:{tools}})+'\n\n')),writeText=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('fetch',fetch);vi.stubGlobal('navigator',{clipboard:{writeText}});initPublicMcp(f.root,true);await f.click('copy-mcp-url');expect(fetch).toHaveBeenCalledWith('/api/mcp-public',expect.objectContaining({method:'POST',credentials:'omit'}));expect(writeText).toHaveBeenCalledWith('https://roadtag.org/api/mcp-public');expect(f.status.textContent).toContain('已複製');});
- it('does not copy a disabled or unexpected server',async()=>{for(const response of [new Response('',{status:503}),Response.json({result:{tools:[...tools,{name:'create_report'}]}})]){const f=fixture(),writeText=vi.fn();vi.stubGlobal('fetch',vi.fn().mockResolvedValue(response));vi.stubGlobal('navigator',{clipboard:{writeText}});initPublicMcp(f.root,true);await f.click('copy-mcp-url');expect(writeText).not.toHaveBeenCalled();expect(f.status.textContent).toContain('暫時無法連接');}});
- it('provides manual copy feedback when clipboard permission is denied',async()=>{const f=fixture();vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({result:{tools}})));vi.stubGlobal('navigator',{clipboard:{writeText:vi.fn().mockRejectedValue(Error('denied'))}});initPublicMcp(f.root,true);await f.click('copy-mcp-url');expect(f.status.textContent).toContain('手動複製');});
- it('copies the visible coordinate example',async()=>{const f=fixture(),writeText=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('navigator',{clipboard:{writeText}});const cleanup=initPublicMcp(f.root,true);await f.click('copy-mcp-prompt');expect(writeText).toHaveBeenCalledWith('請查詢這個座標附近的公開回報。');cleanup();expect(f.prompt.removeEventListener).toHaveBeenCalledOnce();});
-});
-
-it('copies a homepage example without requiring a technical URL button',async()=>{
- const f=fixture(),get=f.root.getElementById.bind(f.root),writeText=vi.fn().mockResolvedValue(undefined);
- vi.spyOn(f.root,'getElementById').mockImplementation(id=>id==='copy-mcp-url'?null:get(id));
- vi.stubGlobal('navigator',{clipboard:{writeText}});const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
- initPublicMcp(f.root,true);await f.click('copy-mcp-prompt');expect(writeText).toHaveBeenCalledWith('請查詢這個座標附近的公開回報。');expect(fetch).not.toHaveBeenCalled();
+describe('public MCP copy actions',()=>{
+ it.each([true,false])('copies the fixed URL independent of the release flag (%s)',async released=>{
+  const f=fixture(),fetch=vi.fn(),writeText=vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('fetch',fetch);vi.stubGlobal('navigator',{clipboard:{writeText}});
+  initPublicMcp(f.root,released);expect(f.url.disabled).toBe(false);expect(f.prompt.disabled).toBe(!released);
+  await f.click('copy-mcp-url');expect(writeText).toHaveBeenCalledWith('https://roadtag.org/api/mcp-public');expect(fetch).not.toHaveBeenCalled();
+  expect(f.status.textContent).toContain('不代表服務目前可連接');
+ });
+ it.each([429,503,'offline','timeout'])('copies without checking upstream %s',async failure=>{
+  const f=fixture(),fetch=vi.fn(async()=>{if(typeof failure==='number')return new Response('',{status:failure});throw new DOMException('offline',failure==='timeout'?'TimeoutError':'NetworkError');}),writeText=vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('fetch',fetch);vi.stubGlobal('navigator',{clipboard:{writeText}});
+  initPublicMcp(f.root,true);await f.click('copy-mcp-url');
+  expect(writeText).toHaveBeenCalledWith('https://roadtag.org/api/mcp-public');expect(fetch).not.toHaveBeenCalled();
+ });
+ it('provides manual copy feedback when clipboard permission is denied',async()=>{
+  const f=fixture(),fetch=vi.fn();vi.stubGlobal('fetch',fetch);vi.stubGlobal('navigator',{clipboard:{writeText:vi.fn().mockRejectedValue(Error('denied'))}});
+  initPublicMcp(f.root,true);await f.click('copy-mcp-url');expect(f.status.textContent).toContain('手動複製');expect(fetch).not.toHaveBeenCalled();
+ });
+ it('keeps unpublished query examples disabled and removes both listeners',async()=>{
+  const f=fixture(),writeText=vi.fn();vi.stubGlobal('navigator',{clipboard:{writeText}});const cleanup=initPublicMcp(f.root,false);
+  await f.click('copy-mcp-prompt');expect(writeText).not.toHaveBeenCalled();cleanup();
+  expect(f.url.removeEventListener).toHaveBeenCalledOnce();expect(f.prompt.removeEventListener).toHaveBeenCalledOnce();
+ });
+ it('copies the visible homepage example without a technical URL button',async()=>{
+  const f=fixture(),get=f.root.getElementById.bind(f.root),writeText=vi.fn().mockResolvedValue(undefined),fetch=vi.fn();
+  vi.spyOn(f.root,'getElementById').mockImplementation(id=>id==='copy-mcp-url'?null:get(id));
+  vi.stubGlobal('navigator',{clipboard:{writeText}});vi.stubGlobal('fetch',fetch);
+  initPublicMcp(f.root,true);await f.click('copy-mcp-prompt');expect(writeText).toHaveBeenCalledWith('請查詢這個座標附近的公開回報。');expect(fetch).not.toHaveBeenCalled();
+ });
 });

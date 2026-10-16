@@ -28,3 +28,13 @@
 - 配置格式與新路由列入既有 build SEO guard；Preview 仍需 noindex。圖示只從本站載入。
 - Review：未改公開三工具及 quota；沒有繞過登入、工作區限制、MCP tool approval 或賦予公開寫入。只做 UI/文件，不宣稱本輪有新平台模型調用 PASS。
 - 尚未部署；合併與正式部署需 Owner 核准。回滾為 revert 此 PR 經既有 main→Vercel，無 migration、DNS 或資料清理。
+
+## Review 修正（2026-10-16）
+
+- P2：固定網址直接複製，不做 tools/list／fetch，不依賴服務健康或 release flag；尚未發布的查詢範例仍停用。成功訊息明示複製不等於連線成功，保留 Clipboard 拒絕時的手動複製、aria-live/status 及 listener cleanup。
+- P3：一般 description、og:description、twitter:description 統一為公開唯讀 MCP 連接與案件查詢，不再包含照片回報描述。Title／canonical／OG／Twitter／JSON-LD／sitemap 由 metadata 測試與既有 build SEO guard 核對。
+- RED：舊碼在 429／503／offline／timeout 及 Clipboard deny 情境阻擋複製；分享描述也未通過一致性測試。GREEN：三個 focused 檔共 15 tests PASS（9 copy actions、1 metadata、5 CLI/TOML/JSON copy）。
+- 本機 1280／390px 無水平溢出；首頁範例、/mcp 網址鍵盤複製 PASS。role=status、aria-live=polite 及 AX 狀態文字可見；未使用實體 NVDA／VoiceOver。
+- Typecheck／Build／SEO／Lint／diff check PASS。CI／Preview 以最新 PR head 檢查為準。
+- 人工靜態 review 未留下未修的 P0/P1；不是獨立子 agent review。沒有正式 MCP／Geoapify／模型呼叫，沒有 env、DB、Secret、Registry、Production 變更。
+- PR #33 不在此修正中合併；衝突分析與隔離整合 patch 另列於整合報告。Owner 尚未核准 Ready／merge／Production。
