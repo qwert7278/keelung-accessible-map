@@ -16,3 +16,10 @@ describe('public MCP homepage connection',()=>{
  it('provides manual copy feedback when clipboard permission is denied',async()=>{const f=fixture();vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({result:{tools}})));vi.stubGlobal('navigator',{clipboard:{writeText:vi.fn().mockRejectedValue(Error('denied'))}});initPublicMcp(f.root,true);await f.click('copy-mcp-url');expect(f.status.textContent).toContain('手動複製');});
  it('copies the visible coordinate example',async()=>{const f=fixture(),writeText=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('navigator',{clipboard:{writeText}});const cleanup=initPublicMcp(f.root,true);await f.click('copy-mcp-prompt');expect(writeText).toHaveBeenCalledWith('請查詢這個座標附近的公開回報。');cleanup();expect(f.prompt.removeEventListener).toHaveBeenCalledOnce();});
 });
+
+it('copies a homepage example without requiring a technical URL button',async()=>{
+ const f=fixture(),get=f.root.getElementById.bind(f.root),writeText=vi.fn().mockResolvedValue(undefined);
+ vi.spyOn(f.root,'getElementById').mockImplementation(id=>id==='copy-mcp-url'?null:get(id));
+ vi.stubGlobal('navigator',{clipboard:{writeText}});const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
+ initPublicMcp(f.root,true);await f.click('copy-mcp-prompt');expect(writeText).toHaveBeenCalledWith('請查詢這個座標附近的公開回報。');expect(fetch).not.toHaveBeenCalled();
+});

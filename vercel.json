@@ -10,6 +10,7 @@
     { "source": "/.well-known/oauth-protected-resource/api/mcp-chatgpt", "destination": "/api/mcp-oauth-resource" },
     { "source": "/map", "destination": "/map.html" },
     { "source": "/admin", "destination": "/map.html" },
+    { "source": "/mcp", "destination": "/mcp/index.html" },
     { "source": "/how-to", "destination": "/how-to/index.html" },
     { "source": "/about", "destination": "/about/index.html" },
     { "source": "/privacy", "destination": "/privacy/index.html" },

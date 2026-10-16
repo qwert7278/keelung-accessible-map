@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="依 ChatGPT、Codex、Claude、Gemini CLI 或 Manus 的接入方式，設定 Road Tag 公開唯讀 MCP，再用自己的 AI 助理查詢道路障礙。" />
+    <link rel="canonical" href="__PUBLIC_SITE_URL__/mcp" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/seo-pages.css" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:site_name" content="路見不平" />
+    <meta property="og:title" content="把 Road Tag 接入你的 AI 助理｜MCP 接入教學" />
+    <meta property="og:description" content="從選位置、拍照到描述通行狀況，了解MCP 接入教學留下社群觀察紀錄。" />
+    <meta property="og:url" content="__PUBLIC_SITE_URL__/mcp" />
+    <meta property="og:image" content="__PUBLIC_SITE_URL__/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="把 Road Tag 接入你的 AI 助理｜MCP 接入教學" />
+    <meta name="twitter:description" content="從選位置、拍照到描述通行狀況，了解MCP 接入教學留下社群觀察紀錄。" />
+    <meta name="twitter:image" content="__PUBLIC_SITE_URL__/og-image.png" />
+    <title>把 Road Tag 接入你的 AI 助理｜MCP 接入教學</title>
+      <link rel="stylesheet" href="/brand-tokens.css" />
+  <script type="application/ld+json" data-roadtag-page>{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"__PUBLIC_SITE_URL__/mcp#page","url":"__PUBLIC_SITE_URL__/mcp","name":"MCP 接入教學","inLanguage":"zh-TW","isPartOf":{"@id":"__PUBLIC_SITE_URL__/#website"}},{"@type":"BreadcrumbList","@id":"__PUBLIC_SITE_URL__/mcp#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"路見不平","item":"__PUBLIC_SITE_URL__/"},{"@type":"ListItem","position":2,"name":"MCP 接入教學","item":"__PUBLIC_SITE_URL__/mcp"}]}]}</script>
+<link rel="stylesheet" href="/mcp-guide.css" />
+</head>
+  <body>
+    <a class="mcp-skip" href="#main">跳至主要內容</a>
+    <header class="top"><div class="bar"><a class="brand" href="/"><img class="brand-wordmark" src="/images/roadtag-logo-horizontal.webp" alt="路見不平 Road Tag 首頁" width="1086" height="362" /></a><nav class="nav" aria-label="主要選單"><a href="/#ai-mcp">查詢範例</a><a href="/map">通行地圖與回報</a></nav></div></header>
+    <main id="main">
+      <section class="hero"><p class="eyebrow">MCP 接入教學</p><h1>把 Road Tag，接進你的 AI 助理。</h1><p>只需設定一次，之後就能在對話中查詢公開道路障礙。先選你的助理，照著操作即可。</p></section>
+      <article class="content">
+        <ol class="mcp-steps"><li><strong>選擇 AI 助理</strong><span>展開下方對應的接入方式。</span></li><li><strong>加入 Road Tag</strong><span>貼網址，或使用電腦設定範例。</span></li><li><strong>開始問路況</strong><span>啟用工具後，把查詢範例貼進對話。</span></li></ol>
+        <section class="mcp-address" aria-labelledby="address-title"><h2 id="address-title">連接時，使用這個網址</h2><code>https://roadtag.org/api/mcp-public</code><button type="button" class="button" id="copy-mcp-url" disabled>複製 MCP 網址</button><p id="public-mcp-status" role="status" aria-live="polite">公開唯讀 MCP 準備中，尚未開放。</p><p>網址要貼在 AI 助理的連接設定，直接用瀏覽器開啟或貼進聊天框，不會自動完成連接。Road Tag 不需要帳號、API Key 或登入驗證。</p></section>
+        <h2>你使用哪一個 AI 助理？</h2><p>以下是各平台提供的接入途徑，實際選單與可用資格依你的版本、方案及工作區政策而定；不是平台官方收錄或逐一完成實測的標章。</p>
+        <details class="mcp-platform" id="chatgpt"><summary><img src="/images/ai-clients/openai.png" alt="" width="32" height="32" /><span>ChatGPT<small>網頁版 · 自訂 MCP</small></span></summary><div class="platform-body"><ol><li>開啟 ChatGPT 的 <strong>Plugins</strong>（部分版本顯示 Apps／Connectors），找到新增自訂 MCP Server 的入口。</li><li>名稱填 <strong>Road Tag</strong>，Connection 貼上方完整網址，驗證選無認證／None（若有此欄位）。</li><li>檢查發現的三個唯讀工具，依平台流程確認，開啟新對話並選用 Road Tag，再貼查詢範例。</li></ol><p>若沒有自訂 MCP 選項，請先確認帳號／管理員政策，或改用網站地圖；貼提示詞不會解除帳號限制。</p><p><a href="https://developers.openai.com/plugins/deploy/connect-chatgpt">OpenAI 官方連接說明 ↗</a></p></div></details>
+        <details class="mcp-platform" id="codex"><summary><img src="/images/ai-clients/openai.png" alt="" width="32" height="32" /><span>Codex<small>電腦 · CLI／設定檔</small></span></summary><div class="platform-body"><p>已安裝 Codex CLI 的使用者，在終端機執行：</p><pre tabindex="0"><code id="codex-command">codex mcp add roadtag --url https://roadtag.org/api/mcp-public</code></pre><button class="button" type="button" data-copy-source="codex-command" disabled>複製 Codex 指令</button><p>或在 <code>~/.codex/config.toml</code> 加入以下區段，再重新載入客戶端：</p><pre tabindex="0"><code id="codex-config">[mcp_servers.roadtag]
+url = "https://roadtag.org/api/mcp-public"</code></pre><button class="button" type="button" data-copy-source="codex-config" disabled>複製 TOML 設定</button><p><a href="https://developers.openai.com/learn/docs-mcp">OpenAI 官方 MCP 設定範例 ↗</a></p></div></details>
+        <details class="mcp-platform" id="claude"><summary><img src="/images/ai-clients/claude.png" alt="" width="32" height="32" /><span>Claude<small>網頁／桌面版 · 遠端 Connector</small></span></summary><div class="platform-body"><ol><li>在 <strong>Customize → Connectors</strong> 找到「Add custom connector」；工作區可能需要由管理員在組織設定新增。</li><li>名稱填 Road Tag，貼上方遠端 MCP 網址，依畫面繼續；Authentication 選 <strong>No sign in</strong>，不填 OAuth／API Key。</li><li>完成後，在對話的工具／Connectors 選單啟用 Road Tag，貼上查詢範例。</li></ol><p><a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp">Claude 官方遠端 Connector 教學 ↗</a></p><details><summary>使用 Claude Code？</summary><p>已安裝 CLI 時，在終端機執行：</p><pre tabindex="0"><code id="claude-command">claude mcp add --transport http roadtag https://roadtag.org/api/mcp-public</code></pre><button class="button" type="button" data-copy-source="claude-command" disabled>複製 Claude Code 指令</button><p>若使用專案的 <code>.mcp.json</code>，加入以下 server，保留原本其他項目：</p><pre tabindex="0"><code id="claude-config">{
+  "mcpServers": {
+    "roadtag": {
+      "type": "http",
+      "url": "https://roadtag.org/api/mcp-public"
+    }
+  }
+}</code></pre><button class="button" type="button" data-copy-source="claude-config" disabled>複製 Claude Code JSON</button><p>請勿把這份 HTTP JSON 當成所有 Claude Desktop 本機設定的通用格式。<a href="https://code.claude.com/docs/en/mcp">Claude Code 官方教學 ↗</a></p></details></div></details>
+        <details class="mcp-platform" id="gemini"><summary><img src="/images/ai-clients/gemini.png" alt="" width="32" height="32" /><span>Gemini CLI<small>電腦 · JSON 設定檔</small></span></summary><div class="platform-body"><p>以下適用已安裝的 <strong>Gemini CLI</strong>，不是一般 Gemini 網頁聊天框。將 Road Tag 加到 <code>~/.gemini/settings.json</code> 的 <code>mcpServers</code>，保留原有設定：</p><pre tabindex="0"><code id="gemini-config">{
+  "mcpServers": {
+    "roadtag": {
+      "httpUrl": "https://roadtag.org/api/mcp-public",
+      "trust": false
+    }
+  }
+}</code></pre><button class="button" type="button" data-copy-source="gemini-config" disabled>複製 Gemini CLI JSON</button><p>重新開啟 CLI，以 <code>/mcp</code> 確認連接，再開始查詢。工具核准保留開啟，不需要設為完全信任。</p><p><a href="https://geminicli.com/docs/tools/mcp-server/">Gemini CLI 官方 MCP 教學 ↗</a></p></div></details>
+        <details class="mcp-platform" id="manus"><summary><img src="/images/ai-clients/manus.png" alt="" width="32" height="32" /><span>Manus<small>網頁版 · Add MCP by URL</small></span></summary><div class="platform-body"><ol><li>開啟 <strong>Connectors → Create → Add MCP by URL</strong>。</li><li>名稱填 Road Tag，Server URL 貼上方完整網址，再儲存。不要選需要另填 API Key 的 Custom API。</li><li>在任務中啟用這個 Connector，貼查詢範例，確認使用的是 Road Tag 工具。</li></ol><p><a href="https://www.manus.im/features/connectors">Manus 官方 Connector 教學 ↗</a></p></div></details>
+        <p id="guide-copy-status" class="copy-status" role="status" aria-live="polite"></p><p class="mcp-help">設定檔中的 <code>~</code> 代表個人家目錄；請合併新增項目，不要覆蓋整份設定。Road Tag 不需憑證，AI 產品本身仍可能要求登入／既有方案。</p>
+        <section aria-labelledby="try-title"><h2 id="try-title">連接好，試著問一句</h2><blockquote id="public-mcp-prompt">請用 Road Tag 查詢這個位置（25.120772、121.743712）附近 500 公尺的道路障礙，附上案件連結。</blockquote><button type="button" class="button" id="copy-mcp-prompt" disabled>複製查詢範例</button><p>目前地址／地標搜尋尚未開放，請提供座標。看到 <code>resolve_location</code>、<code>search_nearby_reports</code>、<code>get_report</code> 恰好三個唯讀工具，才代表已發現正確工具；文字回答本身不代表真的調用了 MCP。</p></section>
+        <h2>想回報道路障礙？</h2><p>公開 MCP 現在只提供查詢。新增回報、照片與現況補充，請到<a href="/map">網站地圖</a>操作。社群回報不是安全路線保證，沒有資料不代表可安全通行。</p>
+        <h2>遇到問題</h2><ul><li><strong>瀏覽器顯示 405：</strong>這是工具網址，請在 AI 的連接設定使用；遠端傳輸為 Streamable HTTP，不是舊式 SSE 設定。</li><li><strong>AI 說找不到工具：</strong>確認已儲存連線、重新載入工具，並在這次對話啟用 Road Tag。</li><li><strong>429 或暫時無法連接：</strong>依 Retry-After 稍候，減少查詢；也可先用網站地圖。</li></ul>
+        <p class="mcp-help">接入文件核對日期：2026-10-16。平台名稱與圖示僅供辨識，商標屬各權利人所有，不表示合作、背書或官方收錄。</p>
+      </article>
+    </main>
+    <footer class="foot"><div class="row"><p>路見不平 Road Tag｜路見不平，一起標註</p><nav aria-label="頁尾連結"><a href="/">回首頁</a><a href="/privacy">隱私權政策</a><a href="/terms">使用條款</a></nav></div></footer>
+    <script type="module" src="/src/mcp-guide-entry.ts"></script>
+    <script type="module" src="/src/consent-entry.tsx"></script>
+  </body>
+</html>

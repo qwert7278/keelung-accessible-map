@@ -11,6 +11,7 @@ function appRouteAliases(): Plugin {
   const seoRoutes: Record<string, string> = {
     '/oauth/consent': '/oauth-consent.html',
     '/how-to': '/seo-pages/how-to.html',
+    '/mcp': '/mcp/index.html',
     '/about': '/seo-pages/about.html',
     '/privacy': '/seo-pages/privacy.html',
     '/terms': '/seo-pages/terms.html',
@@ -77,6 +78,7 @@ export default defineConfig(({ mode }) => {
           oauthConsent: resolve(process.cwd(), 'oauth-consent.html'),
           consent: resolve(process.cwd(), 'src/consent-entry.tsx'),
           homepage: resolve(process.cwd(), 'index.html'),
+          mcpGuide: resolve(process.cwd(), 'mcp/index.html'),
           map: resolve(process.cwd(), 'map.html'),
           // Staging has anonymous Auth disabled. This read-only harness grants no
           // backend access and is never an entry in the Production artifact.
