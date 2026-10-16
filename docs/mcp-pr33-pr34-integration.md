@@ -34,3 +34,12 @@
 獨立 Public Geoapify project／帳號 Free與超額成本及硬停、有限 Staging 實際地址測試仍 PENDING，依 `public-mcp-geocoding-release.md` 交 Owner 核准。不設定 key、不啟用付費、不修改 Production SQL／env、OAuth、私有 MCP、Registry、DNS、正式案件或照片。本輪不合併整合 PR／#33，不部署 Production。
 
 若未來正式啟用文字搜尋有異常，先關 dedicated server geocoding gate，再關 UI text-search flag重建，保留原座標唯讀；code rollback 為 revert 整合 merge 後走既有 main→Vercel，需 Owner 核准，無新 migration。本輪僅 Draft PR，正式站維持 #34，不需清理資料。
+
+
+## PR #35 Final P2 Fix（2026-10-16）
+
+- 將共用 onboarding 的文字範例換成「請使用 Road Tag 搜尋基隆車站，先列出候選位置讓我確認，再查詢附近 500 公尺的公開道路障礙，附上案件連結與資料來源。沒有回報不代表道路安全。」首頁與 `/mcp` 共用同一 initializer；技術接入文件的預備範例同步修正。
+- 移除「若有多個」條件，單一／多個候選皆要求先確認；不改後端 needs_confirmation、provider 或三工具。旗標未同時啟用仍保留既有座標文案與尚未開放狀態。
+- RED：新測試在舊文案下12 PASS／1 FAIL；修正後20 focused tests PASS（onboarding13、guide5、metadata2）。四組旗標各驗證首頁／教學頁模式及實際複製文字，啟用範例不得含若／多個／第一筆的條件，未啟用仍是座標；fetch spy 未被呼叫。
+- 本次差異人工 review：只有範例、對應測試及驗收文件；沒有新增未修 P0／P1。未重跑完整歷史 MCP 測試；未呼叫真實 Geoapify。Typecheck／Lint／Build／SEO／diff check PASS；CI與Preview以本次 head最終交付結果為準。
+- 結案狀態：通過所有工程檢查後為 Engineering GO / Ready for Owner Review，PR保持 Draft。不合併、不開正式文字搜尋；獨立 project成本確認與最多8次Staging實測仍屬下一階段。

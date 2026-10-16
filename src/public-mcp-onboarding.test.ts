@@ -40,8 +40,23 @@ describe('public MCP copy actions',()=>{
  });
 });
 
-it('announces text search only when both release flags are enabled',()=>{
- for(const released of [false,true]){const f=fixture();initPublicMcp(f.root,released,false);expect(f.capabilities.textContent).toContain('暫停');expect(f.notice.hidden).toBe(true);}
- const disabled=fixture();initPublicMcp(disabled.root,false,true);expect(disabled.capabilities.textContent).toContain('暫停');expect(disabled.notice.hidden).toBe(true);
- const live=fixture();initPublicMcp(live.root,true,true);expect(live.capabilities.textContent).toContain('商家');expect(live.text.textContent).toContain('先讓我選擇');expect(live.notice.hidden).toBe(false);
+it.each([[false,false],[false,true],[true,false],[true,true]])('gates both page examples and requires confirmation for any candidate count (%s, %s)',async(released,textSearchReleased)=>{
+ const expected='請使用 Road Tag 搜尋基隆車站，先列出候選位置讓我確認，再查詢附近 500 公尺的公開道路障礙，附上案件連結與資料來源。沒有回報不代表道路安全。';
+ for(const homepage of [false,true]){
+  const f=fixture(),get=f.root.getElementById.bind(f.root),writeText=vi.fn().mockResolvedValue(undefined),fetch=vi.fn();
+  if(homepage)vi.spyOn(f.root,'getElementById').mockImplementation(id=>id==='copy-mcp-url'?null:get(id));
+  vi.stubGlobal('navigator',{clipboard:{writeText}});vi.stubGlobal('fetch',fetch);
+  initPublicMcp(f.root,released,textSearchReleased);
+  if(released&&textSearchReleased){
+   expect(f.text.textContent).toBe(expected);
+   expect(f.text.textContent).not.toMatch(/若|多個|第一筆/);
+   expect(f.capabilities.textContent).toContain('商家');expect(f.notice.hidden).toBe(false);
+  }else{
+   expect(f.text.textContent).toBe('請查詢這個座標附近的公開回報。');
+   expect(f.capabilities.textContent).toContain('暫停');expect(f.notice.hidden).toBe(true);
+  }
+  await f.click('copy-mcp-prompt');
+  if(released)expect(writeText).toHaveBeenCalledWith(f.text.textContent);else expect(writeText).not.toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
+ }
 });
