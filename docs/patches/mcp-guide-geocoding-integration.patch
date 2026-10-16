@@ -1,0 +1,25 @@
+--- a/src/public-mcp-onboarding.ts
++++ b/src/public-mcp-onboarding.ts
+@@ -2 +2 @@
+-export function initPublicMcp(root:Document=document,released=import.meta.env.VITE_MCP_PUBLIC_RELEASED==='true'):()=>void{
++export function initPublicMcp(root:Document=document,released=import.meta.env.VITE_MCP_PUBLIC_RELEASED==='true',textSearchReleased=import.meta.env.VITE_MCP_PUBLIC_TEXT_SEARCH_RELEASED==='true'):()=>void{
+@@ -8,0 +9,7 @@
++ const capabilities=root.getElementById('public-mcp-capabilities'),notice=root.getElementById('public-mcp-location-note');
++ const textSearch=released&&textSearchReleased;
++ if(textSearch){
++  if(capabilities)capabilities.textContent='可用台灣地址、門牌、巷弄、商家或地標查詢公開回報；';
++  text.textContent='請用 Road Tag 查詢基隆車站附近 500 公尺的公開道路障礙；若有多個候選位置請先讓我選擇，再附上案件網址與地理資料來源。';
++ }
++ if(notice)notice.hidden=!textSearch;
+--- a/index.html
++++ b/index.html
+@@ -1199 +1199,2 @@
+-        <p class="mcp-note">需使用支援自訂遠端 MCP 的帳號／客戶端。現在可查公開回報，地址／地標搜尋尚未開放；要新增回報，請用<a href="/map">網站地圖</a>。沒有回報不代表道路安全。</p>
++        <p class="mcp-note">需使用支援自訂遠端 MCP 的帳號／客戶端。<span id="public-mcp-capabilities">現在可查公開回報，地址／地標搜尋尚未開放；</span>要新增回報，請用<a href="/map">網站地圖</a>。沒有回報不代表道路安全。</p>
++        <p id="public-mcp-location-note" class="mcp-note" hidden>文字查詢會傳送至 Geoapify，請避免提供不必要的私人住址。位置資料：<a href="https://www.geoapify.com/">Powered by Geoapify</a> / <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>。</p>
+--- a/mcp/index.html
++++ b/mcp/index.html
+@@ -56 +56,2 @@
+-        <section aria-labelledby="try-title"><h2 id="try-title">連接好，試著問一句</h2><blockquote id="public-mcp-prompt">請用 Road Tag 查詢這個位置（25.120772、121.743712）附近 500 公尺的道路障礙，附上案件連結。</blockquote><button type="button" class="button" id="copy-mcp-prompt" disabled>複製查詢範例</button><p>目前地址／地標搜尋尚未開放，請提供座標。看到 <code>resolve_location</code>、<code>search_nearby_reports</code>、<code>get_report</code> 恰好三個唯讀工具，才代表已發現正確工具；文字回答本身不代表真的調用了 MCP。</p></section>
++        <section aria-labelledby="try-title"><h2 id="try-title">連接好，試著問一句</h2><blockquote id="public-mcp-prompt">請用 Road Tag 查詢這個位置（25.120772、121.743712）附近 500 公尺的道路障礙，附上案件連結。</blockquote><button type="button" class="button" id="copy-mcp-prompt" disabled>複製查詢範例</button><p><span id="public-mcp-capabilities">目前地址／地標搜尋尚未開放，請提供座標。</span>看到 <code>resolve_location</code>、<code>search_nearby_reports</code>、<code>get_report</code> 恰好三個唯讀工具，才代表已發現正確工具；文字回答本身不代表真的調用了 MCP。</p></section>
++        <p id="public-mcp-location-note" class="mcp-note" hidden>文字查詢會傳送至 Geoapify，請避免提供不必要的私人住址。位置資料：<a href="https://www.geoapify.com/">Powered by Geoapify</a> / <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>。</p>
