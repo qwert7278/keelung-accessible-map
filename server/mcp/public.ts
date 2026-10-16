@@ -1,5 +1,6 @@
 import {createMcpHandler} from '@modelcontextprotocol/server';
 import {buildMcpServer,publicReadTools,readBounded} from './handler.js';
+import {createGeoapifyProvider} from '../location/geoapify.js';
 import {RoadTagService} from '../roadtag/service.js';
 import {RoadError,schemas,type Principal} from '../roadtag/contracts.js';
 import {PublicSupabaseBackend} from '../roadtag/public-supabase.js';
@@ -19,7 +20,10 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
   const controls=settings.controls,risk=publicRisk(request,settings.riskSecret,settings.trustVercel),abort=new AbortController();
   const signal=AbortSignal.any([abort.signal,request.signal]);
   const principal:Principal={id:'public:'+risk,actor:'00000000-0000-4000-8000-000000000000',write:false};
-  const scoped=service.backend instanceof PublicSupabaseBackend?new RoadTagService(service.backend.withSignal(signal),service.origin,''):service;
+  // Always inject an explicit public provider (or null), including request-scoped DB clones.
+  const scoped=new RoadTagService(service.backend instanceof PublicSupabaseBackend?service.backend.withSignal(signal):service.backend,service.origin,'',settings.geocoding===true?service.locationProvider??null:null);
+  const geocoding=settings.geocoding===true&&scoped.locationSearchAvailable;
+  let retryAfter:number|undefined;
   let lease:string|undefined;
   const work=async()=>{
    try{
@@ -35,18 +39,21 @@ export function publicMcpEndpoint(service:RoadTagService,settings:PublicSettings
       signal.throwIfAborted();
       if(!(publicReadTools as readonly string[]).includes(name))throw new RoadError('FORBIDDEN');
       const geo=name==='resolve_location'?schemas.resolve_location.safeParse(input):null;
-      if(geo?.success&&geo.data.query&&settings.geocoding===false)throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');
-      if(geo?.success&&geo.data.query&&geo.data.query.length>=2&&geo.data.lat===undefined&&geo.data.lng===undefined&&process.env.GEOAPIFY_LOCATION_ENABLED==='true'&&process.env.GEOAPIFY_API_KEY){
-       const cost=await controls.acquire(risk,'geocode',lease);if(!cost.allowed)throw new RoadError(cost.code||'SERVICE_UNAVAILABLE');
+      if(geo?.success&&geo.data.query){
+       if(geo.data.query.length<2||geo.data.lat!==undefined||geo.data.lng!==undefined)throw new RoadError('INVALID_INPUT');
+       if(!geocoding)throw new RoadError('LOCATION_SEARCH_UNAVAILABLE');
+       const cost=await controls.acquire(risk,'geocode',lease);
+       if(!cost.allowed){retryAfter=cost.retry_after;throw new RoadError(cost.code||'SERVICE_UNAVAILABLE');}
       }
       signal.throwIfAborted();const value=await scoped.call(name,input,principal,signal);emit(name as PublicEvent['operation'],'OK',start);return value;
      }catch(error){emit(name as PublicEvent['operation'],signal.aborted?'TIMEOUT':error instanceof RoadError&&error.code==='RATE_LIMITED'?'RATE_LIMITED':'ERROR',start);throw error;}
-    },{publicReadOnly:true,coordinatesOnly:settings.geocoding===false}),{legacy:'stateless',maxRequestBodySize:32768});
+    },{publicReadOnly:true,coordinatesOnly:!geocoding}),{legacy:'stateless',maxRequestBodySize:32768});
     const response=await handler.fetch(new Request(request,{signal}));
     // Hold the lease until tool/SSE completion, not merely until headers arrive.
     // No server subscriptions are offered. Bound even an unexpected response body.
     const body=response.body?await readBounded(response,524288,signal):null;
     signal.throwIfAborted();response.headers.set('Cache-Control','no-store');
+    if(retryAfter)response.headers.set('Retry-After',String(retryAfter));
     return new Response(body,{status:response.status,headers:response.headers});
    }catch{return fail(503,'SERVICE_UNAVAILABLE');}
    finally{if(lease)try{await controls.release(risk,lease);}catch{emit('request','SERVICE_UNAVAILABLE',started);/* SQL lease expires after 30 seconds. No refund/retry. */}}
@@ -73,6 +80,8 @@ export function publicEnvironment(){
   if(url.origin!==(production?'https://ifcicahnrpkwjcxmnmug.supabase.co':'https://wpravdqviylkcpsioybu.supabase.co')||url.username||url.password||url.pathname!=='/'||url.search||url.hash)return null;
   const key=process.env[prefix+'READ_SUPABASE_PUBLISHABLE_KEY'],gate=process.env[prefix+'CONTROL_SECRET'];
   if(!key||!gate||gate.length<32||gate.length>128||[process.env.MCP_PHOTO_SECRET,process.env.UPLOAD_GATE_SECRET,process.env.SUPABASE_SERVICE_ROLE_KEY,process.env.MCP_SUPABASE_SERVICE_KEY,process.env.MCP_SESSION_ENCRYPTION_KEY,...(production?[process.env.MCP_PUBLIC_CONTROL_SECRET]:[])].includes(gate))return null;
-  return {settings:{enabled:true,origin:originUrl.origin,controls:new PublicControlClient(url.origin,key,gate),riskSecret:gate,trustVercel:process.env.VERCEL==='1',...(production?{geocoding:process.env.MCP_PUBLIC_PRODUCTION_GEOCODING_ENABLED==='true'}:{})},service:new RoadTagService(new PublicSupabaseBackend(url.origin,key),originUrl.origin,'')};
+  const providerKey=process.env[prefix+'GEOAPIFY_API_KEY']?.trim();
+  const geocoding=process.env[prefix+'GEOCODING_ENABLED']==='true'&&!!providerKey&&!([process.env.GEOAPIFY_API_KEY,...(production?[process.env.MCP_PUBLIC_GEOAPIFY_API_KEY]:[])].map(value=>value?.trim()).includes(providerKey));
+  return {settings:{enabled:true,origin:originUrl.origin,controls:new PublicControlClient(url.origin,key,gate),riskSecret:gate,trustVercel:process.env.VERCEL==='1',geocoding},service:new RoadTagService(new PublicSupabaseBackend(url.origin,key),originUrl.origin,'',geocoding?createGeoapifyProvider(providerKey!):null)};
  }catch{return null;}
 }

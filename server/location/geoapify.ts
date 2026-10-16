@@ -12,11 +12,14 @@ function rows(payload: unknown): GeoRow[] {
   return (payload as {results: unknown[]}).results.filter((v):v is GeoRow => !!v && typeof v === 'object' && !Array.isArray(v));
 }
 export function normalizeGeoapifySearch(payload: unknown): LocationResult[] {
+  const seen=new Set<string>();
   return rows(payload).filter(isTaiwan).flatMap(r => {
     const point = { lat:Number(r.lat), lng:Number(r.lon) };
     if (!validLocation(point) || point.lat < 21 || point.lat > 26.5 || point.lng < 118 || point.lng > 123) return [];
     const label=value(r.name || r.address_line1 || r.formatted);
     if (!label) return [];
+    const identity=JSON.stringify([point.lat,point.lng,label,value(r.formatted)]);
+    if(seen.has(identity))return [];seen.add(identity);
     const type=value(r.result_type);
     const rank=r.rank && typeof r.rank==='object' ? r.rank as GeoRow : {};
     const confidence=typeof rank.confidence==='number' && Number.isFinite(rank.confidence) ? Math.max(0,Math.min(1,rank.confidence)) : null;
@@ -38,38 +41,46 @@ export function createGeoapifyBudget(now=()=>Date.now(), minuteMax=80, dayMax=10
     minuteCount++;dayCount++;
   };
 }
-const reserveLookup=createGeoapifyBudget();
-async function lookup(url:URL,signal?:AbortSignal):Promise<unknown> {
-  reserveLookup();
-  const response=await fetch(url,{signal:AbortSignal.any([AbortSignal.timeout(5000),...(signal?[signal]:[])]),redirect:'error'});
-  if (!response.ok) throw new Error('Geoapify unavailable');
-  return response.json();
-}
-function endpoint(action:'autocomplete'|'reverse') {
-  if (process.env.GEOAPIFY_LOCATION_ENABLED!=='true' || !process.env.GEOAPIFY_API_KEY) throw new Error('Geoapify not configured');
-  const url=new URL('https://api.geoapify.com/v1/geocode/'+action);
-  url.searchParams.set('apiKey',process.env.GEOAPIFY_API_KEY);
-  url.searchParams.set('format','json');
-  url.searchParams.set('lang','zh');
-  return url;
-}
-export const geoapifyProvider:LocationProvider={
-  async search(query,cityId,signal) {
-    if(query.trim().length<2 || query.trim().length>200)throw new Error('Invalid location query');
-    const url=endpoint('autocomplete');
-    url.searchParams.set('text',query.trim().replace(/(\d+)之(\d+)(?=號)/g,'$1-$2'));
-    url.searchParams.set('filter','countrycode:tw');
-    url.searchParams.set('limit','5');
-    // City hint is a ranking hint, never an exclusion: users can search across Taiwan.
-    if (cityId==='TW-KEE') url.searchParams.set('bias','proximity:121.7405,25.1276');
-    return normalizeGeoapifySearch(await lookup(url,signal));
-  },
-  async reverse(point:LocationPoint) {
-    if (!validLocation(point) || point.lat<21 || point.lat>26.5 || point.lng<118 || point.lng>123) throw new Error('Invalid location');
-    const url=endpoint('reverse');
-    url.searchParams.set('lat',String(point.lat));
-    url.searchParams.set('lon',String(point.lng));
-    url.searchParams.set('limit','1');
-    return normalizeGeoapifyReverse(await lookup(url));
+function providerWithKey(key:()=>string|undefined):LocationProvider {
+  const reserveLookup=createGeoapifyBudget();
+  async function lookup(url:URL,signal?:AbortSignal):Promise<unknown> {
+    signal?.throwIfAborted();
+    reserveLookup();
+    const response=await fetch(url,{signal:AbortSignal.any([AbortSignal.timeout(5000),...(signal?[signal]:[])]),redirect:'error'});
+    if (!response.ok) throw new Error('Geoapify unavailable');
+    return response.json();
   }
-};
+  function endpoint(action:'autocomplete'|'reverse') {
+    const apiKey=key();if(!apiKey)throw new Error('Geoapify not configured');
+    const url=new URL('https://api.geoapify.com/v1/geocode/'+action);
+    url.searchParams.set('apiKey',apiKey);
+    url.searchParams.set('format','json');
+    url.searchParams.set('lang','zh');
+    return url;
+  }
+  return {
+    async search(query,cityId,signal) {
+      if(query.trim().length<2 || query.trim().length>200)throw new Error('Invalid location query');
+      const url=endpoint('autocomplete');
+      url.searchParams.set('text',query.trim().replace(/(\d+)之(\d+)(?=號)/g,'$1-$2'));
+      url.searchParams.set('filter','countrycode:tw');
+      url.searchParams.set('limit','5');
+      // City hint is a ranking hint, never an exclusion: users can search across Taiwan.
+      if (cityId==='TW-KEE') url.searchParams.set('bias','proximity:121.7405,25.1276');
+      return normalizeGeoapifySearch(await lookup(url,signal));
+    },
+    async reverse(point:LocationPoint) {
+      if (!validLocation(point) || point.lat<21 || point.lat>26.5 || point.lng<118 || point.lng>123) throw new Error('Invalid location');
+      const url=endpoint('reverse');
+      url.searchParams.set('lat',String(point.lat));
+      url.searchParams.set('lon',String(point.lng));
+      url.searchParams.set('limit','1');
+      return normalizeGeoapifyReverse(await lookup(url));
+    }
+  };
+
+}
+// Public callers inject their dedicated credential; never inherit Alpha settings.
+export const createGeoapifyProvider=(apiKey:string):LocationProvider=>providerWithKey(()=>apiKey);
+// Preserve the existing private/website provider and its dynamic feature gate.
+export const geoapifyProvider=providerWithKey(()=>process.env.GEOAPIFY_LOCATION_ENABLED==='true'?process.env.GEOAPIFY_API_KEY:undefined);

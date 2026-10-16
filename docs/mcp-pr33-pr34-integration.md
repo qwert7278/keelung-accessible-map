@@ -1,42 +1,36 @@
-# PR #33／#34 隔離整合驗證
+# PR #34 正式驗收與 PR #33 工程整合
 
-日期：2026-10-16。這是整合準備與可套用 patch；尚未合併任何 PR、未啟用文字搜尋。
+日期：2026-10-16。結論：#34 Production GO；#33 Integration Engineering GO，正式文字搜尋仍關閉，待 Owner 核准。這份紀錄取代先前只有隔離 patch 的整合準備狀態。
 
-## 固定驗證版本
+## #34 Production 證據
 
-- main／merge base：`13331f9307a3acb7a8ab14ef507e3eabd5da5116`
-- #34 修正後：`0ae16ea5fd78bc49f2b00d4b598e0f8a87e4d164`
-- #33 reviewed head：`8a66b564291593552bf274630e004dcebf3132d0`
+- main／#34 merge：`b3ac88a046e33162b72cf6f9dbb4e802cd3b2fef`。GitHub Quality [38849038935](https://github.com/qwert7278/keelung-accessible-map/actions/runs/38849038935)：SUCCESS。
+- Vercel：`dpl_2BrGLdg7Wh1w4p3inAqaF5oZ9YWr`，target production、READY，githubCommitSha 等於上述 merge，正式 roadtag.org alias 指向此 deployment。沒有重新部署或修改設定。
+- 正式首頁與 `/mcp`：HTTP 200；首頁鍵盤複製座標範例、教學頁網址／範例複製及成功狀態 PASS。五平台教學實際展開，Codex TOML、Gemini CLI httpUrl、Claude HTTP 設定及平台界線保留；沒有重新進行模型帳號驗收。
+- 正式 `/mcp` title、canonical、一般／OG／Twitter description 一致；sitemap 含正式 `/mcp`，沒有模板 URL token。頁面未宣稱文字搜尋或公開寫入可用。
+- 使用官方 MCP SDK Client 連線正式端點：initialize、tools/list（恰好三個工具，readOnlyHint）、resolve_location 座標（25.120772,121.743712）PASS，沒有 Geoapify 查詢或案件寫入。初始 Python urllib transport 回 403，未執行 MCP；改用既有 Node SDK 正常連線即通過，未調整 WAF、存取或憑證。
 
-使用 `git merge-tree --write-tree --name-only` 及 archive 建立忽略的隔離快照，沒有 checkout、修改 index、改動 #33 分支或其他 worktree。共同修改五檔：README.md、docs/public-mcp-connect-guide.md、index.html、src/public-mcp-onboarding.test.ts、src/public-mcp-onboarding.ts。實際衝突只有最後的 onboarding.ts 與 index.html；其餘三檔保留 Git 自動整合結果。
+## 實際整合
 
-## 建議整合順序與可重現 patch
+- 新 worktree：`roadtag-geocoding-integration/Road Recall system`；分支 `codex/mcp-geocoding-guide-integration`，從最新 main 上述 merge 建立。
+- #33 reviewed head：`8a66b564291593552bf274630e004dcebf3132d0`，原分支／worktree 未變更。
+- 重新執行 merge-tree 與實際 no-commit merge：共同五檔 README.md、docs/public-mcp-connect-guide.md、index.html、src/public-mcp-onboarding.test.ts、src/public-mcp-onboarding.ts；實際衝突僅 index.html 與 onboarding.ts。
+- 閱讀雙方衝突後，保留 main 的簡化首頁、五平台連結、可選 URL 按鈕及直接複製；補回 #33 雙旗標，首頁與 `/mcp` 都有狀態 hook 與隱藏的 Geoapify 隱私／來源註記。只有兩旗標同為 true 才換文字範例，其餘三組保持座標模式。固定網址複製完全不 fetch。
+- 既有 patch 只在確認 baseline 與衝突後使用；不再需要下次重複套用。`docs/patches/mcp-guide-geocoding-integration.patch` 保留為先前固定版本的歷史參考，不是對本整合結果可再次套用的 migration。
+- server/mcp/public.ts、server/location/geoapify.ts、server/roadtag/service.ts 與 #33 reviewed head byte-identical。保留專用 Public provider、既有 SQL admission／lease／timeout／kill switch、位置確認及 attribution；沒有新增 SQL migration 或更動 schema／policy。
 
-1. Owner 核准後先合併 #34；保留座標範例、簡化首頁與 `/mcp`，文字搜尋仍關閉。
-2. 從該 main 建立獨立整合分支，合併上述 #33 reviewed head，勿直接覆寫或重設 #33。
-3. 只把兩個衝突檔案還原成上述 #34 修正版。其他已自動合併檔案全部保留；`mcp/index.html` 也保留 #34 版本。
-4. 在這個明確 baseline 上執行：
+## 本機驗證
 
-```sh
-git restore --source=0ae16ea5fd78bc49f2b00d4b598e0f8a87e4d164 --worktree -- index.html src/public-mcp-onboarding.ts
-git apply --unidiff-zero --check docs/patches/mcp-guide-geocoding-integration.patch
-git apply --unidiff-zero docs/patches/mcp-guide-geocoding-integration.patch
-```
+- `npx vitest run src/public-mcp-onboarding.test.ts src/mcp-guide.test.ts src/mcp-guide-metadata.test.ts src/services/geoapify.test.ts`：初次29 PASS；追加頁面接線 regression 後 metadata 2 PASS，合計30個案例。涵蓋四組旗標、無 URL 按鈕首頁、429／503／offline／timeout 不妨礙複製、Clipboard deny／cleanup、設定格式與 metadata；新增案例確認兩頁 default-off／隱私 hook、來源網址與五平台入口。
+- `npx tsx tests/mcp-public-geocoding.ts`：PASS，SDK 三工具、地址／地標／商家／巷弄／22 縣市 fixture、確認／去重、Alpha 隔離、quota before I/O、上游錯誤不重試、取消／deadline／provider timeout、lease／資料隔離。真實 Geoapify 呼叫0，不宣稱已驗證真實搜尋正確率。
+- `npm run lint`、`npm run build`（Typecheck／Vite／SEO）、git working／staged diff check PASS。新增測試另跑 ESLint／Typecheck PASS；`tests/mcp-public-controls.ts` 與 `tests/mcp-public-cancel.ts` 均 PASS（本機 SQL quota／lease／fail-closed 與取消／late admission release）。既有大型 chunk warning，無新增 build failure。
+- 整合 localhost5201 首頁與 `/mcp`：座標範例、文字搜尋尚未開放、隱私 notice 隱藏、鍵盤複製及狀態回饋 PASS，無水平溢出。離線以 unit fetch spy 不被呼叫驗證。未執行實體螢幕閱讀器測試。
+- GitHub CI／Preview 與整合 SHA：以 Draft Integration PR head 的回讀結果交付，不將本機 build 稱為正式發布。
 
-5. 檢查差異、完成 focused tests 與 CI，再以獨立 PR 交 Owner 審查。以上命令只供未來隔離整合分支使用；本輪沒有對真正開發分支執行合併。若 main 或任一 reviewed head 改變，須重新確認衝突與 patch，不能盲目套用。
+## Code Review 與剩餘門檻
 
-Patch 只修改 index.html、mcp/index.html、src/public-mcp-onboarding.ts：保留新首頁／教學頁與無網路網址複製，補回雙旗標能力文字、候選位置確認範例、Geoapify 隱私及來源標示。預設 HTML 仍明示文字搜尋未開放。公開 MCP 與文字旗標必須同時為 true 才顯示文字搜尋；其餘三組旗標維持座標模式。網址複製不受旗標或服務健康影響。
+本輪人工 review，非獨立子 agent review；未發現未修 P0／P1。整合風險是舊首頁覆蓋新教學、必需 URL 按鈕造成首頁 initializer 退出、單旗標誤稱文字搜尋啟用；已解決並加 regression。三工具、候選確認、配額、來源與 fail-closed 保留。
 
-## 實際驗證
+獨立 Public Geoapify project／帳號 Free與超額成本及硬停、有限 Staging 實際地址測試仍 PENDING，依 `public-mcp-geocoding-release.md` 交 Owner 核准。不設定 key、不啟用付費、不修改 Production SQL／env、OAuth、私有 MCP、Registry、DNS、正式案件或照片。本輪不合併整合 PR／#33，不部署 Production。
 
-- Delivered patch 在隔離 merge-tree 快照 `git apply --check` 及實際套用 PASS；兩衝突檔沒有 conflict markers。
-- 三個 focused test 檔：16 PASS，含四組旗標、無 URL 按鈕的首頁、URL 直接複製、429／503／offline／timeout、Clipboard deny、listener cleanup、CLI／TOML／JSON、metadata。
-- `npx tsx tests/mcp-public-geocoding.ts`：PASS。使用 fixture／mock 驗證三工具、地址／地標／商家／巷弄／22 縣市、候選確認、配額先於 I/O、kill switch、401／429／5xx 不重試、abort／deadline／provider timeout、lease 釋放及隱私。真實外部呼叫 0；不宣稱真實地理定位準確度驗收。
-- server/mcp/public.ts、server/location/geoapify.ts、server/roadtag/service.ts 與 #33 reviewed head byte-identical；沒有改寫 provider、公開 quota 或 Alpha。
-- 隔離快照 `npm run build`（Typecheck／Vite／SEO）：PASS。既有大型 chunk 警告，不影響完成；#34 本身 Lint、Typecheck、Build、SEO、diff check 亦 PASS。
-
-## Review、邊界與回滾
-
-本輪人工靜態 review：P2 網址網路依賴、P3 分享描述已修；整合衝突已提供實際 patch。未發現新增未修 P0／P1；這不是獨立子 agent 審查。保留 exactly three read-only tools；沒有 env、key、DB、quota、Registry、DNS、正式案件或 Production 變更。
-
-#34 仍為 Draft，Ready／merge／Production 部署需要 Owner 核准；#33 合併與 Public Geoapify 的 key／成本上限／實際呼叫／啟用另需核准。此 patch 測試通過不代表正式文字搜尋已上線。回滾 #34 為 revert 該 PR，經既有 main→Vercel 發布；不需 migration 或資料清理。未套用的整合 patch 可直接不採用；未來整合 PR 需另列其發布回滾。
+若未來正式啟用文字搜尋有異常，先關 dedicated server geocoding gate，再關 UI text-search flag重建，保留原座標唯讀；code rollback 為 revert 整合 merge 後走既有 main→Vercel，需 Owner 核准，無新 migration。本輪僅 Draft PR，正式站維持 #34，不需清理資料。

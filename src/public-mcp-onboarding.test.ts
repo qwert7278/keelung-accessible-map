@@ -5,8 +5,9 @@ function fixture(){
  const listeners=new Map<string,()=>Promise<void>>();
  const button=(id:string)=>({disabled:false,addEventListener:vi.fn((_type:string,fn:()=>Promise<void>)=>listeners.set(id,fn)),removeEventListener:vi.fn()});
  const url=button('copy-mcp-url'),prompt=button('copy-mcp-prompt'),status={textContent:''},text={textContent:'請查詢這個座標附近的公開回報。'};
- const nodes:Record<string,unknown>={'copy-mcp-url':url,'copy-mcp-prompt':prompt,'public-mcp-status':status,'public-mcp-prompt':text};
- return {root:{getElementById:(id:string)=>nodes[id]} as unknown as Document,url,prompt,status,click:(id:string)=>listeners.get(id)!()};
+ const capabilities={textContent:'地址／地標搜尋暫停'},notice={hidden:true};
+ const nodes:Record<string,unknown>={'copy-mcp-url':url,'copy-mcp-prompt':prompt,'public-mcp-status':status,'public-mcp-prompt':text,'public-mcp-capabilities':capabilities,'public-mcp-location-note':notice};
+ return {capabilities,notice,text,root:{getElementById:(id:string)=>nodes[id]} as unknown as Document,url,prompt,status,click:(id:string)=>listeners.get(id)!()};
 }
 describe('public MCP copy actions',()=>{
  it.each([true,false])('copies the fixed URL independent of the release flag (%s)',async released=>{
@@ -37,4 +38,10 @@ describe('public MCP copy actions',()=>{
   vi.stubGlobal('navigator',{clipboard:{writeText}});vi.stubGlobal('fetch',fetch);
   initPublicMcp(f.root,true);await f.click('copy-mcp-prompt');expect(writeText).toHaveBeenCalledWith('請查詢這個座標附近的公開回報。');expect(fetch).not.toHaveBeenCalled();
  });
+});
+
+it('announces text search only when both release flags are enabled',()=>{
+ for(const released of [false,true]){const f=fixture();initPublicMcp(f.root,released,false);expect(f.capabilities.textContent).toContain('暫停');expect(f.notice.hidden).toBe(true);}
+ const disabled=fixture();initPublicMcp(disabled.root,false,true);expect(disabled.capabilities.textContent).toContain('暫停');expect(disabled.notice.hidden).toBe(true);
+ const live=fixture();initPublicMcp(live.root,true,true);expect(live.capabilities.textContent).toContain('商家');expect(live.text.textContent).toContain('先讓我選擇');expect(live.notice.hidden).toBe(false);
 });
