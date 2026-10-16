@@ -1179,16 +1179,24 @@
         </div>
       </section>
 
-      <section class="section wrap chatgpt-report" id="ai-mcp" aria-labelledby="public-mcp-title">
-        <p class="chatgpt-status">用自己的 AI 助理查詢｜公開唯讀 MCP</p>
-        <h2 id="public-mcp-title">用你的 AI 助理查詢道路障礙</h2>
-        <p class="chatgpt-lead">若你的 AI 助理支援「自訂遠端 MCP Server」，可加入下方網址，查詢 Road Tag 已公開的無障礙道路回報。不需要 Road Tag 帳號、邀請碼或 Secret。</p>
-        <p>目前提供座標候選位置、附近公開回報與指定案件詳情。<strong>地址／地標搜尋暫停，請先提供座標。</strong></p>
-        <div class="public-mcp-connection"><code class="public-mcp-address">https://roadtag.org/api/mcp-public</code><button type="button" class="button secondary" id="copy-mcp-url" disabled>複製 MCP 網址</button></div>
+      <section class="section wrap mcp-intro" id="ai-mcp" aria-labelledby="public-mcp-title">
+        <p class="chatgpt-status">用自己的 AI 助理查詢</p>
+        <h2 id="public-mcp-title">出門前，先問問路況。</h2>
+        <p class="chatgpt-lead">連接 Road Tag 後，把這段話貼給你的 AI 助理。</p>
+        <div class="mcp-prompt-card">
+          <blockquote id="public-mcp-prompt">請用 Road Tag 查詢這個位置（25.120772、121.743712）附近 500 公尺的道路障礙，附上案件連結。</blockquote>
+          <button type="button" class="button" id="copy-mcp-prompt" disabled>複製查詢範例</button>
+        </div>
         <p id="public-mcp-status" role="status" aria-live="polite">公開唯讀 MCP 準備中，尚未開放。</p>
-        <p>請到 AI 助理設定中的 MCP／Tools／Connectors 新增遠端 Server 並貼上網址；選單名稱依平台而異。僅支援自訂遠端 MCP 的客戶端可嘗試連接，並非自動安裝或各平台官方驗收。</p>
-        <div class="chatgpt-example"><h3>查詢範例</h3><blockquote id="public-mcp-prompt">請用 Road Tag 查詢座標 25.120772、121.743712 附近 500 公尺的公開道路障礙回報，再提供案件網址。請依回報內容回答，不要把沒有回報的地點當成安全道路。</blockquote><button type="button" class="button secondary" id="copy-mcp-prompt" disabled>複製查詢範例</button></div>
-        <p><strong>這是公開唯讀查詢，不會建立或修改案件。</strong>資料由民眾回報，未列出的地點不代表安全。你也可以直接<a href="/map">使用網站地圖查詢或回報</a>。</p>
+        <p class="mcp-guide-link">第一次使用？<a href="/mcp">先連接你的 AI 助理 <span aria-hidden="true">↗</span></a></p>
+        <nav class="mcp-clients" aria-label="各 AI 助理接入教學">
+          <a href="/mcp#chatgpt"><img src="/images/ai-clients/openai.png" alt="" width="28" height="28" loading="lazy" />ChatGPT</a>
+          <a href="/mcp#codex"><img src="/images/ai-clients/openai.png" alt="" width="28" height="28" loading="lazy" />Codex</a>
+          <a href="/mcp#claude"><img src="/images/ai-clients/claude.png" alt="" width="28" height="28" loading="lazy" />Claude</a>
+          <a href="/mcp#gemini"><img src="/images/ai-clients/gemini.png" alt="" width="28" height="28" loading="lazy" />Gemini CLI</a>
+          <a href="/mcp#manus"><img src="/images/ai-clients/manus.png" alt="" width="28" height="28" loading="lazy" />Manus</a>
+        </nav>
+        <p class="mcp-note">需使用支援自訂遠端 MCP 的帳號／客戶端。現在可查公開回報，地址／地標搜尋尚未開放；要新增回報，請用<a href="/map">網站地圖</a>。沒有回報不代表道路安全。</p>
       </section>
 
       <section class="wrap" aria-labelledby="closing-title">

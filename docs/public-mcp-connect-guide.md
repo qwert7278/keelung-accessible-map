@@ -1,10 +1,12 @@
 # 用自己的 AI 助理查詢 Road Tag
 
-[官網連接入口與網址複製](https://roadtag.org/#ai-mcp)
+[首頁簡短查詢範例](https://roadtag.org/#ai-mcp) · [依平台展開的 MCP 接入教學與設定複製](https://roadtag.org/mcp)
 
 Road Tag 收集民眾公開的騎樓、人行道與道路通行障礙回報。資料可能尚未更新或不完整，並非政府核定資訊、即時現場狀態或安全路線認證；未出現回報不代表道路安全。
 
 ## 連接方式
+
+不熟悉設定檔的使用者請先使用上方網站接入教學。網址須放在連接設定；聊天提示詞不能代替首次設定。教學涵蓋 ChatGPT、Codex、Claude、Gemini CLI 與 Manus 的官方接入途徑，未宣稱各帳號實測通過。
 
 1. 確認自己的 AI 助理支援**自訂遠端 MCP Server**，且 transport 為 **Streamable HTTP**。只有本機 stdio 或舊式 SSE 選項的客戶端，不一定可直接連接。
 2. 開啟該 AI 助理的 MCP／Tools／Connectors 設定，新增遠端 server。各產品位置、名稱、帳號資格及管理員政策可能不同。

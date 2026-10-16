@@ -6,7 +6,7 @@ const dist = resolve(process.cwd(), "dist");
 const base = new URL(process.env.VITE_PUBLIC_SITE_URL
   || loadEnv("production", process.cwd(), "VITE_PUBLIC_SITE_URL").VITE_PUBLIC_SITE_URL
   || "https://roadtag.org").origin;
-const expectedPaths = ["/", "/map", "/how-to", "/about", "/privacy", "/terms"];
+const expectedPaths = ["/", "/map", "/mcp", "/how-to", "/about", "/privacy", "/terms"];
 const failures = [];
 const read = async (path) => readFile(resolve(dist, path), "utf8");
 const check = (condition, message) => { if (!condition) failures.push(message); };
@@ -63,8 +63,18 @@ check((chatgptGuide.match(/<li>/g) || []).length === 6 && chatgptGuide.includes(
 check(!/href=["']https?:\/\/(?:chatgpt\.com|chat\.openai\.com)/i.test(chatgptGuide), 'Private connector must not expose an invented launch URL.');
 check(faqSchema?.mainEntity?.some(q => q.name === '誰負責建置與維護 Road Tag？'), 'Association FAQ is required.');
 for (const q of faqSchema?.mainEntity || []) { check(visibleFaq.includes(q.name) && visibleFaq.includes(q.acceptedAnswer.text), 'FAQ structured data must match visible content.'); }
+const mcpGuide = await read('mcp/index.html');
+for(const client of ['chatgpt','codex','claude','gemini','manus'])check(index.includes(`href="/mcp#${client}"`)&&mcpGuide.includes(`id="${client}"`), 'Each AI setup entry must resolve to a guide section.');
+check(index.includes('href="/mcp"') && !/id="copy-mcp-url"/.test(index.match(/<section[^>]*id="ai-mcp"[\s\S]*?<\/section>/)?.[0]||''), 'Homepage should lead with the example and link to dedicated setup.');
+for(const [id,field,value] of [['gemini-config','httpUrl',base+'/api/mcp-public'],['claude-config','url',base+'/api/mcp-public']]){
+ const raw=mcpGuide.match(new RegExp(`<code id="${id}">([\\s\\S]*?)<\\/code>`))?.[1];
+ let config;try{config=JSON.parse(raw||'');}catch{/* Report a useful build error below. */}
+ check(config?.mcpServers?.roadtag?.[field]===value, 'MCP guide needs valid client-specific JSON: '+id);
+ if(id==='claude-config')check(config?.mcpServers?.roadtag?.type==='http','Claude Code remote JSON must specify HTTP transport.');
+ if(id==='gemini-config')check(config?.mcpServers?.roadtag?.trust===false,'Gemini setup must retain tool confirmations.');
+}
 const mapPage = await read("map.html");
-for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms"].map(p => `${p}/index.html`)]) {
+for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms", "mcp"].map(p => `${p}/index.html`)]) {
   const html = await read(path);
   const entities = [...html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
     .flatMap(match => { const parsed = JSON.parse(match[1]); return parsed['@graph'] || [parsed]; });
@@ -106,7 +116,7 @@ check(mapSchema["@graph"]?.some((entity) => entity["@type"] === "WebSite" && ent
 check(mapPage.includes(`<link rel="canonical" href="${base}/map" />`), "Map canonical URL must use /map.");
 check(meta(mapPage, "og:url", `${base}/map`), "Map social URL must use /map.");
 
-for (const path of ["how-to", "about", "privacy", "terms"]) {
+for (const path of ["how-to", "about", "privacy", "terms", "mcp"]) {
   const html = await read(`${path}/index.html`);
   check(html.includes(`<html lang="zh-Hant-TW">`), `${path} language is missing.`);
   check(html.includes(`<h1>`), `${path} must have one H1.`);
@@ -136,6 +146,7 @@ for (const [source, destination] of [
   ["/map", "/map.html"],
   ["/admin", "/map.html"],
   ["/how-to", "/how-to/index.html"],
+  ["/mcp", "/mcp/index.html"],
   ["/about", "/about/index.html"],
   ["/privacy", "/privacy/index.html"],
   ["/terms", "/terms/index.html"],
@@ -145,7 +156,7 @@ const adminHeaders = vercelConfig.headers.filter(({ source }) => source === "/ad
 check(adminHeaders.some(({ headers }) => headers.some(({ key, value }) => key.toLowerCase() === "x-robots-tag" && /noindex/i.test(value))), "Admin response must include an X-Robots-Tag noindex header.");
 
 const shareImagePath = resolve(dist, "og-image.png");
-for (const path of ["index.html", "map.html", "404.html", ...["how-to", "about", "privacy", "terms"].map((p) => `${p}/index.html`)]) {
+for (const path of ["index.html", "map.html", "404.html", ...["how-to", "about", "privacy", "terms", "mcp"].map((p) => `${p}/index.html`)]) {
   check(!/基隆好行|Road Recall|Road Record/.test(await read(path)), `${path} must not expose the retired brand.`);
 }
 const shareImage = await readFile(shareImagePath);
@@ -157,7 +168,7 @@ check((await stat(resolve(dist, "404.html"))).isFile(), "A static 404 page must 
 
 const preview = process.env.VERCEL_ENV === "preview" || process.argv.includes("--preview");
 if (preview) {
-  for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms"].map((p) => `${p}/index.html`)]) {
+  for (const path of ["index.html", "map.html", ...["how-to", "about", "privacy", "terms", "mcp"].map((p) => `${p}/index.html`)]) {
     const html = await read(path);
     check(/<meta\s+name="robots"\s+content="noindex, nofollow, noarchive"/i.test(html), `${path} must be noindex on Preview.`);
   }
