@@ -1,5 +1,7 @@
 # Road Tag｜P2B-01 Cross-client Acceptance
 
+> 2026-10-16 更新：以下為2026-10-13／14的歷史 Staging 驗收，NO-GO與模型帳號阻擋不代表現行 Production 發布狀態，也不是現在要求重跑的工作。Owner另提供 Claude Connector Production座標三工具3/3 Functional PASS，詳見 [Claude使用者實測紀錄](mcp-claude-functional-acceptance.md)。不同環境／日期的資料未做deep-equality重驗，不將新紀錄回填舊Staging證據。Public MCP已發布、#35文字搜尋仍未啟用，工程狀態見 [目前整合紀錄](mcp-pr33-pr34-integration.md)。
+
 2026-10-14（Asia/Taipei）。主要規格：`ROAD_TAG_P2B_01_CROSS_PLATFORM_GO_2026-10-13.md`。
 
 **P2B-01 NO-GO：兩種 client 已真實通過，其中一種為 AI Agent；尚缺第三種 client與第二種非 OpenAI AI Agent 的成功工具呼叫。** Phase 2A GO 不受這個模型帳號／容量阻擋影響。沒有以 SDK 取代第二個 Agent，也沒有開始 P2B-02。

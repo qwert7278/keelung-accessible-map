@@ -43,3 +43,16 @@
 - RED：新測試在舊文案下12 PASS／1 FAIL；修正後20 focused tests PASS（onboarding13、guide5、metadata2）。四組旗標各驗證首頁／教學頁模式及實際複製文字，啟用範例不得含若／多個／第一筆的條件，未啟用仍是座標；fetch spy 未被呼叫。
 - 本次差異人工 review：只有範例、對應測試及驗收文件；沒有新增未修 P0／P1。未重跑完整歷史 MCP 測試；未呼叫真實 Geoapify。Typecheck／Lint／Build／SEO／diff check PASS；CI與Preview以本次 head最終交付結果為準。
 - 結案狀態：通過所有工程檢查後為 Engineering GO / Ready for Owner Review，PR保持 Draft。不合併、不開正式文字搜尋；獨立 project成本確認與最多8次Staging實測仍屬下一階段。
+
+
+## Public Adoption 收尾（2026-10-16）
+
+P2已於09d0039修復，本輪不重做。新增 `mcp-claude-functional-acceptance.md`，如實記錄Owner提供的Claude Production座標三工具3/3 PASS（500m內1筆、458.6m），案件ID／原始payload未提供；舊P2B文件標為歷史快照並連到新證據，不竄改舊JSON或跨環境一致性結論。
+
+`/mcp` 補上Road Tag用途、座標順序／如何替換範例與地圖替代入口，Claude教學加入有來源、日期與適用範圍的成功紀錄；首頁保持原簡潔版本。僅文案／文件變更，沒有新增P1／P2操作流程問題或變動工具／旗標。桌面瀏覽器確認說明可見、Claude成功紀錄可展開、文字搜尋仍未開放、無水平溢出；沒有重跑Claude或Geoapify。
+
+Geoapify發布文件已補帳號待確認清單與8次Staging執行卡、異常停止及cleanup證明要求。已唯讀確認既有Road Tag MCP Staging專案Current plan為Free／3,000 credits；未複製、保存或輸出key，未改方案／設定。正式Public project隔離、供應商硬停及最高費用仍BLOCKED，不把Free當零超額保證。本輪無任何provider呼叫、env／key／DB／DNS／Registry／Production變更。本輪metadata／route測試2 PASS，Typecheck／Build／SEO／diff check PASS；沿用前輪P2的20 focused tests與Lint PASS，不重跑未改動的邏輯。
+
+下一階段成長工作依序：① 用現有接入頁邀請小批自願使用者完成一次座標查詢並回饋卡點；只收非敏感功能結果，不蒐集完整私人對話。② 請社群用既有網站回報與補充現況，重視真實、可確認的公共障礙，不造案件。③ 用既有案件連結分享已確認公開紀錄，註明日期與資料可能變化，無回報不保證安全。④ 整理具來源與範圍的成功案例、更新限制與維護資訊，再擴大邀請。以上僅優先順序，未發送邀請、社群貼文、加入追蹤或新增分享功能。
+
+現在最有價值的發布解除工作是Owner確認獨立Geoapify project的方案／超額與硬停證據，再核准執行卡；Public座標採用不必等待文字搜尋，可先核准本Draft內容的Ready／合併／部署。本輪不執行這些需核准的操作。

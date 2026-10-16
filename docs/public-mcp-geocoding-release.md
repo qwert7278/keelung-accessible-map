@@ -32,6 +32,22 @@ Task: `ROADTAG-PUBLIC-MCP-GEOCODING-01` · 2026-10-15
 
 **Cost ceiling：OWNER APPROVAL PENDING。** 本服務的 SQL 有硬性 admission 上限；尚無供應商帳號的可證實硬停／零超額帳單保證，最大金額不能從公開軟額度推算。若 Owner 不接受已知風險且供應商無法提供確認，文字搜尋保持停用，座標 MCP 照常服務。
 
+## 2026-10-16 發布前狀態與有限 Staging 執行卡
+
+已重新核對官方 Pricing、Billing、API keys文件：Free仍為每日3,000 credits／5 requests/s，日限額明列soft limit；project各有方案與帳務，另換key不能證明預算隔離。以上是公開文件，不是此帳號已開通方案或硬停的證據。既有程式／SQL限額與金鑰隔離沿用上文，未修改、未從Production回讀或提高policy。
+
+| 項目 | 本輪狀態 |
+|---|---|
+| 專用Provider／Alpha key隔離、default-off、SQL admission／lease／kill switch | Engineering PASS，沿用前輪測試，不重跑 |
+| 隔離Project與實際方案 | 帳號既有專案選單顯示Road Tag與Road Tag MCP Staging；後者Plan & Billing為Current plan Free／3,000 credits，唯讀確認。未建立專案／key，未複製、保存或輸出key；正式Public專案及其他消耗隔離仍PENDING |
+| 超額收費條件、可驗證硬停／最高金額 | BLOCKED，雖Staging目前Free，未取得硬停／零超額帳單保證或付款／歷史訂閱完整核對；公開soft quota不能當零超額保證，需Owner確認或供應商書面條件 |
+| 最多8次Staging真實Provider查詢 | READY FOR APPROVAL，未執行，Provider呼叫0 |
+| Production啟用／合併／key配置 | OWNER APPROVAL PENDING |
+
+Staging核准後，先記錄branch head／Preview SHA、Staging基線disabled／gate／counter／lease與policy（只記數值，不記Secret），確認成本條件後才配置獨立臨時key及control gate。**整個窗口最多8筆Provider HTTP，無自動重試、無併發，失敗／取消也計入上限**。固定順序：公共建築門牌、公共地點巷弄門牌、車站、醫院、店家、跨縣市地標、模糊地標、預期無結果，各1次；不使用使用者私人住址。若供應商意外回429／5xx、帳務不明、洩密或安全檢查失敗，停止剩餘呼叫，不補打。候選有無及準確度如實記錄，單一或多個皆先確認；不為湊PASS改寫期待值。
+
+沿用最多24次MCP HTTP總預算（含初始化／通知／工具發現與其他protocol請求），每次發出前計數；若Client協定額外流量會耗盡預算，停止回報，不能默默加次數。測後或任何例外均先停Preview Public／geocoding旗標與Staging DB enabled，清gate hash、窗口counter／lease，移除本輪env／alias臨時存取、撤銷本輪新建key並清本機暫存；不撤銷Owner原有key。復原後回讀enabled=false、gate未配置、counter=lease=0、Preview端點停用；cleanup有缺口就標FAIL並停止啟用。無migration、無案件／照片寫入。正式文字搜尋回滾仍依本文件末節，不將Staging核准當Production核准。
+
 ## 驗證證據
 
 所有 provider、DB transport 與位置 fixture 都在本機；22 縣市測試只證明候選處理與地理邊界，不證明真實供應商每個門牌／商家都有資料。
