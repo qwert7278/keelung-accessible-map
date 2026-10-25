@@ -49,6 +49,8 @@ npm run build
 
 ## 保存與發布
 
+平板上的瀏覽器預覽使用既有 Vercel 專案的 Preview 部署。`codex/roadtag-cloud-development` 分支在 `VERCEL_ENV=preview` 時由 Vite 固定編譯成 Demo，正式發布仍固定為非 Demo；不要把雲端 dev server 的 localhost 網址當平板連結。分支推送後，等待 Vercel READY，再由助理檢查實際頁面的 Demo 標示與地圖。若預覽有登入保護，可使用有期限的分享連結；連結到期後由助理重新取得，勿提交分享 token。
+
 兩端接續工作透過 GitHub 工作分支同步，不會自動同步未提交的檔案：
 
 1. 離開目前環境前，檢查 diff，只提交本次要保留的檔案並推送工作分支。
