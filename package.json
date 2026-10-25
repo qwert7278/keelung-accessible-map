@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:cloud": "node scripts/dev-cloud.mjs",
     "build": "tsc -b && vite build && node scripts/build-seo.mjs && node scripts/seo-check.mjs",
     "lint": "eslint .",
     "test": "vitest run && node scripts/location-runtime-check.mjs && node scripts/upload-runtime-check.mjs",

@@ -1,12 +1,12 @@
 # Road Tag／路見不平 專案備忘
 
-更新：2026-10-03。僅適用此專案；永久規則與即時部署狀態分開記錄。
+更新：2026-10-25。僅適用此專案；永久規則與即時部署狀態分開記錄。
 
 ## 固定決策
 
-- 唯一開發來源：本地主 repo `C:\Users\qwert\Desktop\Road Recall system`。
+- 開發來源：同一 GitHub repo 的電腦或雲端工作樹。電腦既有目錄為 `C:\Users\qwert\Desktop\Road Recall system`；雲端工作樹為 `/workspace/keelung-accessible-map`。透過工作分支提交／推送接續，不把未提交檔案視為已同步；操作見 [雲端開發指南](cloud-development.md)。
 - 唯一正式版本：GitHub `qwert7278/keelung-accessible-map` 的 `main`；Vercel 是唯一網站發布端。
-- 工作方式：本地修改 → lint／test／build 與預覽 → 使用者確認此次版本 → 明確推送 `main` → 核對正式部署 SHA／網址。不要擅自把 Preview 當正式發布。
+- 工作方式：電腦或雲端修改 → lint／test／build 與預覽 → 使用者確認此次版本 → 明確推送 `main` → 核對正式部署 SHA／網址。不要擅自把 Preview 當正式發布。
 - ChatGPT Sites 已封存為 owner-only，不再合併、編輯、同步或發布；保留歷史，不刪除。AI 編程工具可以換，主 repo 與發布入口不增加。
 - Supabase 保留既有 Database／Auth／Storage；migration 與測試在同一 Git repo，Production 資料、照片與密鑰不放 Git。一般網站 push 不自動套用 migration。
 - 保持小幅、可審查修改，沿用現有架構；不為簡單改動引入多餘框架、服務或第二份文件規則。保留其他人的未提交內容。

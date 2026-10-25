@@ -5,7 +5,7 @@ description: Maintain only the Road Recall project in this repository, including
 
 # Road Recall 維護
 
-僅適用 `C:\Users\qwert\Desktop\Road Recall system`。先讀 [專案備忘](../../../docs/PROJECT_MEMO.md)；按任務需要讀其中連結的流程／網域文件，不把其他專案套入此流程。
+僅適用此 repo 的電腦或雲端工作樹（原電腦目錄為 `C:\Users\qwert\Desktop\Road Recall system`）。先讀 [專案備忘](../../../docs/PROJECT_MEMO.md)；按任務需要讀其中連結的流程／網域文件，不把其他專案套入此流程。
 
 ## 來源與範圍
 

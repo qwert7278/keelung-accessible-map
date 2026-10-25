@@ -1,6 +1,25 @@
 # Road Tag 雲端開發
 
-本 repo 可透過 GitHub Codespaces 在瀏覽器編輯；Node.js 24、npm 與開發設定由 `.devcontainer/devcontainer.json` 管理。此開發環境使用同一份 GitHub 原始碼。
+本 repo 支援 AI 助理管理的雲端工作區與電腦接續開發，兩端共用 GitHub 原始碼與 Node.js 24（`.nvmrc`）。平板使用者可直接在對話要求助理啟動、修改與檢查，不需要自己的終端。GitHub Codespaces 是可選的另一種編輯入口。
+
+## AI 助理管理的雲端工作區
+
+由助理在可用的雲端執行環境完成以下操作：
+
+```sh
+git clone https://github.com/qwert7278/keelung-accessible-map.git
+cd keelung-accessible-map
+npm ci --cache /tmp/roadtag-npm-cache
+npm run dev:cloud
+```
+
+已有工作區時先檢查 `git status --short`、目前分支與 commit，保留未提交修改，不重複 clone。需要抓取此雲端設定時使用 `codex/roadtag-cloud-development` 分支，合併後才改用 `main`。
+
+託管環境中，下載程式碼、安裝套件、啟動監聽服務及 HTTP 驗證都需要執行工具的網路權限。若出現 `Operation not permitted` 或代理在 0 ms 內連線失敗，先檢查沙箱權限，不能僅憑此錯誤判定代理壞掉；使用工具提供的額外網路權限，不移除既有代理或 TLS 驗證。npm 快取指向可寫入的 `/tmp`，避免寫入受限的使用者家目錄。
+
+雲端 Chromium 若出現 `ERR_CERT_AUTHORITY_INVALID`，確認它可使用環境既有的代理 CA 與 NSS 信任資料庫。此次環境的資料庫位於 `/home/agent/.pki/nssdb`，瀏覽器驗證需要對該目錄的寫入權限；僅有唯讀權限時無法正常載入既有信任設定。不使用忽略憑證錯誤的旗標。
+
+`dev:cloud` 固定啟用 Demo／OSM，監聽 `0.0.0.0:5173`，連接埠被占用時直接報錯。助理需保留服務程序，檢查 `/`、`/map` 和 Demo 資料顯示。雲端工作區可能暫停或回收，下次需檢查並重新啟動；不能承諾程序永久在線。`localhost` 只屬於執行環境，不是平板可用的網址；只有平台提供並驗證的預覽連結才能交給使用者。
 
 ## 開啟與預覽
 
@@ -8,7 +27,7 @@
 2. 在 Codespaces 終端執行：
 
    ```sh
-   npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
+   npm run dev:cloud
    ```
 
 3. 在 **Ports** 面板開啟 5173 的瀏覽器連結，維持 Private 可見性。首頁為 `/`，地圖為 `/map`，管理展示為 `/admin`。儲存原始碼後，Vite 會更新預覽。
@@ -18,7 +37,7 @@ Codespaces 的建立及運算由你的 GitHub 帳號管理，可能使用帳號�
 
 ## 開發模式與檢查
 
-雲端終端預設 `VITE_DEMO_MODE=true`、`VITE_MAP_PROVIDER=osm`，可在不填正式後端憑證的情況下測試 Demo。這兩項由 devcontainer 的 `remoteEnv` 設定，會優先於 Vite 的 `.env`；若要切換隔離測試後端，須明確修改設定並重建環境。正式資料庫設定仍依既有部署文件處理。
+`npm run dev:cloud` 固定使用 `VITE_DEMO_MODE=true`、`VITE_MAP_PROVIDER=osm`，可在不填正式後端憑證的情況下測試 Demo，且不受既有 `.env` 的正式模式設定影響。若要切換隔離測試後端，使用原有 `npm run dev` 入口並依既有部署文件處理。此命令不改變 `build` 或正式發布流程。
 
 ```sh
 npm run lint
@@ -30,6 +49,21 @@ npm run build
 
 ## 保存與發布
 
+兩端接續工作透過 GitHub 工作分支同步，不會自動同步未提交的檔案：
+
+1. 離開目前環境前，檢查 diff，只提交本次要保留的檔案並推送工作分支。
+2. 換到雲端或電腦時，先檢查工作區是否乾淨；有未提交修改時先保存，不覆寫。
+3. 乾淨工作區執行 `git fetch origin`，切換相同工作分支，再以 `git pull --ff-only` 更新。若分歧，先檢查差異並處理衝突，不強制推送或 reset。
+4. 執行 `npm ci`（雲端使用上述可寫快取），再啟動開發入口。平板上的這些操作均可交給 AI 助理。
+
 在工作分支修改、檢查並提交，推送該分支後以 PR 審查。雲端開發可取代本機編輯步驟；GitHub `main` 仍是正式版本。維持 [既有發布流程](single-release-workflow.md)：使用者確認此次版本後才更新 `main`，由 Vercel 部署，再核對正式網址。
 
 不要提交 `.env` 或密鑰；需要的測試憑證使用 Codespaces secrets。線上資料與照片仍留在既有服務。
+
+## 2026-10-25 雲端驗證紀錄
+
+- Node.js 24.19.0，成功安裝鎖定版本依賴；`npm run dev:cloud` 已實際啟動。
+- `npm run lint`、`npm test`（31 個測試檔、294 項測試及端點執行檢查）、`npm run build` 通過。建置仍有既有的大型 chunk 提醒。
+- Chromium 檢查首頁、`/map` 與 OSM 底圖正常；沒有 JavaScript 未處理錯誤。
+- 在隔離的瀏覽器 Demo 中，選取位置 → 上傳合成 QA 照片 → 送出回報 → 重新整理，仍顯示 1 個標記。未操作正式後端。
+- 768 × 1024 平板視窗未出現水平溢出。此紀錄是當次驗證，不代表雲端程序永久運行或正式網站已更新。
