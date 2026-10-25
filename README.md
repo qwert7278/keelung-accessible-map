@@ -43,6 +43,8 @@ npm run dev
 
 開啟終端顯示的 localhost 網址預覽首頁；通行地圖在 `/map`，預設 Demo 可直接使用。
 
+雲端開發（平板可直接請 AI 助理操作）與電腦接續流程，見 [雲端開發指南](docs/cloud-development.md)。雲端 Demo 啟動入口為 `npm run dev:cloud`。
+
 ```sh
 npm run lint
 npm test

@@ -67,10 +67,15 @@ export default defineConfig(({ mode }) => {
   }
   const key = env.VITE_SUPABASE_PUBLISHABLE_KEY
   if (key && !key.startsWith('sb_publishable_')) throw new Error('VITE_SUPABASE_PUBLISHABLE_KEY must be a publishable key')
+  // Tablet previews of the cloud development branch must stay in browser-only Demo mode.
+  const cloudDemoPreview = process.env.VERCEL_ENV === 'preview'
+    && process.env.VERCEL_GIT_COMMIT_REF === 'codex/roadtag-cloud-development'
   return {
     plugins: [react(), appRouteAliases()],
     // The public release always uses the real repository, even if a stale QA flag exists.
-    define: process.env.VERCEL_ENV === 'production' ? { 'import.meta.env.VITE_DEMO_MODE': JSON.stringify('false') } : {},
+    define: process.env.VERCEL_ENV === 'production'
+      ? { 'import.meta.env.VITE_DEMO_MODE': JSON.stringify('false') }
+      : cloudDemoPreview ? { 'import.meta.env.VITE_DEMO_MODE': JSON.stringify('true') } : {},
     build: {
       manifest: true,
       rollupOptions: {
